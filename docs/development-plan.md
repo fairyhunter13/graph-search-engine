@@ -78,6 +78,7 @@ a signature change means a grammar pin moved, and `meta.incompatible(conn)` alre
 | `config.py` | constants, env switches, paths | imports no sibling |
 | `filters.py` | extension map, denylists | one `indexable()` for watcher and indexer |
 | `projcfg.py` | strict `.graphrag.yaml` parse | an unknown key is an error |
+| `entry.py` | `ProjectEntry` and its JSON shape | one row, one resolved path |
 | `registry.py` | `projects.json` under `flock` | `_mutate` loads inside the lock |
 | `discover.py` | enumeration, `FileMeta`, hash diff | paths resolve before ownership |
 | `grammars.py` | pack access, capability set | capability is per capture |
@@ -156,7 +157,7 @@ for the callers of a known function and check them by hand.
 
 | ID | Title | Status | Paths it owns | T-nn covering it |
 |---|---|---|---|---|
-| D-01 | The floor: config, store, discovery | planned | src/graphrag/config.py, src/graphrag/filters.py, src/graphrag/store.py, src/graphrag/discover.py, src/graphrag/registry.py, src/graphrag/projcfg.py | T-01, T-02 |
+| D-01 | The floor: config, store, discovery | done | src/graphrag/config.py, src/graphrag/filters.py, src/graphrag/store.py, src/graphrag/discover.py, src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/projcfg.py | T-01, T-02 |
 | D-02 | Grammars, queries, extraction, Python and TS | planned | src/graphrag/grammars.py, src/graphrag/queries.py, src/graphrag/extract.py | T-03, T-04, T-05, T-06 |
 | D-03 | Symbol table and ranked resolution | planned | src/graphrag/symtab.py, src/graphrag/resolve.py | T-07, T-08 |
 | D-04 | Index loop, traversal, query surface | planned | src/graphrag/index.py, src/graphrag/indexwrite.py, src/graphrag/traverse.py, src/graphrag/query.py | T-09, T-10 |

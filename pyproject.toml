@@ -1,0 +1,40 @@
+[project]
+name = "graphrag"
+version = "0.1.0"
+description = "A code graph search engine on tree-sitter: who calls this, what breaks if I change it"
+requires-python = ">=3.12"
+dependencies = [
+    # Strict project config parsing. There is no safe_load in the stdlib, and the
+    # loader is subclassed later to stop YAML 1.1 rewriting a timestamp on a
+    # round trip -- the trap that silently disables an OKF freshness check.
+    "pyyaml>=6.0.2",
+]
+
+[project.scripts]
+graphrag = "graphrag.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/graphrag"]
+
+[dependency-groups]
+dev = ["pytest>=8.3.0", "ruff>=0.8.0"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "slow: needs a large corpus or a network fetch",
+    "corpus: needs the pinned CPython checkout",
+]

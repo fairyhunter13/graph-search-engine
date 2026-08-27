@@ -1,0 +1,101 @@
+"""`.graphrag.yaml`, parsed strictly.
+
+An unknown key is an error, and the error names the closest known key. A config
+silently half-read is the failure this refuses: the operator sets `exclude`,
+sees no error, and spends an afternoon asking why a directory is still indexed.
+
+The retired filename is refused by name rather than ignored, for the same
+reason. A file the engine skips in silence looks exactly like one it obeyed.
+"""
+
+from __future__ import annotations
+
+import difflib
+from dataclasses import dataclass, field
+from pathlib import Path
+
+import yaml
+
+from . import config
+
+
+class ConfigError(ValueError):
+    """A project config that cannot be obeyed as written."""
+
+
+@dataclass(slots=True)
+class ProjectConfig:
+    """Everything a project may say about itself."""
+
+    enabled: bool = True
+    # Extra directory names never descended into, on top of the global set.
+    exclude: list[str] = field(default_factory=list)
+    # Languages to index. Empty means every language with a grammar.
+    languages: list[str] = field(default_factory=list)
+    # Other projects this one federates. Expanded one level, never transitively.
+    members: list[str] = field(default_factory=list)
+    # The SCIP overlay, off unless a project asks for it and can build.
+    scip: bool = False
+    scip_indexers: list[str] = field(default_factory=list)
+
+
+_FIELDS: dict[str, type] = {
+    "enabled": bool,
+    "exclude": list,
+    "languages": list,
+    "members": list,
+    "scip": bool,
+    "scip_indexers": list,
+}
+
+
+def _suggest(key: str) -> str:
+    close = difflib.get_close_matches(key, _FIELDS, n=1, cutoff=0.6)
+    return f", did you mean {close[0]!r}" if close else ""
+
+
+def parse(text: str, *, source: str = "<string>") -> ProjectConfig:
+    """One config document. Every rejection names the file and the key."""
+    try:
+        raw = yaml.safe_load(text)
+    except yaml.YAMLError as exc:
+        raise ConfigError(f"{source}: not valid YAML: {exc}") from exc
+    if raw is None:
+        return ProjectConfig()
+    if not isinstance(raw, dict):
+        raise ConfigError(f"{source}: the document must be a mapping, got {type(raw).__name__}")
+
+    unknown = [k for k in raw if k not in _FIELDS]
+    if unknown:
+        key = sorted(unknown)[0]
+        known = ", ".join(sorted(_FIELDS))
+        raise ConfigError(f"{source}: unknown key {key!r}{_suggest(key)}. Known keys: {known}")
+
+    for key, value in raw.items():
+        want = _FIELDS[key]
+        if want is bool and not isinstance(value, bool):
+            raise ConfigError(f"{source}: {key!r} must be true or false")
+        if want is list and (
+            not isinstance(value, list) or any(not isinstance(v, str) for v in value)
+        ):
+            raise ConfigError(f"{source}: {key!r} must be a list of strings")
+    return ProjectConfig(**raw)
+
+
+def load(root: Path | str) -> ProjectConfig:
+    """The config for one project, or the defaults where there is none."""
+    root = Path(root)
+    retired = root / config.RETIRED_CONFIG_NAME
+    if retired.exists():
+        raise ConfigError(
+            f"{retired} is the retired config name and is not read. "
+            f"Rename it to {config.PROJECT_CONFIG_NAME}."
+        )
+    path = root / config.PROJECT_CONFIG_NAME
+    if not path.exists():
+        return ProjectConfig()
+    try:
+        text = path.read_text()
+    except OSError as exc:
+        raise ConfigError(f"{path}: unreadable: {exc}") from exc
+    return parse(text, source=str(path))

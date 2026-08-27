@@ -85,8 +85,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 
 | ID | Title | S-nn | D-nn covered | Status | Test node ID |
 |---|---|---|---|---|---|
-| T-01 | An incompatible meta stamp forces a rebuild | S-07 | D-01 | planned | tests/test_store.py::test_incompatible_meta_rebuilds |
-| T-02 | Registry mutation loads inside the lock | S-07 | D-01 | planned | tests/test_registry.py::test_mutate_loads_inside_the_lock |
+| T-01 | An incompatible meta stamp forces a rebuild | S-07 | D-01 | done | tests/test_store.py::test_incompatible_meta_rebuilds |
+| T-02 | Registry mutation loads inside the lock | S-07 | D-01 | done | tests/test_registry.py::test_mutate_loads_inside_the_lock |
 | T-03 | Python golden symbol counts hold | S-01 | D-02 | planned | tests/test_extract.py::test_python_golden_symbol_counts |
 | T-04 | TypeScript needs the JavaScript query too | S-01 | D-02 | planned | tests/test_queries.py::test_typescript_concatenates_javascript |
 | T-05 | Every capture name is mapped or ignored | S-01 | D-02 | planned | tests/test_queries.py::test_every_capture_name_is_known |

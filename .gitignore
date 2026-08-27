@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 # a rendering of the bundle is not part of the bundle
 knowledge/viz.html
+.pytest_cache/
+.ruff_cache/
