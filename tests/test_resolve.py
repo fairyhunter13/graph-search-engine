@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -242,6 +243,43 @@ def _write_receipt(mean_global: float, mean_scoped: float, n_files: int) -> None
         + "\n",
         encoding="utf-8",
     )
+
+
+CONCEPT = (
+    Path(__file__).resolve().parent.parent
+    / "knowledge"
+    / "computations"
+    / "import-scoping-collapses-the-candidate-set.md"
+)
+
+
+@pytest.mark.corpus
+@pytest.mark.slow
+def test_the_receipt_on_disk_agrees_with_the_concept():
+    """The claim lives in the concept prose, and nothing compared the two.
+
+    It sits in this file rather than beside the attester because pytest collects
+    files in name order, so `test_attester.py` ran before the receipt existed and
+    the check skipped on every CI run it was meant to guard.
+
+    The claim is not parsed out of the prose. Each measured number is rendered
+    the way the concept writes it and looked for there. So a number edited in the
+    prose with no re-run fails, and a re-run that moves a number fails until the
+    prose follows.
+    """
+    if not (config.corpus_root() / "Lib").is_dir():
+        pytest.skip(f"no corpus at {config.corpus_root()}")
+
+    receipt = json.loads(config.receipt_path(NODE_ID).read_text(encoding="utf-8"))
+    assert receipt["corpus_ref"] == config.CORPUS_REF
+
+    body = CONCEPT.read_text(encoding="utf-8")
+    for field, rendered in (
+        ("mean_global", f"{receipt['mean_global']:.2f}"),
+        ("mean_scoped", f"{receipt['mean_scoped']:.2f}"),
+        ("n_files", str(receipt["n_files"])),
+    ):
+        assert rendered in body, f"{field} measured {rendered}, and the concept does not say it"
 
 
 @pytest.mark.corpus

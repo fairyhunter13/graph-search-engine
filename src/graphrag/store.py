@@ -86,11 +86,11 @@ CREATE VIRTUAL TABLE IF NOT EXISTS nodes_fts USING fts5(
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 """
 
-# The edge kinds, closed. An unknown kind is an error naming this set, never a
-# widened query: a caller who mistypes `CALL` wants to be told, not to be
-# handed every edge in the graph.
+# The edge kinds, closed. No tool takes a kind from a caller, so this set is not
+# a request validator. It is the vocabulary `query.QUESTIONS` maps a question
+# onto, and a question outside that map is refused naming the map.
 EDGE_KINDS: frozenset[str] = frozenset(
-    {"DEFINES", "CONTAINS", "IMPORTS", "CALLS", "REFERENCES", "INHERITS", "IMPLEMENTS"}
+    {"DEFINES", "CONTAINS", "IMPORTS", "CALLS", "REFERENCES", "IMPLEMENTS"}
 )
 
 NODE_KINDS: frozenset[str] = frozenset(

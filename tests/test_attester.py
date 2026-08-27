@@ -8,12 +8,9 @@ reason naming what disagreed.
 from __future__ import annotations
 
 import importlib.util
-import json
 from pathlib import Path
 
 import pytest
-
-from graphrag import config
 
 ROOT = Path(__file__).resolve().parent.parent
 ATTESTER = ROOT / "knowledge" / "attesters" / "measurement_equality.py"
@@ -99,14 +96,6 @@ def test_an_empty_claim_attests_nothing_and_a_partial_one_attests_itself(claim):
     assert got["ok"] is bool(claim)
 
 
-@pytest.mark.corpus
-def test_the_receipt_on_disk_agrees_with_the_claim():
-    """`D-19` moved the number and every copy of it was a literal, so nothing
-    compared the claim against a run. This is the case that would have failed."""
-    path = config.receipt_path(SANCTIONED["test_node_id"])
-    if not path.is_file():
-        pytest.skip(f"no receipt at {path}; run the measurement first")
-
-    receipt = json.loads(path.read_text(encoding="utf-8"))
-    got = attester.attest(sanctioned_computation=SANCTIONED, receipt=receipt, claimed_value=CLAIM)
-    assert got["ok"] is True, got["reason"]
+# The receipt on disk is graded in `tests/test_resolve.py`, beside the run that
+# writes it. Here it skipped on every CI run, because pytest collects files in
+# name order and this one is read before the measurement has written anything.

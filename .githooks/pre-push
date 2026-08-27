@@ -30,17 +30,69 @@ if [[ -f "$DEV" && -f "$TST" ]]; then
     exit 1
   fi
 
-  # Arm 3: the refusal probe. Feed the checks a document that must fail.
+  # The collected node IDs, read once. The probe and arm 4c share this list and the
+  # function below it, so the probe exercises the check that runs and not a copy of it.
+  COLLECTED="$(mktemp)"
+  # `-o addopts=` is load-bearing. The repo sets `-q` there, and a second `-q`
+  # collapses collection to a per-file count with no node ID in it, so every
+  # anchored row then reads as uncollected and the arm reports nothing true.
+  if uv run pytest --collect-only -q -o addopts= >"$COLLECTED" 2>/dev/null; then
+    sort -o "$COLLECTED" "$COLLECTED"
+    COLLECTED_OK=1
+  else
+    COLLECTED_OK=0
+  fi
+
+  uncollected_rows() {  # $1 = a test plan. Prints every anchored row the runner misses.
+    while IFS= read -r node; do
+      [ -n "$node" ] || continue
+      # A (ccw) row names a test in another checkout, the same limit arm 4b records for
+      # paths. This runner cannot collect it, and reporting it would train the reader to
+      # ignore the arm.
+      case "$node" in '(ccw)'*) continue ;; esac
+      grep -qF "$node" "$COLLECTED" || echo "$node"
+    done < <(awk -F'|' '/^\| T-[0-9]/ {print $7}' "$1" | tr -d ' ')
+  }
+
+  uncovered_dev_rows() {  # $1 = a development plan. Prints every D row naming no T-nn.
+    while IFS='|' read -r _ id _ _ _ cases; do
+      case "$cases" in *T-[0-9]*) continue ;; esac
+      echo "${id// /}"
+    done < <(grep -E '^\| D-[0-9]' "$1")
+  }
+
+  uncovered_test_rows() {  # $1 = a test plan. Prints every T row naming no D-nn.
+    while IFS='|' read -r _ id _ _ covers _; do
+      case "$covers" in *D-[0-9]*) continue ;; esac
+      echo "${id// /}"
+    done < <(grep -E '^\| T-[0-9]' "$1")
+  }
+
+  # Arm 3: the refusal probe. Feed the real checks a document that must fail. Each call
+  # here is the function the arm below calls, so a probe that passes proves the shipped
+  # check refuses. Re-implementing the pipeline here would only prove awk still works.
   PROBE="$(mktemp -d)"
-  printf '| T-99 | probe | S-99 | D-99 | planned | tests/test_nothing.py::test_absent |\n' \
-    > "$PROBE/test-plan.md"
-  : > "$PROBE/collected"
-  if ! awk -F'|' '/^\| T-[0-9]/ {print $7}' "$PROBE/test-plan.md" | tr -d ' ' | sort \
-       | comm -23 - "$PROBE/collected" | grep -q .; then
+  {
+    printf '| T-99 | probe | S-99 | D-99 | planned | tests/test_nothing.py::test_absent |\n'
+    printf '| T-98 | probe | S-99 | none | planned |  |\n'
+  } > "$PROBE/test-plan.md"
+  printf '| D-99 | probe | planned | src/graphrag/store.py | none |\n' \
+    > "$PROBE/development-plan.md"
+  probe_failed() {
     rm -rf "$PROBE"
-    echo "[pre-push] x the anchor check found nothing wrong with a deliberately broken row"
+    echo "[pre-push] x $1"
     echo "[pre-push]   passing and not running are the same observation here"
     exit 1
+  }
+  # Skipped where collection failed, and arm 4c below reports that as a finding.
+  if [ "$COLLECTED_OK" -eq 1 ] && [ -z "$(uncollected_rows "$PROBE/test-plan.md")" ]; then
+    probe_failed "the anchor check found nothing wrong with a deliberately broken row"
+  fi
+  if [ -z "$(uncovered_dev_rows "$PROBE/development-plan.md")" ]; then
+    probe_failed "the coverage check accepted a D row that names no case"
+  fi
+  if [ -z "$(uncovered_test_rows "$PROBE/test-plan.md")" ]; then
+    probe_failed "the coverage check accepted a T row that names no development row"
   fi
   rm -rf "$PROBE"
 
@@ -60,26 +112,28 @@ if [[ -f "$DEV" && -f "$TST" ]]; then
     done
   done < <(awk -F'|' '/^\| D-[0-9]/ {print $5}' "$DEV")
 
-  # Arm 4c: uncollected tests.
-  COLLECTED="$(mktemp)"
-  # `-o addopts=` is load-bearing. The repo sets `-q` there, and a second `-q`
-  # collapses collection to a per-file count with no node ID in it, so every
-  # anchored row then reads as uncollected and the arm reports nothing true.
-  if uv run pytest --collect-only -q -o addopts= >"$COLLECTED" 2>/dev/null; then
-    sort -o "$COLLECTED" "$COLLECTED"
+  # Arm 4c: uncollected tests. Arm 3 proved this function refuses a broken row.
+  if [ "$COLLECTED_OK" -eq 1 ]; then
     while IFS= read -r node; do
-      [ -n "$node" ] || continue
-      # A (ccw) row names a test in another checkout, the same limit arm 4b records for
-      # paths. This runner cannot collect it, and reporting it would train the reader to
-      # ignore the arm.
-      case "$node" in '(ccw)'*) continue ;; esac
-      grep -qF "$node" "$COLLECTED" || { echo "[pre-push] uncollected test: $node"; findings=1; }
-    done < <(awk -F'|' '/^\| T-[0-9]/ {print $7}' "$TST" | tr -d ' ')
+      echo "[pre-push] uncollected test: $node"
+      findings=1
+    done < <(uncollected_rows "$TST")
   else
     echo "[pre-push] pytest collected nothing - every anchored test reads as uncollected"
     findings=1
   fi
   rm -f "$COLLECTED"
+
+  # Arm 4d: coverage. Arm 4a resolves an ID a row names, so a row naming none is invisible
+  # to it. Both documents state the rule that every D row names at least one T row.
+  while IFS= read -r id; do
+    echo "[pre-push] uncovered $id: the dev plan row names no T-nn"
+    findings=1
+  done < <(uncovered_dev_rows "$DEV")
+  while IFS= read -r id; do
+    echo "[pre-push] uncovered $id: the test plan row names no D-nn"
+    findings=1
+  done < <(uncovered_test_rows "$TST")
 
   if [ "$findings" -ne 0 ]; then
     if [ "$PLAN_GATE_BLOCKING" -eq 1 ]; then

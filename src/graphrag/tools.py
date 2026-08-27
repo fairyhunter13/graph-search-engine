@@ -3,7 +3,7 @@
 Everything else is the CLI, because everything else is an operator job. Each
 answer carries the capability of the languages it touched, and every gap the
 engine knows about rides in `gaps`. A tool here never returns a bare empty list:
-an empty list reads as "nothing calls this", and 23 of the 68 grammars with a
+an empty list reads as "nothing calls this", and 18 of the 68 grammars with a
 tags file emit no call capture at all.
 """
 

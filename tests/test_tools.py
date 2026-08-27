@@ -2,7 +2,7 @@
 
 `T-14` is the case the whole project exists for. A caller question against a
 language with no call capture must name the gap. An empty list here reads as
-"nothing calls this", and 23 of the 68 grammars with a tags file emit no call
+"nothing calls this", and 18 of the 68 grammars with a tags file emit no call
 capture at all.
 """
 

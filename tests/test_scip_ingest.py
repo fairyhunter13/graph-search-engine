@@ -157,6 +157,79 @@ def test_a_relationship_that_is_not_an_implementation_is_ignored(repo, tmp_path)
     conn.close()
 
 
+# Two files define `alpha` and a third calls it with no import, so the ranked
+# tier reaches the repo-global rule and emits both candidates unresolved.
+AMBIGUOUS = {
+    "a.py": "def alpha():\n    return 1\n",
+    "b.py": "def alpha():\n    return 2\n",
+    "c.py": "def gamma():\n    return alpha()\n",
+}
+ALPHA_A = "scip-python python . . `a`/alpha()."
+ALPHA_B = "scip-python python . . `b`/alpha()."
+GAMMA = "scip-python python . . `c`/gamma()."
+
+
+def test_the_tier_raises_the_resolved_share_and_agrees_with_the_parse(repo, tmp_path):
+    """The claim the whole overlay rests on, measured with the tier off and on.
+
+    An assertion that the tier ingests something is not the claim. The claim is
+    that resolved edges rise, and that the edge SCIP resolves names a file the
+    parse already held as a candidate. A target the parse never saw would mean
+    the overlay is extracting rather than upgrading.
+    """
+    root, conn = _store(repo, AMBIGUOUS)
+
+    def resolved():
+        row = conn.execute(
+            "SELECT count(*) AS n FROM edges WHERE kind = 'CALLS' AND resolved = 1"
+        ).fetchone()
+        return row["n"]
+
+    candidates = conn.execute(
+        "SELECT f.path AS path FROM edges e"
+        " JOIN nodes n ON n.id = e.dst JOIN files f ON f.id = n.file_id"
+        " WHERE e.kind = 'CALLS' AND n.name = 'alpha'"
+    ).fetchall()
+    assert {row["path"] for row in candidates} == {"a.py", "b.py"}
+    before = resolved()
+    assert before == 0
+
+    path = tmp_path / "index.scip"
+    w.write(
+        path,
+        "scip-python",
+        [
+            w.document(
+                "a.py", occurrences=[w.occurrence(ALPHA_A, roles=DEFINITION, span=(0, 4, 0, 9))]
+            ),
+            w.document(
+                "b.py", occurrences=[w.occurrence(ALPHA_B, roles=DEFINITION, span=(0, 4, 0, 9))]
+            ),
+            w.document(
+                "c.py",
+                occurrences=[
+                    w.occurrence(GAMMA, roles=DEFINITION, span=(0, 4, 0, 9)),
+                    w.occurrence(ALPHA_A, span=(1, 11, 1, 16)),
+                ],
+            ),
+        ],
+    )
+    assert ingest.ingest(conn, path, root).calls == 1
+
+    assert resolved() > before
+    upgraded = conn.execute(
+        "SELECT f.path AS path, e.confidence AS confidence FROM edges e"
+        " JOIN nodes n ON n.id = e.dst JOIN files f ON f.id = n.file_id"
+        " WHERE e.evidence = 'scip'"
+    ).fetchall()
+    assert len(upgraded) == 1
+    assert upgraded[0]["confidence"] == 1.0
+    # The parse held this file as one of its two candidates, so the tier chose
+    # between them rather than naming a target of its own.
+    assert upgraded[0]["path"] == "a.py"
+    conn.close()
+
+
 def test_a_definition_at_a_byte_no_node_holds_is_dropped(repo, tmp_path):
     """SCIP finds names tree-sitter does not, and the tier never creates a node."""
     root, conn = _store(repo, {"a.py": SRC})

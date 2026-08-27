@@ -7,7 +7,7 @@ tags: [attestation, measurement, drift]
 status: stable
 generated: { by: claude/opus-5, at: 2026-08-27T09:45:00Z }
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T09:53:01Z }
+  - { by: process:okf-verify, at: 2026-08-27T10:24:21Z }
 sources:
   - id: attester-case
     resource: tests/test_attester.py

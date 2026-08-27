@@ -7,6 +7,21 @@ title: graphrag knowledge history
 
 ## 2026-08-27
 
+- **Verified**: 28 of 33 concepts stamped `process:okf-verify`, 30 stampable. The same two stay blocked on the private `claude-code-workflows` citation, so an unauthenticated fetch still reads 404.
+- **Creation**: `decisions/tree-sitter-is-declined-for-chunking-and-adopted-for-graphs.md` - the founding record. coderag's chunker rejection and its `graph` tool drop are honoured, and the capability moved to its own engine.
+- **Creation**: `decisions/resolution-is-import-scoped-and-ranked-and-never-forced.md` - the six tiers, the never-forced edge, and the kill criterion, citing the computation rather than repeating its digits.
+- **Creation**: `decisions/scip-is-an-overlay-and-never-the-extractor.md` - `SymbolRole` carries no call role, so SCIP upgrades a call site and cannot find one.
+- **Creation**: `decisions/the-capture-vocabulary-is-the-maintainers-and-the-pin-is-exact.md` - 58 capture names curated downstream, an exact pin, and `T-05` grading every name as mapped or ignored.
+- **Creation**: `decisions/the-registration-surface-is-a-claim-and-a-row-leaves-only-on-request.md` - the resolved path as key, the claim count, and why no row is pruned for a missing path.
+- **Creation**: `constraints/sixty-eight-of-371-grammars-ship-a-tags-file.md` - the parsing claim and the symbol claim are different numbers.
+- **Creation**: `constraints/eighteen-of-the-sixty-eight-emit-no-call-capture.md` - 50 of 68 in the pack census and 52 effective. An earlier draft said 23, and that was wrong.
+- **Creation**: `constraints/the-pack-ships-queries-and-downloads-parsers-on-first-use.md` - why `doctor` is offline and an air-gapped install still needs a seeded cache.
+- **Creation**: `constraints/a-member-call-is-about-43-percent-of-call-sites.md` - the share the receiver rule refuses, and the band `T-07` asserts around it.
+- **Creation**: `constraints/symbol-information-kind-is-a-per-indexer-capability.md` - kind 0 is a declined answer, and overwriting a tree-sitter kind with it loses data.
+- **Creation**: `constraints/an-occurrence-range-comes-in-three-shapes.md` - the deprecated flat field, the two typed forms, and the silent zero-range failure on scip-java.
+- **Creation**: `constraints/every-scip-indexer-needs-a-resolved-build.md` - the asymmetry that decides which tier is the base and which is the overlay.
+- **Update**: `computations/import-scoping-collapses-the-candidate-set.md` - `stale_after: 2027-08-27T00:00:00Z` declared, with the freshness section that says why this concept qualifies and what triggers a re-run.
+- **Update**: `decisions/a-stale-date-is-declared-only-where-a-remeasurement-is-real.md` - the rule was written and not applied. The pinned-corpus computation now carries the date, and the repo-pinned one is recorded as a different case.
 - **Creation**: `defects/the-attester-graded-a-literal.md` - the number `D-19` moved, the six copies that kept the old one, and the receipt that now comes off disk.
 - **Verified**: 15 concepts carry `process:okf-verify`. Every `generated.at` read ahead of the clock, a noon or evening placeholder rather than a write time, so no source check ran anywhere in the bundle. Two concepts stay blocked: they cite the `claude-code-workflows` repository, which is private, so an unauthenticated fetch reads 404.
 - **Creation**: `constraints/an-unreachable-daemon-is-not-an-absent-edge.md` - the four reach variants, and why `Type=notify` belongs to the same problem.

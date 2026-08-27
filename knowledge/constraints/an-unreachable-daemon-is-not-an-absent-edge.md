@@ -7,7 +7,7 @@ tags: [reach, daemon, degradation, honesty]
 status: stable
 generated: { by: claude/opus-5, at: 2026-08-27T07:08:13Z }
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T09:53:01Z }
+  - { by: process:okf-verify, at: 2026-08-27T10:24:21Z }
 sources:
   - id: notice
     resource: src/graphrag/reach.py

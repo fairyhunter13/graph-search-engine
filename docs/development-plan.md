@@ -39,7 +39,7 @@ cited here in one line rather than repeated.
 | Resolution | Two-phase, import-scoped, confidence-ranked |
 | No `tags.scm` | Parse, file and import edges only. No fabricated symbols |
 | Capability model | A set per language, not a tier. Reported with every answer |
-| Import queries | Hand-written for all 68 `tags.scm` languages |
+| Import queries | Hand-written for 32 of the 68 `tags.scm` languages. The other 36 are a reported gap |
 | Grammar source | The pack, pinned exactly. Parsers cached, first run needs network |
 | SCIP | Optional overlay, off by default, upgrades resolution only |
 | SCIP bindings | Generated from `scip.proto` at tag `v0.9.0`, vendored |
@@ -158,17 +158,17 @@ for the callers of a known function and check them by hand.
 
 | ID | Title | Status | Paths it owns | T-nn covering it |
 |---|---|---|---|---|
-| D-01 | The floor: config, store, discovery | done | src/graphrag/config.py, src/graphrag/filters.py, src/graphrag/store.py, src/graphrag/discover.py, src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/projcfg.py, tests/test_discover.py, tests/test_projcfg.py, tests/test_hygiene.py | T-01, T-02, T-94..T-101 |
-| D-02 | Grammars, queries, extraction, wave one | done | src/graphrag/grammars.py, src/graphrag/queries.py, src/graphrag/extract.py, src/graphrag/queries/imports, src/graphrag/queries/tags_extra, tests/fixtures/wave1 | T-03, T-04, T-05, T-06, T-33, T-34, T-35, T-60 |
-| D-03 | Symbol table and ranked resolution | done | src/graphrag/symtab.py, src/graphrag/resolve.py | T-07, T-08, T-36, T-37 |
+| D-01 | The floor: config, store, discovery | done | src/graphrag/config.py, src/graphrag/filters.py, src/graphrag/store.py, src/graphrag/discover.py, src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/projcfg.py, tests/test_store.py, tests/test_registry.py, tests/test_discover.py, tests/test_projcfg.py, tests/test_hygiene.py | T-01, T-02, T-94..T-101, T-122 |
+| D-02 | Grammars, queries, extraction, wave one | done | src/graphrag/grammars.py, src/graphrag/queries.py, src/graphrag/extract.py, src/graphrag/queries/imports, src/graphrag/queries/tags_extra, tests/fixtures/wave1, tests/test_extract.py, tests/test_queries.py, tests/test_grammars.py | T-03, T-04, T-05, T-06, T-33, T-34, T-35, T-60 |
+| D-03 | Symbol table and ranked resolution | done | src/graphrag/symtab.py, src/graphrag/resolve.py, tests/test_resolve.py | T-07, T-08, T-36, T-37 |
 | D-04 | Index loop, traversal, query surface | done | src/graphrag/index.py, src/graphrag/indexwrite.py, src/graphrag/traverse.py, src/graphrag/query.py, tests/test_index.py, tests/test_perf.py | T-09, T-10, T-45..T-55 |
 | D-05 | Import queries, the remaining waves | done | src/graphrag/queries/imports, tests/test_import_queries.py | T-11, T-56, T-57, T-58 |
 | D-06 | MCP tools, daemon, CLI, stdio bridge | done | src/graphrag/tools.py, src/graphrag/server.py, src/graphrag/cli.py, src/graphrag/bridge.py, tests/test_tools.py, tests/test_server.py | T-12, T-13, T-14, T-15, T-21, T-61, T-62, T-63, T-64 |
 | D-07 | Watcher, health, progress, ledgers | done | src/graphrag/watch.py, src/graphrag/health.py, src/graphrag/progress.py, src/graphrag/ledger.py, src/graphrag/trace.py, tests/test_watch.py, tests/test_health.py | T-16, T-17, T-66..T-76 |
-| D-08 | SCIP overlay behind the coverage guard | done | src/graphrag/scip/, src/graphrag/config.py, src/graphrag/index.py, tests/scipwrite.py, tests/fixtures/scip/scip.proto, tests/test_scip_wire.py, tests/test_scip_read.py, tests/test_scip_offsets.py, tests/test_scip_symbol.py, tests/test_scip_guard.py, tests/test_scip_ingest.py, tests/test_scip_run.py | T-18, T-19, T-102..T-110 |
+| D-08 | SCIP overlay behind the coverage guard | done | src/graphrag/scip/, src/graphrag/config.py, src/graphrag/index.py, tests/scipwrite.py, tests/fixtures/scip/scip.proto, tests/test_scip_wire.py, tests/test_scip_read.py, tests/test_scip_offsets.py, tests/test_scip_symbol.py, tests/test_scip_guard.py, tests/test_scip_ingest.py, tests/test_scip_run.py | T-18, T-19, T-102..T-110, T-121 |
 | D-09 | Fleet registration across five profiles | done | (ccw) internal/policy/shared.go | T-20, T-21 |
 | D-10 | Two-engine gate and the routing rule | done | (ccw) internal/hooks/treesearch.go | T-22, T-23, T-24, T-25 |
-| D-11 | systemd units and reach enrolment | done | src/graphrag/systemd.py, src/graphrag/reach.py, tests/test_systemd.py | T-26, T-27, T-85..T-89 |
+| D-11 | systemd units and reach enrolment | done | src/graphrag/systemd.py, src/graphrag/reach.py, tests/test_systemd.py, (ccw) internal/hooks/graphragreach.go | T-26, T-27, T-85..T-89, T-117, T-118, T-119, T-120 |
 | D-12 | The OKF profile record and bundle root | done | knowledge/index.md, knowledge/log.md, knowledge/policies, tests/test_bundle.py | T-28, T-38, T-39, T-40 |
 | D-13 | The first working attester | done | knowledge/attesters, knowledge/computations, knowledge/skills, tests/test_attester.py | T-29, T-30, T-41, T-42, T-43, T-44 |
 | D-14 | Gate lines and the attester contract check | done | .githooks/pre-push, scripts/check_attester_contract.py, knowledge/constraints, knowledge/decisions | T-31, T-32 |
@@ -179,6 +179,7 @@ for the callers of a known function and check them by hand.
 | D-19 | Capture the receiver, so a member call resolves to its own module | done | src/graphrag/extract.py, src/graphrag/resolve.py | T-93 |
 | D-20 | Continuous integration, the gate a skipped hook still meets | done | .github/workflows/ci.yml, tests/test_ci.py | T-112..T-115 |
 | D-21 | The receipt is an artifact of the run, never a literal | done | src/graphrag/config.py, tests/test_resolve.py, tests/test_attester.py | T-111 |
+| D-22 | The re-export pass, so a name resolves through the package initialiser | planned | src/graphrag/symtab.py, src/graphrag/resolve.py, tests/test_resolve.py | T-116 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -358,9 +359,9 @@ Every risk lived in code shaped around one server, and each piece is now a set o
 `ServerRegistered` takes the name. `Guard.Project` resolves against either registry, so a repo
 enrolled only here is gated rather than exempt. The `PostToolUse` matcher covers both tools.
 
-`searchFailed` learned the structural empty shapes, `nodes: []` and `edges: []`. Without that a
-graph miss reads as a successful retrieval and buys the walk marker, which is the exact failure the
-`PostToolUse` move was made to prevent.
+`searchFailed` learned the structural empty shape, `"results":[]`. Without that a graph miss reads
+as a successful retrieval and buys the walk marker. That is the exact failure the `PostToolUse`
+move was made to prevent. The correction below records what the shape is not.
 
 One thing the gate could not share is the denial text. The structural registry carries no chunk
 count, so the sentence that quotes one now branches on which registry answered. A gate that states a
@@ -434,3 +435,62 @@ there was a real call.
 What is left is a receiver naming a local variable. No syntactic rule places it, and closing that
 gap needs the type of the receiver. `D-08` now ships that overlay, and a project that opts
 in gets a resolved edge at those sites from the indexer instead of a refusal.
+
+# A correction `D-10` forced, 2026-08-27
+
+The plan said the gate learns graphrag's empty shapes, `nodes: []` and `edges: []`. The engine
+emits neither. `tools.py` returns a `results` key on every path, error paths included, and it
+emits no top-level `nodes` list and no top-level `edges` list. The two needles matched nothing, so
+a graph miss still bought the walk marker.
+
+The shipped empty shape is `"results":[]`, and the gate already rejects it. The two dead needles
+are deleted in the `ccw` checkout, which this row's `(ccw)` prefix marks as out of reach from here.
+
+# A correction `D-02` forced, 2026-08-27
+
+The design said the pin gives 68 grammars with a definition capture, 45 with a call capture and 17
+with an implementation capture. Two of the three were wrong. Measured under the pinned pack: 68
+grammars ship a `tags.scm`, and 67 of them define, 50 call and 17 implement.
+
+`svelte` is the one tagged grammar with no definition capture. Its query names sections in markup,
+so nothing it captures is a symbol. TypeScript and TSX gain calls from the JavaScript query they
+concatenate, so the effective call count is 52 against a pack census of 50. That leaves 18 tagged
+grammars with no call capture of their own, and 16 that answer no caller question at all.
+
+`T-06` now names all five numbers in its title. It carried the title alone before, so a count could
+move under it and no reader would see anything change.
+
+# What `D-03` left open, 2026-08-27
+
+Two resolution rules were promised, and one of the two ships.
+
+Constructor-call resolution ships. A constructor capture records the class name, so `Foo()` scores
+against the class definition and never against `__init__`. On a two-file probe the call resolves to
+the `class Foo` symbol at the imported-symbol tier.
+
+The re-export transitive pass does not ship. `imported_names` maps a name to the module the import
+statement names literally. A `Foo` re-exported by `pkg/__init__.py` from `pkg.internal` misses both
+import tiers, and falls to the global tier at confidence 0.30. `D-22` is that gap, and it stays
+open rather than reading as done.
+
+# What `D-09` proved on a fresh device, 2026-08-27
+
+The registration is five files and one of them is written per profile, so a claim that it works on
+this machine is not a claim that it bootstraps. Both halves were run against a scratch `HOME` with
+no `~/.claude-shared` in it. The receipt is `partc-fresh-device.json` under the receipt directory.
+
+`ccw hook link-shared` alone exits 0 and writes nothing. It cannot create the shared store, so on a
+fresh device it re-asserts a roster that is not there yet. `ccw install --apply --targets=claude`
+creates the store and seeds five `.claude.json` files, each holding `coderag` and `graphrag`.
+
+That is the ordering the plan named as a hazard, measured rather than reasoned. The installer
+bootstraps and the hook maintains, and neither does the other job.
+
+# What the plan pair skills earn, 2026-08-27
+
+Seven planning skills were retired here for zero dispatches, so a skill that is never selected is
+the failure this pair had to avoid. The receipt is `partb-skill-dispatch.json`.
+
+One headless session in a scratch Python package, outside the fleet repos, was asked for a test
+plan with no skill named. It read the tree, then dispatched `test-plan` and followed the procedure.
+The trigger is the document, and the body carries a template and a procedure the doctrine does not.

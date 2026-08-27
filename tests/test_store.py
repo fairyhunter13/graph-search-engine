@@ -93,3 +93,17 @@ def test_counts_report_the_resolved_share(graph):
         [(ids[1], ids[0], 0.85, 1, 1), (ids[1], ids[0], 0.3, 2, 0)],
     )
     assert store.counts(graph) == {"files": 1, "nodes": 2, "edges": 2, "resolved": 1}
+
+
+def test_the_two_closed_sets_have_a_reader():
+    """Both sets carried a claim and nothing read them, so a name could drift.
+
+    `EDGE_KINDS` is what `query.QUESTIONS` maps a question onto, and
+    `NODE_KINDS` is what `queries.DEFINITION_KINDS` maps a capture onto. A name
+    added on one side and not the other fails here rather than at a query.
+    """
+    from graphrag import queries, query
+
+    asked = {kind for _, kinds, _ in query.QUESTIONS.values() for kind in kinds}
+    assert asked <= store.EDGE_KINDS
+    assert set(queries.DEFINITION_KINDS.values()) <= store.NODE_KINDS

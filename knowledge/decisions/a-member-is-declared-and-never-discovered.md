@@ -7,7 +7,7 @@ tags: [federation, scope, registry, workspace]
 status: stable
 generated: { by: claude/opus-5, at: 2026-08-27T07:04:49Z }
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T09:53:01Z }
+  - { by: process:okf-verify, at: 2026-08-27T10:24:21Z }
 sources:
   - id: coderag-federation
     resource: https://github.com/fairyhunter13/rag-search-engine
@@ -42,3 +42,8 @@ would bound the cost of the walk and leave the ownership problem exactly where i
 A workspace where the same members are declared in every project, and the duplication is the thing
 operators complain about. Discovery would then be removing a chore rather than widening a candidate
 set behind their backs.
+
+# Where a declared member becomes a row
+
+[The registration surface](the-registration-surface-is-a-claim-and-a-row-leaves-only-on-request.md)
+records the claim, and it is why a member row survives while a root still names it.

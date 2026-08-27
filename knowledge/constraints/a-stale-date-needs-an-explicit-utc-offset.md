@@ -7,7 +7,7 @@ tags: [okf, gate, freshness, strict]
 status: stable
 generated: { by: claude/opus-5, at: 2026-08-27T06:15:16Z }
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T09:53:01Z }
+  - { by: process:okf-verify, at: 2026-08-27T10:24:21Z }
 sources:
   - id: okf-spec
     resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md

@@ -15,7 +15,8 @@ executor:
 attester:
   resource: ../attesters/measurement_equality.py
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T09:53:01Z }
+  - { by: process:okf-verify, at: 2026-08-27T10:24:21Z }
+stale_after: 2027-08-27T00:00:00Z
 sources:
   - id: cpython-measure
     resource: https://github.com/python/cpython/tree/v3.12.7/Lib
@@ -54,6 +55,18 @@ one.
 
 Import scoping stops beating global matching by six times on this corpus. Then the premise is gone,
 `D-03` goes blocked with the observed numbers, and this concept is deprecated rather than relaxed.
+
+# Trust and freshness
+
+`stale_after` is 2027-08-27T00:00:00Z, one year after the run. This is the case the freshness rule
+sanctions, and it is the only concept in the bundle that carries a date. Three things make the
+re-measurement real. The corpus is a frozen tag, so anyone can fetch the same 755 files. The
+procedure is written down as the executor skill. The receipt names the test node, so a new run is
+comparable with this one.
+
+The date is not the trigger for a re-run. The resolver changing is. The date is the backstop for the
+case where nobody notices that it changed. The offset is explicit, so the value cannot read as fresh
+forever.
 
 [^cpython-measure]: CPython `Lib` at tag `v3.12.7`, 755 files, measured 2026-08-27.
 [^resolve-module]: `mean_candidates` in `src/graphrag/resolve.py` is the measurement, one arm per call.

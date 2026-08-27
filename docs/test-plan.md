@@ -119,7 +119,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-03 | Python golden symbol counts hold | S-01 | D-02 | done | tests/test_extract.py::test_python_golden_symbol_counts |
 | T-04 | TypeScript needs the JavaScript query too | S-01 | D-02 | done | tests/test_queries.py::test_typescript_concatenates_javascript |
 | T-05 | Every capture name is mapped or ignored | S-01 | D-02 | done | tests/test_queries.py::test_every_capture_name_is_known |
-| T-06 | The capability counts hold under the pin | S-03 | D-02 | done | tests/test_grammars.py::test_capability_counts_under_the_pin |
+| T-06 | 68 tagged grammars: 67 defs, 50 calls by pack and 52 effective, 17 impls | S-03 | D-02 | done | tests/test_grammars.py::test_capability_counts_under_the_pin |
 | T-07 | Import scoping beats global matching | S-02 | D-03 | done | tests/test_resolve.py::test_import_scoping_collapses_candidates |
 | T-08 | An unknown name becomes an external node | S-02 | D-03 | done | tests/test_resolve.py::test_unknown_name_is_external |
 | T-09 | Blast radius terminates on a cycle | S-04 | D-04 | done | tests/test_index.py::test_blast_radius_terminates_over_the_cycle |
@@ -224,11 +224,18 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-108 | The index pass runs the overlay only where the config asks | S-06 | D-08 | done | tests/test_scip_run.py::test_the_index_pass_runs_the_overlay_only_where_the_config_asks |
 | T-109 | An unknown indexer name is an error and never a guessed encoding | S-06 | D-08 | done | tests/test_scip_offsets.py::test_an_unknown_tool_is_an_error_and_never_a_guess |
 | T-110 | A symbol descriptor tail carries the kind of each step | S-06 | D-08 | done | tests/test_scip_symbol.py::test_the_descriptor_tail_carries_the_kind_of_each_step |
-| T-111 | The receipt on disk agrees with the claim | S-02 | D-21 | done | tests/test_attester.py::test_the_receipt_on_disk_agrees_with_the_claim |
+| T-111 | The receipt on disk agrees with the concept | S-02 | D-21 | done | tests/test_resolve.py::test_the_receipt_on_disk_agrees_with_the_concept |
 | T-112 | The workflow pins every action to a commit | S-16 | D-20 | done | tests/test_ci.py::test_the_workflow_pins_every_action |
 | T-113 | The workflow token reads and never writes | S-16 | D-20 | done | tests/test_ci.py::test_the_workflow_reads_and_never_writes |
 | T-114 | No step continues on error | S-16 | D-20 | done | tests/test_ci.py::test_no_step_continues_on_error |
 | T-115 | It runs on main and by hand only | S-16 | D-20 | done | tests/test_ci.py::test_it_runs_on_main_and_by_hand_only |
+| T-116 | A re-exported name resolves through the package initialiser | S-02 | D-22 | planned |  |
+| T-117 | The live graph card reports the counts on disk | S-10 | D-11 | done | (ccw) internal/hooks/graphragreach_internal_test.go::TestALiveGraphReportsItsCounts |
+| T-118 | A stopped graph daemon never reports an available graph | S-10 | D-11 | done | (ccw) internal/hooks/graphragreach_internal_test.go::TestAStoppedDaemonNeverReportsAnAvailableGraph |
+| T-119 | An unenrolled directory with no daemon is unreachable, not absent | S-10 | D-11 | done | (ccw) internal/hooks/graphragreach_internal_test.go::TestAnUnenrolledDirectoryWithNoDaemonIsUnreachableNotAbsent |
+| T-120 | A stopped coderag daemon reports itself down | S-10 | D-11 | done | (ccw) internal/hooks/coderagreach_internal_test.go::TestAStoppedCoderagDaemonReportsItselfDown |
+| T-121 | The tier raises the resolved share and agrees with the parse | S-06 | D-08 | done | tests/test_scip_ingest.py::test_the_tier_raises_the_resolved_share_and_agrees_with_the_parse |
+| T-122 | The two closed kind sets have a reader | S-01 | D-01 | done | tests/test_store.py::test_the_two_closed_sets_have_a_reader |
 
 # User journeys
 
@@ -255,12 +262,14 @@ pass is queued for the one project, and the progress file names it.
 
 **J-07 Route two questions unprompted.** From a fresh session, ask a meaning question. Then ask a
 caller question. Acceptance: each reaches the engine the routing rule names, with neither engine
-named in the prompt. Run 2026-08-27, two scripted sessions, neither prompt naming an engine.
+named in the prompt. Run 2026-08-27, two headless sessions under `claude -p`, neither prompt
+naming an engine. The receipt is `j07-routing-selection.json` under the receipt directory, and it
+carries both prompts and both tool sequences.
 
-The meaning question called `mcp__coderag__search` in semantic mode first. The caller question
-called `mcp__coderag__search` in lexical mode to name the symbol, then `mcp__graphrag__neighbors`
-and `mcp__graphrag__blast_radius` to walk the edges from it. That is the widen-then-confirm order,
-selected and not prompted.
+The meaning question called `mcp__coderag__search` in semantic mode, then read the file it named.
+The caller question called `mcp__coderag__search` in lexical mode to name the symbol, then
+`mcp__graphrag__neighbors` with `question=callers` to walk the edges from it. That is the
+widen-then-confirm order, selected and not prompted.
 
 **J-08 Measure the two engines against each other.** Run a caller-question set against both. Score
 both against hand-verified edges. Acceptance: the numbers exist and are recorded. Measured
@@ -292,14 +301,17 @@ reaches the semantic engine and stops there fails this plan, and not the prompt.
 
 Real, named, and built by `git init` in a temporary directory. No mocks, and no parser stubs.
 
-- `tests/fixtures/wave1/` — one file per wave-one language, each holding a class, a method, a
-  member call, a static call and four import shapes. One directory rather than one per language,
-  because the goldens are read side by side and a split hides a difference between them.
-- `tests/fixtures/c_small/` — C, which has no call capture. The gap fixture.
+- `tests/fixtures/wave1/` — `orders.py`, `orders.ts` and `Orders.php`. Three of the five wave-one
+  languages carry a file. Each holds a class, a method, a member call, a static call and four
+  import shapes. `javascript` and `tsx` carry none, and `T-04` covers the query they share with
+  TypeScript. One directory rather than one per language, because the goldens are read side by side.
+- The C gap has no directory. `tests/test_tools.py` builds `main.c` inline as `NO_CALLS`, and
+  `T-14` and `T-64` read it. `tests/test_grammars.py` asserts the missing capability itself.
 - The cycle fixture is three modules importing each other, built by the `repo` factory in
   `tests/test_index.py` rather than by a checked-in directory. It is five lines per module, and
   a directory on disk would hide them from the case that reads them.
-- `tests/fixtures/unicode/` — a non-ASCII identifier, for the SCIP offset table.
+- The non-ASCII identifier has no directory either. `tests/test_scip_offsets.py` holds the source
+  inline as `SRC`, and `T-18` reads it against both column encodings.
 - The CPython standard library at `v3.12.7`, cloned once into `~/.cache/graphrag/corpus`, for
   `T-07`. The case is marked `corpus` and skips when the clone is absent, so a fresh machine runs
   the suite without a network fetch. `GRAPHRAG_CORPUS_DIR` and `GRAPHRAG_CORPUS_REF` move it.
@@ -309,17 +321,32 @@ Real, named, and built by `git init` in a temporary directory. No mocks, and no 
 Every `T-nn` names exactly one `S-nn` and at least one `D-nn`. Every `D-nn` names at least one
 `T-nn`. An ID is never reused and never deleted.
 
-Two commands, run by the pre-push gate. Silence is the pass.
+Three checks, run by the pre-push gate. Silence is the pass.
 
 ```sh
 git ls-files > /tmp/tracked
 awk -F'|' '/^\| D-[0-9]/ {print $5}' docs/development-plan.md | tr ',' '\n' | tr -d ' ' \
   | grep -vFx -f /tmp/tracked
 
-uv run pytest --collect-only -q | sort > /tmp/collected
-awk -F'|' '/^\| T-[0-9]/ {print $7}' docs/test-plan.md | tr -d ' ' | sort \
-  | comm -23 - /tmp/collected
+uv run pytest --collect-only -q -o addopts= | sort > /tmp/collected
+awk -F'|' '/^\| T-[0-9]/ {print $7}' docs/test-plan.md | tr -d ' ' | while read -r node; do
+  [ -n "$node" ] || continue
+  grep -qF "$node" /tmp/collected || echo "uncollected test: $node"
+done
+
+grep -E '^\| D-[0-9]' docs/development-plan.md | grep -vE 'T-[0-9]'
+grep -E '^\| T-[0-9]' docs/test-plan.md | cut -d'|' -f5 | grep -vE 'D-[0-9]'
 ```
+
+`-o addopts=` is load-bearing. This repo sets `-q` there, and a second `-q` collapses collection to
+a per-file count with no node ID in it. Every anchored row then reads as uncollected.
+
+The match is `grep -qF` per row rather than `comm -23` over two sorted lists. A collected line
+carries text around the node ID. An exact-line compare therefore reports a row the runner does
+collect. An empty node cell is a case not yet written, and is skipped.
+
+The third check is coverage rather than a dangling reference. A row naming nothing at all passes an
+orphan check, because it has no ID to resolve.
 
 The pattern is `T-[0-9]`, never a bare `T-`, so the vocabulary block above is not read as a row.
 The tree side is `git ls-files` rather than a walk, because the gate is about what a clone gets.

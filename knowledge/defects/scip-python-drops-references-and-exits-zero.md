@@ -7,7 +7,7 @@ tags: [scip, guard, coverage, upstream]
 status: stable
 generated: { by: claude/opus-5, at: 2026-08-27T09:15:52Z }
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T09:53:01Z }
+  - { by: process:okf-verify, at: 2026-08-27T10:24:21Z }
 sources:
   - id: scip-python-221
     resource: https://github.com/sourcegraph/scip-python/issues/221
