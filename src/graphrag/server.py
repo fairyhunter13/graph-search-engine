@@ -26,7 +26,7 @@ import anyio.to_thread
 import uvicorn
 from starlette.responses import JSONResponse
 
-from . import config, index, registry, watch
+from . import config, index, ledger, peers, registry, watch
 from .tools import enroll, mcp
 
 log = logging.getLogger(__name__)
@@ -96,7 +96,10 @@ async def register(request) -> JSONResponse:
         return JSONResponse({"error": "the body names no root"}, status_code=400)
     # Off the event loop: enrolment resolves a path and reads the store, and
     # `/healthz` answers behind it otherwise.
-    return JSONResponse(await anyio.to_thread.run_sync(enroll, root))
+    answer = await anyio.to_thread.run_sync(enroll, root)
+    # One daemon serves every session, so the row names which one asked.
+    ledger.append(ledger.RUN, {"event": "register", "root": root, "peer": peers.of(request)})
+    return JSONResponse(answer)
 
 
 async def healthz(_request) -> JSONResponse:

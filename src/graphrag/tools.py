@@ -15,7 +15,7 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from . import config, index, query, registry, store
+from . import config, federation, index, query, registry, store
 
 INSTRUCTIONS = """\
 Structural code search over the graph: who calls this, what breaks if I change
@@ -88,9 +88,16 @@ def enroll(root: Path | str) -> dict[str, Any]:
     target = registry.resolve(root)
     if not target.is_dir():
         return {"error": f"{target} is not a directory"}
-    registry.claim(target, direct=True)
+    members = federation.register(target)
     state = index.QUEUE.submit(target)
-    out: dict[str, Any] = {"root": str(target), "queued": state, "depth": index.QUEUE.depth}
+    for member in members:
+        index.QUEUE.submit(member)
+    out: dict[str, Any] = {
+        "root": str(target),
+        "members": [str(member) for member in members],
+        "queued": state,
+        "depth": index.QUEUE.depth,
+    }
     path = config.index_path(target)
     if path.exists():
         conn = store.connect(path)

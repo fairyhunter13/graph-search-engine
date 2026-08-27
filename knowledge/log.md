@@ -7,6 +7,7 @@ title: graphrag knowledge history
 
 ## 2026-08-27
 
+- **Creation**: `decisions/a-member-is-declared-and-never-discovered.md` - why a graph engine declares its members where the semantic engine discovers them.
 - **Creation**: `constraints/one-bad-node-type-disables-a-whole-query.md` - the silent query compile failure `sourcepawn` shipped, and the check that sees it.
 - **Creation**: `constraints/extraction-runs-at-118-files-per-second.md` - the measured throughput and the floor `T-10` sets from it.
 - **Creation**: the bundle root and the profile record.

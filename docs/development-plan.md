@@ -173,7 +173,7 @@ for the callers of a known function and check them by hand.
 | D-13 | The first working attester | done | knowledge/attesters, knowledge/computations, knowledge/skills, tests/test_attester.py | T-29, T-30, T-41, T-42, T-43, T-44 |
 | D-14 | Gate lines and the attester contract check | done | .githooks/pre-push, scripts/check_attester_contract.py, knowledge/constraints, knowledge/decisions | T-31, T-32 |
 | D-15 | Source roots, so a dotted import matches a path | done | src/graphrag/symtab.py, tests/test_resolve.py | T-59 |
-| D-16 | Workspace scope, federation and peer identity | planned | src/graphrag/scope.py, src/graphrag/federation.py, src/graphrag/peers.py | T-65 |
+| D-16 | Workspace scope, federation and peer identity | done | src/graphrag/scope.py, src/graphrag/federation.py, src/graphrag/peers.py, tests/test_federation.py | T-65, T-77..T-84 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -284,3 +284,22 @@ directory matches nothing, and scoping goes quiet on the languages the row exist
 The longest prefix wins, or `src` eats the maven layout halfway and leaves `main.java.com.acme`.
 A path that strips to nothing keeps its own parts, because an empty module name is shared by every
 file sitting directly under a source root.
+
+# What `D-16` settled, 2026-08-27
+
+Members are declared in `.graphrag.yaml` and never discovered. The semantic engine walks symlinks
+under the root to find them, and that is right for a ranked corpus: a member that arrives by
+accident only widens recall. A graph answers about a named symbol, so an undeclared member adds
+candidate definitions the operator never chose and cannot see in a config file.
+
+The declaration is the truth in both directions. `sweep` claims a member the config gained and
+releases one the config lost, and nothing else moves. A member is an indirect claim, so releasing
+the root releases it, while a member also enrolled on its own keeps its row.
+
+`scope.owner` answers with the deepest enrolled root rather than the first. A project vendored
+inside another is the more specific answer for its own files, and filing them under the outer root
+loses the distinction the two rows exist to hold.
+
+`peers.of` is best effort by construction. A short-lived client is gone before the lookup runs, and
+`unknown` is the honest result. The daemon serves every session on the machine, so a ledger row
+naming no caller names nothing useful.

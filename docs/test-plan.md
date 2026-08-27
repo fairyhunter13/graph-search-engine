@@ -159,7 +159,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-62 | A dead daemon keeps stdout clean | S-08 | D-06 | done | tests/test_server.py::test_the_bridge_survives_an_unreachable_daemon |
 | T-63 | An unindexed root names the index tool | S-08 | D-06 | done | tests/test_tools.py::test_an_unindexed_root_names_the_index_tool |
 | T-64 | Doctor prints the capability table | S-03 | D-06 | done | tests/test_tools.py::test_doctor_prints_the_capability_table |
-| T-65 | Federation expands one level, not transitively | S-10 | D-16 | planned | tests/test_federation.py::test_federation_expands_one_level |
+| T-65 | Federation expands one level, not transitively | S-10 | D-16 | done | tests/test_federation.py::test_federation_expands_one_level |
 | T-66 | Progress carries a rate and an eta | S-09 | D-07 | done | tests/test_watch.py::test_progress_reports_a_pass_and_then_an_idle |
 | T-67 | The progress file is keyed the way the graph is | S-09 | D-07 | done | tests/test_watch.py::test_an_index_pass_writes_its_progress_file |
 | T-68 | A rotated ledger still answers | S-09 | D-07 | done | tests/test_watch.py::test_the_ledger_rotates_and_still_answers |
@@ -171,6 +171,14 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-74 | A dead worker pages with no project failing | S-09 | D-07 | done | tests/test_health.py::test_a_dead_worker_pages_though_no_project_is_failing |
 | T-75 | A stalled queue pages at the stall | S-09 | D-07 | done | tests/test_health.py::test_a_stalled_queue_pages_at_the_stall |
 | T-76 | An unreachable daemon is reported, not ranked | S-09 | D-07 | done | tests/test_health.py::test_an_unreachable_daemon_is_reported_not_ranked |
+| T-77 | A member is an indirect claim | S-10 | D-16 | done | tests/test_federation.py::test_a_member_is_an_indirect_claim |
+| T-78 | A member dropped from the config loses the claim | S-10 | D-16 | done | tests/test_federation.py::test_a_member_dropped_from_the_config_loses_the_claim |
+| T-79 | An absent member is dropped rather than raised | S-10 | D-16 | done | tests/test_federation.py::test_an_absent_member_is_dropped_rather_than_raised |
+| T-80 | A root federating itself is ignored | S-10 | D-16 | done | tests/test_federation.py::test_a_member_naming_itself_is_ignored |
+| T-81 | A config that cannot be obeyed federates nothing | S-10 | D-16 | done | tests/test_federation.py::test_a_config_that_cannot_be_obeyed_federates_nothing |
+| T-82 | Scope reaches a member and stops there | S-10 | D-16 | done | tests/test_federation.py::test_scope_reaches_a_member_and_stops_there |
+| T-83 | The deepest enrolled root owns a path | S-10 | D-16 | done | tests/test_federation.py::test_the_deepest_enrolled_root_owns_a_path |
+| T-84 | A peer is looked up, never guessed | S-10 | D-16 | done | tests/test_federation.py::test_this_process_is_named_by_its_own_source_port |
 
 # User journeys
 
