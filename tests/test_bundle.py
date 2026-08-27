@@ -8,11 +8,16 @@ not reachable through this repo's own reader.
 
 from __future__ import annotations
 
+import importlib.util
+import shutil
+import subprocess
 from pathlib import Path
 
+import pytest
 import yaml
 
-BUNDLE = Path(__file__).resolve().parent.parent / "knowledge"
+ROOT = Path(__file__).resolve().parent.parent
+BUNDLE = ROOT / "knowledge"
 
 
 class FrontmatterLoader(yaml.SafeLoader):
@@ -81,3 +86,72 @@ def test_no_link_in_the_bundle_starts_at_the_root():
     for path in sorted(BUNDLE.rglob("*.md")):
         for line in path.read_text(encoding="utf-8").splitlines():
             assert "](/" not in line, f"{path}: {line}"
+
+
+def _okfrules(args: list[str], target: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(["okfrules", *args, "check", str(target)], capture_output=True, text=True)
+
+
+CONCEPT = """\
+---
+type: Constraint
+title: An offset-free date reads as fresh forever
+description: The fixture the strict arm is proven against.
+sources:
+  - id: spec
+    resource: https://example.invalid/spec
+stale_after: 2026-09-23
+---
+
+# Body
+
+Text.
+"""
+
+INDEX = """\
+---
+okf_version: "0.2"
+---
+
+# Constraint
+
+* [An offset-free date reads as fresh forever](c.md) - The fixture the strict arm is proven
+  against.
+"""
+
+
+@pytest.mark.skipif(shutil.which("okfrules") is None, reason="okfrules is not on PATH")
+def test_offset_free_stale_after_is_rejected(tmp_path):
+    """Both ways, because the second half is what makes `-strict` the line that matters."""
+    (tmp_path / "index.md").write_text(INDEX)
+    (tmp_path / "c.md").write_text(CONCEPT)
+
+    strict = _okfrules(["-strict"], tmp_path)
+    assert strict.returncode != 0
+    assert "explicit UTC offset" in strict.stdout + strict.stderr
+
+    plain = _okfrules([], tmp_path)
+    assert plain.returncode == 0, plain.stdout + plain.stderr
+
+
+def test_dropped_receipt_field_fails():
+    """A receipt field the attester never reads is a claim nothing checks."""
+    contract = ROOT / "scripts" / "check_attester_contract.py"
+    spec = importlib.util.spec_from_file_location("check_attester_contract", contract)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    assert module.check(BUNDLE) == []
+
+    concept = BUNDLE / "computations" / "import-scoping-collapses-the-candidate-set.md"
+    text = concept.read_text(encoding="utf-8")
+    broken = text.replace("commit_sha,", "commit_sha, wall_clock_s,")
+    assert broken != text
+    concept.write_text(broken, encoding="utf-8")
+    try:
+        findings = module.check(BUNDLE)
+    finally:
+        concept.write_text(text, encoding="utf-8")
+    assert len(findings) == 1
+    assert "wall_clock_s" in findings[0]

@@ -114,6 +114,36 @@ if [[ -d "$REPO_ROOT/knowledge" ]]; then
     echo "[pre-push] x knowledge/ is not a conformant OKF bundle - push blocked"
     exit 1
   fi
+
+  # Augment, never shrink. `okf check -against` reads each concept's previous version out of git
+  # and reports a dropped heading or a lost sources entry. No repo in the fleet runs it.
+  if command -v okf >/dev/null 2>&1; then
+    if ! okf check -against HEAD "$REPO_ROOT/knowledge"; then
+      echo "[pre-push] x a concept lost content against HEAD - push blocked"
+      exit 1
+    fi
+  else
+    echo "[pre-push] x okf not installed - the augment-never-shrink rule cannot be checked"
+    echo "[pre-push]   go install github.com/fairyhunter13/okf/cmd/okf@v0.6.0"
+    exit 1
+  fi
+
+  # The receipt-to-attester invariant, which okfrules does not carry. A probe first: a contract
+  # naming a missing attester must fail, or passing and not running are the same observation.
+  CONTRACT="$REPO_ROOT/scripts/check_attester_contract.py"
+  ATTEST_PROBE="$(mktemp -d)"
+  printf -- '---\ntype: Attested Computation\ntitle: no attester\nruntime: python\n---\n\nbody\n' \
+    > "$ATTEST_PROBE/broken.md"
+  if uv run --project "$REPO_ROOT" python "$CONTRACT" "$ATTEST_PROBE" >/dev/null 2>&1; then
+    rm -rf "$ATTEST_PROBE"
+    echo "[pre-push] x the attester contract check accepted a computation with no attester"
+    exit 1
+  fi
+  rm -rf "$ATTEST_PROBE"
+  if ! uv run --project "$REPO_ROOT" python "$CONTRACT" "$REPO_ROOT/knowledge"; then
+    echo "[pre-push] x an Attested Computation names an attester that does not read its receipt"
+    exit 1
+  fi
 fi
 
 exit 0

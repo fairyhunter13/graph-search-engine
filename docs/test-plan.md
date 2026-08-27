@@ -115,8 +115,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-28 | The bundle root declares its OKF version | S-11 | D-12 | done | tests/test_bundle.py::test_root_index_declares_okf_version |
 | T-29 | The attester accepts a sound receipt | S-11 | D-13 | done | tests/test_attester.py::test_sound_receipt_is_accepted |
 | T-30 | The attester rejects a changed number | S-11 | D-13 | done | tests/test_attester.py::test_changed_number_is_rejected |
-| T-31 | An offset-free stale date is rejected | S-11 | D-14 | planned | tests/test_bundle.py::test_offset_free_stale_after_is_rejected |
-| T-32 | A dropped receipt field fails the check | S-11 | D-14 | planned | tests/test_bundle.py::test_dropped_receipt_field_fails |
+| T-31 | An offset-free stale date is rejected | S-11 | D-14 | done | tests/test_bundle.py::test_offset_free_stale_after_is_rejected |
+| T-32 | A dropped receipt field fails the check | S-11 | D-14 | done | tests/test_bundle.py::test_dropped_receipt_field_fails |
 | T-33 | TypeScript and PHP golden counts hold | S-01 | D-02 | done | tests/test_extract.py::test_typescript_golden_symbol_counts |
 | T-34 | A PHP static call needs the repair layer | S-01 | D-02 | done | tests/test_extract.py::test_a_php_static_call_needs_the_repair_layer |
 | T-35 | One import row per import statement | S-01 | D-02 | done | tests/test_extract.py::test_one_import_row_per_statement |
