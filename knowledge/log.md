@@ -7,6 +7,7 @@ title: graphrag knowledge history
 
 ## 2026-08-27
 
+- **Verified**: both `computations/` concepts carry `process:okf-verify`. Their `generated.at` read ahead of the clock, so every source check was refused rather than run.
 - **Creation**: `constraints/an-unreachable-daemon-is-not-an-absent-edge.md` - the four reach variants, and why `Type=notify` belongs to the same problem.
 - **Creation**: `decisions/a-member-is-declared-and-never-discovered.md` - why a graph engine declares its members where the semantic engine discovers them.
 - **Creation**: `constraints/one-bad-node-type-disables-a-whole-query.md` - the silent query compile failure `sourcepawn` shipped, and the check that sees it.

@@ -6,7 +6,7 @@ description: "The measurement that decides whether a second engine earns its pro
 tags: [routing, measurement, two-engine, attestation]
 status: stable
 runtime: python
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T08:30:23Z }
 parameters:
   - { name: corpus, type: path, required: true }
 executor:
@@ -14,6 +14,8 @@ executor:
   receipt: [test_node_id, corpus_ref, commit_sha, n_questions, f1_graph, f1_lexical, f1_semantic, f1_graph_distinctive, f1_graph_collides]
 attester:
   resource: ../attesters/two_engine_receipt.py
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:32:43Z }
 sources:
   - id: two-engine-run
     resource: scripts/two_engine_measure.py

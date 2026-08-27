@@ -6,7 +6,7 @@ description: "The measurement the whole resolution design rests on. Global name 
 tags: [resolution, measurement, cpython, attestation]
 status: stable
 runtime: python
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T06:12:26Z }
 parameters:
   - { name: corpus, type: path, required: true }
 executor:
@@ -14,6 +14,8 @@ executor:
   receipt: [test_node_id, corpus_ref, commit_sha, mean_global, mean_scoped, n_files]
 attester:
   resource: ../attesters/measurement_equality.py
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:32:43Z }
 sources:
   - id: cpython-measure
     resource: https://github.com/python/cpython/tree/v3.12.7/Lib
