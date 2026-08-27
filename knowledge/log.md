@@ -7,6 +7,8 @@ title: graphrag knowledge history
 
 ## 2026-08-27
 
+- **Update**: `scripts/check_no_shrink.py` - `okf check` names a dropped source by its resource string, so correcting a broken path read as a shrink. The `id` is the stable handle, and a resource corrected under a surviving id is no longer a finding. A lost id still is, and `T-210` grades both directions.
+- **Update**: the entry below saying both URL entries are back is superseded. The shrink gate was refusing a correction, not defending provenance. The two decisions now cite the reference record alone, and `okf verify knowledge -run-verifiers` reports 32 stampable, 32 passed, 0 blocked.
 - **Update**: `computations/the-graph-answers-the-caller-question.md` - re-measured at commit `a455467` under the expression-receiver rule. The graph reaches F1 1.000 and the `collides` class rises from 0.596 to 1.000 on precision, so the class split this concept was written around is closed. The class fields stay in the receipt, because they are what shows the split closed.
 - **Update**: `computations/import-scoping-collapses-the-candidate-set.md` - the same rule moved the scoped arm from 1.24 to 1.19 and the ambiguous share from 8.9% to 7.2%. The collapse is 9.1 times, and every band `T-07` asserts still holds.
 - **Update**: two decisions cited the private fleet repository and the reference record replaced that URL. A replacement is a dropped source, which the shrink gate refuses, so both entries are back beside the new one.

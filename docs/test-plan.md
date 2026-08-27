@@ -328,6 +328,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-207 | A taken port is refused by name | S-10 | D-06, D-09 | done | tests/test_partc.py::test_a_taken_port_is_refused_by_name |
 | T-208 | An expression receiver leaves the repo rather than picking a homonym | S-14 | D-27 | done | tests/test_resolve.py::test_an_expression_receiver_leaves_the_repo_rather_than_picking_a_homonym |
 | T-209 | The receipt on disk is attested | S-11 | D-30 | done | tests/test_attester.py::test_the_receipt_on_disk_is_attested |
+| T-210 | A corrected citation is not a dropped source | S-11 | D-31 | done | tests/test_bundle.py::test_a_corrected_citation_is_not_a_dropped_source |
 
 # User journeys
 

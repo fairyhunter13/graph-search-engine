@@ -29,6 +29,7 @@ BUNDLE = ROOT / "knowledge"
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import check_index_gloss  # noqa: E402
+import check_no_shrink  # noqa: E402
 import okf_frontmatter  # noqa: E402
 from okf_frontmatter import FrontmatterLoader, frontmatter  # noqa: E402
 
@@ -222,3 +223,37 @@ def test_every_index_gloss_is_its_concepts_description(tmp_path):
     findings = check_index_gloss.check(bundle)
     assert len(findings) == 1
     assert "the-overlay-doubled-its-own-edges.md" in findings[0]
+
+
+OLD = """\
+---
+type: Decision
+resource: src/graphrag/resolve.py
+sources:
+  - id: fleet-record
+    resource: ../references/a-record.md
+  - id: spec
+    resource: https://example.invalid/SPEC.md
+---
+
+body
+"""
+
+
+def test_a_corrected_citation_is_not_a_dropped_source():
+    """`okf check` names a dropped source by its resource, so a fixed path reads as a drop.
+
+    The `id` is the stable handle. A resource corrected under a surviving id is
+    a correction, and only a lost id is a shrink. The top-level `resource` field
+    sits above the list, so the parse must not pair it with the first id.
+    """
+    assert check_no_shrink._sources(OLD) == [
+        ("fleet-record", "../references/a-record.md"),
+        ("spec", "https://example.invalid/SPEC.md"),
+    ]
+
+    fixed = OLD.replace("../references/a-record.md", "knowledge/references/a-record.md")
+    assert check_no_shrink._id_survives(OLD, fixed, "../references/a-record.md")
+
+    dropped = OLD.replace("  - id: spec\n    resource: https://example.invalid/SPEC.md\n", "")
+    assert not check_no_shrink._id_survives(OLD, dropped, "https://example.invalid/SPEC.md")

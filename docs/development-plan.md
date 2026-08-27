@@ -188,6 +188,7 @@ for the callers of a known function and check them by hand.
 | D-28 | One frontmatter reader, and the trust tier section 5.3 names | done | scripts/okf_frontmatter.py, tests/test_bundle.py | T-192, T-194, T-195 |
 | D-29 | Every index gloss is checked against its concept description | done | scripts/check_index_gloss.py, .githooks/pre-push, tests/test_bundle.py | T-193 |
 | D-30 | The bundle records what it cannot cite, and the shrink-gate deviation | done | knowledge/references, knowledge/decisions, tests/test_attester.py | T-209 |
+| D-31 | A corrected citation is not a dropped source, and the private URL goes | done | scripts/check_no_shrink.py, knowledge/decisions, tests/test_bundle.py | T-210 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the

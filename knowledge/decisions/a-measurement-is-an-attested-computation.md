@@ -10,9 +10,9 @@ sources:
   - id: okf-spec
     resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md
   - id: stamp-rule
-    resource: https://github.com/fairyhunter13/claude-code-workflows
+    resource: knowledge/references/the-fleet-mechanisms-are-recorded-here-not-linked.md
   - id: fleet-record
-    resource: ../references/the-fleet-mechanisms-are-recorded-here-not-linked.md
+    resource: knowledge/references/the-fleet-mechanisms-are-recorded-here-not-linked.md
 ---
 
 # The problem the plan could not close

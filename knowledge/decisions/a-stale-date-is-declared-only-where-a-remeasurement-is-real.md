@@ -8,9 +8,9 @@ status: stable
 generated: { by: claude/opus-5, at: 2026-08-27T06:15:16Z }
 sources:
   - id: nightly
-    resource: https://github.com/fairyhunter13/claude-code-workflows
+    resource: knowledge/references/the-fleet-mechanisms-are-recorded-here-not-linked.md
   - id: fleet-record
-    resource: ../references/the-fleet-mechanisms-are-recorded-here-not-linked.md
+    resource: knowledge/references/the-fleet-mechanisms-are-recorded-here-not-linked.md
 ---
 
 # The fleet already solved freshness a different way
