@@ -58,13 +58,13 @@ caller, and scoping it out prices a correct answer as a false positive.
 The test asserts the ordering and the class split, never the digits. A number moves with the corpus,
 and the corpus is the repo under work.
 
-The arm figures also move between runs on one commit. Five runs span `d64e8fc`, `396f183`,
-`1443efc` and `75bacf7`. They gave 0.535, 0.510, 0.510, 0.497 and 0.497 lexical. They gave 0.331,
-0.316, 0.316, 0.306 and 0.306 semantic. The graph scored 1.000 in every one. The retrieval
+The arm figures also move between runs on one commit. Six runs span `d64e8fc`, `396f183`,
+`1443efc`, `75bacf7` and `5f3495c`. They gave 0.535, 0.510, 0.510, 0.497, 0.497 and 0.497 lexical.
+They gave 0.331, 0.316, 0.316, 0.306, 0.306 and 0.306 semantic. The graph scored 1.000 in every one. The retrieval
 arms rank by an embedding over a live index, so read them as the scale of the gap and never as a
 constant.
 
-The last two agree to three digits, and the fifth ran while the `coderag` daemon was indexing 409
+The last three agree to three digits, and the fifth ran while the `coderag` daemon was indexing 409
 projects. The CLI stopped loading its own model between them, so the arms no longer compete with
 the daemon for the card. See `references/the-coderag-cli-holds-its-own-gpu-session.md`.
 
@@ -109,4 +109,4 @@ followed, and the reason is evidence. The class fields at 1.000 are what shows t
 and a receipt without them cannot show it. So this concept is amended and the fields stay.
 
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 70 ground-truth caller files, measured 2026-08-28 at commit `75bacf7`.
+[^two-engine-run]: Ten caller questions over this repo, 70 ground-truth caller files, measured 2026-08-28 at commit `5f3495c`.
