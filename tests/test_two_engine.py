@@ -63,6 +63,19 @@ def test_a_hung_search_raises_rather_than_scoring_zero(monkeypatch):
         measure_mod.coderag_files("index", "lexical")
 
 
+def test_the_probe_covers_every_mode_the_run_uses(monkeypatch):
+    """T-217. The two modes fail apart, so a probe of one guards half the run."""
+    assert set(measure_mod.CODERAG_MODES) == {"lexical", "semantic"}
+
+    def only_semantic_reds(question, mode):
+        if mode == "semantic":
+            raise RuntimeError("CUBLAS failure 3: the resource allocation failed")
+        return {"src/graphrag/index.py"}
+
+    monkeypatch.setattr(measure_mod, "coderag_files", only_semantic_reds)
+    assert "CUBLAS" in measure_mod.arm_unreachable()
+
+
 @pytest.mark.engines
 def test_the_graph_wins_the_caller_question():
     """T-91. The claim is the ordering and the split, never the three digits.

@@ -45,7 +45,7 @@ false positive. `commit_sha` named a commit that did not describe the code that 
 # What holds it now
 
 The arms raise on a non-zero exit and on unparsable output, carrying stderr. `arm_unreachable`
-probes with one real search, so an unreachable daemon skips the case rather than scoring it.
+probes every mode the run uses, so an unreachable daemon skips the case rather than scoring it.
 `config.provenance` stamps `tree_dirty` beside `commit_sha`, and `outcome` says `unverified` until
 the assertions have run and held. The attester refuses a receipt on either count, which keeps the
 tree check inside the receipt where a consumer-side grader can reach it.
@@ -59,6 +59,11 @@ three classes. Neither arm had regressed, and the graph had not either.
 A fourth shape stayed open after that run: a daemon that accepts the connection and never answers
 hung the measurement rather than failing it. `SEARCH_TIMEOUT_S` bounds each search, and a timeout
 raises the way an error exit does.
+
+A fifth shape closed after a run at `a582e14`. The probe searched `lexical` alone, and the semantic
+arm exited 1 on a cuBLAS allocation failure the probe never reached. The run raised rather than
+scoring zero, so the repair held, but the skip that should have caught it did not. `CODERAG_MODES`
+is derived from `ARMS`, so the probe cannot cover fewer modes than the run it guards.
 
 # What would have to be true to revisit this
 

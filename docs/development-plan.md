@@ -190,7 +190,7 @@ for the callers of a known function and check them by hand.
 | D-30 | The bundle records what it cannot cite, and the shrink-gate deviation | done | knowledge/references, knowledge/decisions, tests/test_attester.py | T-209 |
 | D-31 | A corrected citation is not a dropped source, and the private URL goes | done | scripts/check_no_shrink.py, knowledge/decisions, tests/test_bundle.py | T-210 |
 | D-32 | The quiet window, so a burst of saves buys one pass and not one each | done | src/graphrag/config.py, src/graphrag/index.py, src/graphrag/watch.py, src/graphrag/extract.py, tests/test_watch.py | T-16, T-214, T-215 |
-| D-33 | A receipt carries whether its own run can be read off | done | src/graphrag/config.py, knowledge/attesters, scripts/two_engine_measure.py, tests/test_attester.py, tests/test_two_engine.py, tests/test_resolve.py, scripts/check_attester_contract.py | T-211, T-212, T-213, T-216 |
+| D-33 | A receipt carries whether its own run can be read off | done | src/graphrag/config.py, knowledge/attesters, scripts/two_engine_measure.py, tests/test_attester.py, tests/test_two_engine.py, tests/test_resolve.py, scripts/check_attester_contract.py | T-211, T-212, T-213, T-216, T-217 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the

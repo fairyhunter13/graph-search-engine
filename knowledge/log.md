@@ -66,3 +66,4 @@ title: graphrag knowledge history
 - **Update**: `computations/the-graph-answers-the-caller-question.md` - re-measured after `D-19` captured the receiver. The graph moves from F1 0.743 to 0.913 and the `collides` class from 0.538 to 0.831. The split does not close, so the receipt keeps its class fields.
 - **Update**: `computations/import-scoping-collapses-the-candidate-set.md` - the title said seven times while the body and the receipt both said 9.1. The measurement never moved; the title was stale.
 - **Update**: `computations/the-graph-answers-the-caller-question.md` - the run footnote named `d64e8fc` while the receipt behind the figures carries `396f183`.
+- **Update**: `defects/the-unreachable-arm-scored-zero.md` - a fifth shape: the probe searched `lexical` alone, so a semantic arm that exits 1 on a GPU allocation failure walked past the skip. `CODERAG_MODES` derives from `ARMS`, and `T-217` holds that the probe cannot cover fewer modes than the run.

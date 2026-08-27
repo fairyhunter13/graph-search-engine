@@ -335,6 +335,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-214 | A further save restarts the quiet window | S-09 | D-32 | done | tests/test_watch.py::test_a_further_save_restarts_the_quiet_window |
 | T-215 | An explicit call pulls a waiting job forward | S-09 | D-32 | done | tests/test_watch.py::test_an_explicit_call_pulls_a_waiting_job_forward |
 | T-216 | A hung search raises rather than scoring zero | S-11 | D-33 | done | tests/test_two_engine.py::test_a_hung_search_raises_rather_than_scoring_zero |
+| T-217 | The probe covers every mode the run uses | S-11 | D-33 | done | tests/test_two_engine.py::test_the_probe_covers_every_mode_the_run_uses |
 
 # User journeys
 

@@ -255,17 +255,24 @@ def arm_unreachable() -> str:
 
     `shutil.which` proves the CLI is installed and never that the daemon behind
     it answers, and the daemon being down is the case a skip exists for.
+
+    Every mode the run uses is probed, because they fail apart. A GPU the
+    embedding model cannot allocate reds `semantic` while `lexical` answers.
     """
     if shutil.which("coderag") is None:
         return "no coderag CLI on PATH"
-    try:
-        coderag_files("index", "lexical")
-    except RuntimeError as err:
-        return str(err)
+    for mode in CODERAG_MODES:
+        try:
+            coderag_files("index", mode)
+        except RuntimeError as err:
+            return str(err)
     return ""
 
 
 ARMS = ("graphrag", "coderag-semantic", "coderag-lexical")
+
+# Derived, so a probe cannot cover fewer modes than the run it guards.
+CODERAG_MODES = tuple(arm.partition("-")[2] for arm in ARMS if arm.startswith("coderag-"))
 
 
 def _tally() -> dict[str, list[int]]:
