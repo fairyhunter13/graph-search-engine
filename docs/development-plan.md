@@ -175,6 +175,7 @@ for the callers of a known function and check them by hand.
 | D-15 | Source roots, so a dotted import matches a path | done | src/graphrag/symtab.py, tests/test_resolve.py | T-59 |
 | D-16 | Workspace scope, federation and peer identity | done | src/graphrag/scope.py, src/graphrag/federation.py, src/graphrag/peers.py, tests/test_federation.py | T-65, T-77..T-84 |
 | D-17 | The registry row carries the reach figures | done | src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/index.py, src/graphrag/cli.py | T-90 |
+| D-18 | The caller question, graded against both engines | done | scripts/two_engine_measure.py, tests/test_two_engine.py | T-91, T-92 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -370,3 +371,26 @@ built to keep a session from reading silence as an absence.
 An unchanged pass writes no graph, so `record` passes no counts and the row keeps what the last
 real pass left. Zeroing there would report a live graph as empty, which is the same defect one
 layer down.
+
+# What `D-18` measured, 2026-08-27
+
+`J-08` was the one journey with no number behind it. The routing rule said coderag names the symbol
+and graphrag walks the edges from it, and no record graded that.
+
+Ten caller questions, scored at file granularity against a hand-verified ground truth over the whole
+tracked tree. graphrag returns F1 0.743, coderag lexical 0.573 and coderag semantic 0.394. So the
+second engine earns its process, and question 7 of the design plan does not arise.
+
+The split under that number is the finding, and one figure hides it. Where the name is called only
+through the module that defines it, graphrag returns precision 1.000 and recall 1.000. Where the
+tree also carries the name as an attribute -- `list.append`, `Path.resolve`, `sqlite3.connect` --
+precision falls to 0.412.
+
+The cause is in `extract.py`. A member call records the attribute name and `is_member`, and the
+receiver is discarded before resolution. So `registry.load()` and `projcfg.load()` are one name to
+the resolver, and every `list.append` site resolves onto `ledger.append`. That is part A's
+documented `expr.method()` limit, measured rather than argued.
+
+A first ground truth scoped `tests/` and `scripts/` out, and it priced a correct answer as a false
+positive. A caller in a test is a caller. The corrected scope moved graphrag from F1 0.518 to 0.743
+and moved nothing about the engine.

@@ -51,11 +51,34 @@ def _canonical(value: Any) -> Any:
 
 def attest(*, sanctioned_computation: dict, receipt: dict, claimed_value: dict) -> dict:
     """Grade one run. Returns `{"ok", "reason", "details"}` and never raises."""
-    missing = [f for f in RECEIPT_FIELDS if f not in receipt]
+    return grade(
+        fields=RECEIPT_FIELDS,
+        provenance=PROVENANCE_FIELDS,
+        sanctioned_computation=sanctioned_computation,
+        receipt=receipt,
+        claimed_value=claimed_value,
+    )
+
+
+def grade(
+    *,
+    fields: tuple[str, ...],
+    provenance: tuple[str, ...],
+    sanctioned_computation: dict,
+    receipt: dict,
+    claimed_value: dict,
+) -> dict:
+    """The grader, with the contract passed in.
+
+    A second computation carries a second receipt shape, and one module can
+    declare only one `RECEIPT_FIELDS`. So the contract is the parameter and the
+    comparison is shared, rather than copied into a second file.
+    """
+    missing = [f for f in fields if f not in receipt]
     if missing:
         return _verdict(False, f"the receipt omits {', '.join(missing)}", missing=missing)
 
-    for field in PROVENANCE_FIELDS:
+    for field in provenance:
         if field not in sanctioned_computation:
             return _verdict(False, f"the sanctioned computation omits {field}", field=field)
         want = _canonical(sanctioned_computation[field])
@@ -69,7 +92,7 @@ def attest(*, sanctioned_computation: dict, receipt: dict, claimed_value: dict) 
                 ran=got,
             )
 
-    unknown = [k for k in claimed_value if k not in RECEIPT_FIELDS]
+    unknown = [k for k in claimed_value if k not in fields]
     if unknown:
         return _verdict(
             False,

@@ -86,6 +86,11 @@ Precondition: a repo indexed once.
 Action: the pass runs again, unchanged and then after one edit.
 Expected: the unchanged pass parses nothing, and the edited one parses the tree.
 
+**S-14 The routing rule is graded.**
+Precondition: a caller-question set, and a ground truth read by hand over the whole tracked tree.
+Action: the graph engine and both semantic modes answer each question.
+Expected: the graph scores highest overall, and it is exact only where the name is distinctive.
+
 **S-11 The bundle carries its own guarantees.**
 Precondition: a concept declaring an attested computation.
 Action: the pre-push gate runs.
@@ -185,6 +190,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-88 | An enrolled but unindexed root says so | S-10 | D-11 | done | tests/test_systemd.py::test_an_enrolled_but_unindexed_root_says_so |
 | T-89 | An unreachable daemon refuses rather than reports nothing | S-10 | D-11 | done | tests/test_systemd.py::test_an_unreachable_daemon_refuses_rather_than_reports_nothing |
 | T-90 | The registry row carries the reach figures | S-10 | D-17 | done | tests/test_index.py::test_the_registry_row_carries_the_figures_the_reach_hook_reads |
+| T-91 | The graph wins the caller question, and only where the name is distinctive | S-14 | D-18 | done | tests/test_two_engine.py::test_the_graph_wins_the_caller_question |
+| T-92 | The two-engine receipt is attested, and a moved number is refused | S-11 | D-18 | done | tests/test_two_engine.py::test_the_two_engine_receipt_is_attested |
 
 # User journeys
 
@@ -214,8 +221,13 @@ caller question. Acceptance: each reaches the engine the routing rule names, wit
 named in the prompt.
 
 **J-08 Measure the two engines against each other.** Run a caller-question set against both. Score
-both against hand-verified edges. Acceptance: the numbers exist and are recorded. This journey is
-the evidence that no record holds today, and its result graduates to `knowledge/computations/`.
+both against hand-verified edges. Acceptance: the numbers exist and are recorded. Measured
+2026-08-27 on this repo: graphrag F1 0.743, coderag lexical 0.573, coderag semantic 0.394, over ten
+questions. The result graduates to `knowledge/computations/`.
+
+The class split is the part a single number hides, and this journey reports both. A name called only
+through its own module scores 1.000 on precision and recall. A name the tree also carries as an
+attribute scores 0.412 on precision, because the extractor discards the receiver.
 
 # Experience bar
 

@@ -64,4 +64,5 @@ addopts = "-q"
 markers = [
     "slow: needs a large corpus or a network fetch",
     "corpus: needs the pinned CPython checkout",
+    "engines: needs both engines live over this repo's own tree",
 ]
