@@ -5,14 +5,16 @@ title: The attester graded a literal, so the number that moved moved past it
 description: "`D-19` moved mean_scoped from 1.49 to 1.24 and one of seven copies was updated. The receipt the attester grades was a hand-written dict in test source, so it went stale with the claim and the two still agreed."
 tags: [attestation, measurement, drift]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T10:05:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T09:45:00Z }
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:53:01Z }
 sources:
   - id: attester-case
     resource: tests/test_attester.py
   - id: measurement
     resource: tests/test_resolve.py
   - id: concept
-    resource: ../computations/import-scoping-collapses-the-candidate-set.md
+    resource: knowledge/computations/import-scoping-collapses-the-candidate-set.md
 ---
 
 # What happened

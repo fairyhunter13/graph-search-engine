@@ -15,7 +15,7 @@ executor:
 attester:
   resource: ../attesters/measurement_equality.py
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
+  - { by: process:okf-verify, at: 2026-08-27T09:53:01Z }
 sources:
   - id: cpython-measure
     resource: https://github.com/python/cpython/tree/v3.12.7/Lib

@@ -7,7 +7,7 @@ tags: [throughput, extraction, measurement]
 status: stable
 generated: { by: claude/opus-5, at: 2026-08-27T06:24:30Z }
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
+  - { by: process:okf-verify, at: 2026-08-27T09:53:01Z }
 sources:
   - id: cpython-lib
     resource: https://github.com/python/cpython/tree/v3.12.7/Lib

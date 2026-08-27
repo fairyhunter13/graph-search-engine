@@ -15,7 +15,7 @@ executor:
 attester:
   resource: ../attesters/two_engine_receipt.py
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
+  - { by: process:okf-verify, at: 2026-08-27T09:53:01Z }
 sources:
   - id: two-engine-run
     resource: scripts/two_engine_measure.py
