@@ -18,6 +18,7 @@ and the two-engine gate live in the `ccw` repo, and a live session exercises the
 Named exclusions, each with its reason.
 
 - The SCIP overlay ships no code this pass, so `T-18` and `T-19` stay `planned`.
+- Receiver capture is the fix `D-18` measured and does not ship here, so `T-93` stays `planned`.
 - Grammar correctness belongs to `tree-sitter-language-pack`, and is not re-tested here.
 - The parser download needs network. It is proven once by hand, and not in the suite.
 - `coderag` itself is not under test. Only the boundary between the two engines is.
@@ -192,6 +193,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-90 | The registry row carries the reach figures | S-10 | D-17 | done | tests/test_index.py::test_the_registry_row_carries_the_figures_the_reach_hook_reads |
 | T-91 | The graph wins the caller question, and only where the name is distinctive | S-14 | D-18 | done | tests/test_two_engine.py::test_the_graph_wins_the_caller_question |
 | T-92 | The two-engine receipt is attested, and a moved number is refused | S-11 | D-18 | done | tests/test_two_engine.py::test_the_two_engine_receipt_is_attested |
+| T-93 | A member call resolves to the module its receiver names | S-14 | D-19 | planned | tests/test_resolve.py::test_the_receiver_picks_the_module |
 
 # User journeys
 

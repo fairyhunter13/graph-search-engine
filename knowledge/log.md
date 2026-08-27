@@ -17,3 +17,4 @@ title: graphrag knowledge history
 - **Creation**: `constraints/mcp-2-0-renames-the-schema-attributes.md` - the rename the conformance case in `D-06` hit.
 - **Creation**: `constraints/a-pass-reparses-the-tree-because-resolution-is-global.md` - the claim `T-16` and `J-06` had wrong, and why.
 - **Creation**: `defects/the-newest-ledger-row-was-not-first.md` - the rounded stamp and the stable sort `D-07` uncovered.
+- **Creation**: `computations/the-graph-answers-the-caller-question.md`, its executor skill and its attester - the routing rule, graded, and the class split a single F1 hides.

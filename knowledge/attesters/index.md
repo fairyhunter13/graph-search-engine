@@ -6,3 +6,7 @@ concept sanctions. Fidelity: the value about to be displayed is the value the re
 
 Its `RECEIPT_FIELDS` tuple is the contract. Every name in a concept's `executor.receipt` must appear
 there, and the gate checks it.
+
+`two_engine_receipt.py` is the second contract. It declares the two-engine receipt shape and
+delegates the comparison to `grade` in `measurement_equality.py`, because one module declares
+exactly one `RECEIPT_FIELDS` and a union of two shapes would grade neither.

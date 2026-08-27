@@ -176,6 +176,7 @@ for the callers of a known function and check them by hand.
 | D-16 | Workspace scope, federation and peer identity | done | src/graphrag/scope.py, src/graphrag/federation.py, src/graphrag/peers.py, tests/test_federation.py | T-65, T-77..T-84 |
 | D-17 | The registry row carries the reach figures | done | src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/index.py, src/graphrag/cli.py | T-90 |
 | D-18 | The caller question, graded against both engines | done | scripts/two_engine_measure.py, tests/test_two_engine.py | T-91, T-92 |
+| D-19 | Capture the receiver, so a member call resolves to its own module | planned | src/graphrag/extract.py, src/graphrag/resolve.py | T-93 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -378,7 +379,7 @@ layer down.
 and graphrag walks the edges from it, and no record graded that.
 
 Ten caller questions, scored at file granularity against a hand-verified ground truth over the whole
-tracked tree. graphrag returns F1 0.743, coderag lexical 0.573 and coderag semantic 0.394. So the
+tracked tree. graphrag returns F1 0.743, coderag lexical 0.569 and coderag semantic 0.383. So the
 second engine earns its process, and question 7 of the design plan does not arise.
 
 The split under that number is the finding, and one figure hides it. Where the name is called only
@@ -394,3 +395,7 @@ documented `expr.method()` limit, measured rather than argued.
 A first ground truth scoped `tests/` and `scripts/` out, and it priced a correct answer as a false
 positive. A caller in a test is a caller. The corrected scope moved graphrag from F1 0.518 to 0.743
 and moved nothing about the engine.
+
+`D-19` is what the number motivates. Capture the receiver where it names an imported module, and
+`registry.load()` resolves while `list.append()` does not. The `collides` class is the arm to watch,
+because it is the only one with room to move.
