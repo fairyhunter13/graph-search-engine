@@ -31,6 +31,10 @@ dependencies = [
     # without it a stop waits for clients that never disconnect and systemd
     # kills the unit on a timeout instead.
     "uvicorn>=0.34",
+    # The watcher, and the debounce happens in Rust before Python sees it. A
+    # `git checkout` across 4000 files crosses into Python as one batch, where a
+    # raw inotify reader would queue 4000 index passes for the same project.
+    "watchfiles>=1.0",
 ]
 
 [project.scripts]

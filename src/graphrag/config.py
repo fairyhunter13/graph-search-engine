@@ -87,6 +87,32 @@ HOST = _env("HOST", "127.0.0.1")
 # rebind makes a registered client point at nothing and look correct doing it.
 PORT = _env_int("PORT", 8766)
 MCP_URL = f"http://{HOST}:{PORT}/mcp"
+HEALTHZ_URL = f"http://{HOST}:{PORT}/healthz"
+
+# ---------------------------------------------------------------- operations
+
+# The two-sample rule holds the previous failing set here. Without it a checker
+# compares against nothing and pages on every transient failure.
+HEALTH_STATE_PATH = STATE_DIR / "health.json"
+
+# A queue this deep that is no shallower than at the last check is not draining.
+# The identity carries no count, because the rule compares identities and one
+# that moves between samples pages on neither.
+HEALTH_QUEUE_STUCK = _env_int("HEALTH_QUEUE_STUCK", 20)
+
+# A ledger is evidence, and nothing reads it back as state. One generation is
+# kept by rename, so a question asked after a rotation still has rows to read.
+LEDGER_MAX_BYTES = _env_int("LEDGER_MAX_BYTES", 2 * 1024 * 1024)
+
+# Progress is throttled, and a terminal write bypasses the throttle. The last
+# write is the one a reader needs most.
+PROGRESS_WRITE_S = float(_env("PROGRESS_WRITE_S") or "1.0")
+
+# How long the watcher blocks before it looks at the re-arm flag. A re-arm tears
+# down every watch and rebuilds it, and inotify has no replay, so everything
+# inside that window is lost. Re-arming only on a changed set is what bounds it.
+WATCH_POLL_MS = _env_int("WATCH_POLL_MS", 1000)
+WATCH_DEBOUNCE_MS = _env_int("WATCH_DEBOUNCE_MS", 400)
 
 # ------------------------------------------------------------------- querying
 

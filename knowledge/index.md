@@ -15,3 +15,4 @@ okf_version: "0.2"
 * [policies](policies/index.md) - The rules this repo holds itself to, including the OKF profile
   it runs and why that profile is stricter than the spec.
 * [skills](skills/index.md) - The run procedures an Attested Computation names in its executor.
+* [defects](defects/index.md) - what went wrong here, what caused it, and what holds it now.

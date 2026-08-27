@@ -26,7 +26,7 @@ import anyio.to_thread
 import uvicorn
 from starlette.responses import JSONResponse
 
-from . import config, index, registry
+from . import config, index, registry, watch
 from .tools import enroll, mcp
 
 log = logging.getLogger(__name__)
@@ -66,6 +66,7 @@ async def lifespan(_app) -> AsyncIterator[None]:
     on a process that accepts it and does nothing with it.
     """
     _start_worker()
+    watch.start()
     rows = registry.load()
     queued = sum(
         1 for path, row in rows.items() if row.enabled and index.QUEUE.submit(path) == "queued"
@@ -76,6 +77,7 @@ async def lifespan(_app) -> AsyncIterator[None]:
         yield
     finally:
         _notify("STOPPING=1")
+        watch.stop()
         _stop.set()
 
 
@@ -111,6 +113,10 @@ async def healthz(_request) -> JSONResponse:
             "failing": failing,
             "queue_depth": index.QUEUE.depth,
             "worker_alive": bool(_worker and _worker.is_alive()),
+            # The watcher is the one failure no project row can carry: it
+            # belongs to the thread, not to a project, and a dead one reads as
+            # a fleet that simply stopped changing.
+            "watching": watch.alive(),
             "fleet_digest": registry.fleet_digest(rows),
             "unclaimed_stores": len(registry.unclaimed_stores()),
         }

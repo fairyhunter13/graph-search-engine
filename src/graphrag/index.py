@@ -12,12 +12,27 @@ that never heals until the next full pass.
 
 from __future__ import annotations
 
+import logging
 import threading
 from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import config, discover, extract, indexwrite, resolve, store, symtab
+from . import (
+    config,
+    discover,
+    extract,
+    indexwrite,
+    ledger,
+    progress,
+    registry,
+    resolve,
+    store,
+    symtab,
+    trace,
+)
+
+log = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -40,15 +55,17 @@ def _facts(root: Path, metas: list[discover.FileMeta]) -> dict[str, extract.File
     """Parse every indexable file. Resolution is global, so a partial parse
     would price every unparsed file as a repo that does not define the name."""
     out: dict[str, extract.FileFacts] = {}
-    for meta in metas:
-        if not meta.lang:
-            continue
+    parsable = [meta for meta in metas if meta.lang]
+    progress.begin(root, len(parsable))
+    for meta in parsable:
         try:
             text = (root / meta.rel_path).read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError) as exc:
             out[meta.rel_path] = extract.FileFacts(lang=meta.lang, error=str(exc))
+            progress.advance()
             continue
         out[meta.rel_path] = extract.extract(meta.lang, text)
+        progress.advance()
     return out
 
 
@@ -91,6 +108,7 @@ def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
         file_ids = indexwrite.write_files(conn, metas, facts)
         nodes = indexwrite.write_nodes(conn, table, file_ids)
 
+        progress.phase("resolving")
         resolutions = {p: resolve.resolve_file(table, p) for p in table.files}
         external = {r.reference.name for rows in resolutions.values() for r in rows if r.external}
         externals = indexwrite.write_externals(conn, external)
@@ -108,6 +126,7 @@ def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
     report.nodes = totals["nodes"]
     report.edges = totals["edges"]
     report.resolved = totals["resolved"]
+    progress.finish()
     return report
 
 
@@ -164,7 +183,29 @@ def run_worker(queue: Queue = QUEUE, *, stop: threading.Event | None = None) -> 
         key = queue.take()
         if key is None:
             continue
-        try:
-            index_once(key)
-        finally:
-            queue.done(key)
+        with trace.span():
+            try:
+                report = index_once(key)
+                registry.mark_indexed(key)
+                ledger.append(
+                    ledger.RUN,
+                    {
+                        "kind": "index",
+                        "root": key,
+                        "files": report.files,
+                        "parsed": report.parsed,
+                        "edges": report.edges,
+                        "resolved": report.resolved,
+                        "unchanged": report.unchanged,
+                        "rebuilt": report.rebuilt,
+                    },
+                )
+            except Exception as exc:
+                # The row carries the failure, so the health rule can hold it
+                # across two samples. A worker that dies on one project stops
+                # indexing every other one.
+                registry.mark_indexed(key, error=str(exc))
+                ledger.append(ledger.RUN, {"kind": "index", "root": key, "error": str(exc)})
+                log.exception("index pass failed for %s", key)
+            finally:
+                queue.done(key)

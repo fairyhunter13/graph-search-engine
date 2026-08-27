@@ -24,6 +24,9 @@ def state_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "REGISTRY_LOCK", root / "projects.lock")
     monkeypatch.setattr(config, "BACKUP_DIR", root / "backups")
     monkeypatch.setattr(config, "INDEX_DIR", root / "graphs")
+    monkeypatch.setattr(config, "PROGRESS_DIR", root / "progress")
+    monkeypatch.setattr(config, "LEDGER_DIR", root / "ledgers")
+    monkeypatch.setattr(config, "HEALTH_STATE_PATH", root / "health.json")
     return root
 
 

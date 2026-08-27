@@ -21,3 +21,5 @@
   attributes](mcp-2-0-renames-the-schema-attributes.md) - The 2.0 line renames FastMCP to MCPServer
   and spells the tool schema attributes in snake_case. A conformance check written against
   inputSchema raises rather than failing, so it never reports the schema it was written to grade.
+* [A pass reparses the tree, because resolution is global](a-pass-reparses-the-tree-because-resolution-is-global.md) - why one edit does
+  not mean one file, and what the watcher guarantees instead.

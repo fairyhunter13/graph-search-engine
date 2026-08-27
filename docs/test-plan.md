@@ -110,8 +110,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-13 | Neighbors carries confidence and evidence | S-08 | D-06 | done | tests/test_tools.py::test_neighbors_carries_confidence |
 | T-14 | A missing capability is named, not empty | S-03 | D-06 | done | tests/test_tools.py::test_missing_capability_is_reported |
 | T-15 | An unknown argument names the valid set | S-08 | D-06 | done | tests/test_tools.py::test_unknown_argument_names_valid_set |
-| T-16 | One edit reparses one file | S-09 | D-07 | planned | tests/test_watch.py::test_single_edit_reparses_one_file |
-| T-17 | Health pages on the second failure only | S-09 | D-07 | planned | tests/test_health.py::test_two_sample_rule |
+| T-16 | One edit raises one index pass | S-09 | D-07 | done | tests/test_watch.py::test_single_edit_reparses_one_file |
+| T-17 | Health pages on the second failure only | S-09 | D-07 | done | tests/test_health.py::test_two_sample_rule |
 | T-18 | Two indexers agree on a non-ASCII range | S-06 | D-08 | planned | tests/test_scip_offsets.py::test_non_ascii_ranges_agree |
 | T-19 | A collapsed SCIP index is refused | S-06 | D-08 | planned | tests/test_scip_guard.py::test_collapsed_index_is_refused |
 | T-20 | Five profiles carry the graphrag entry | S-10 | D-09 | planned | tests/test_fleet.py::test_five_profiles_carry_the_entry |
@@ -160,6 +160,17 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-63 | An unindexed root names the index tool | S-08 | D-06 | done | tests/test_tools.py::test_an_unindexed_root_names_the_index_tool |
 | T-64 | Doctor prints the capability table | S-03 | D-06 | done | tests/test_tools.py::test_doctor_prints_the_capability_table |
 | T-65 | Federation expands one level, not transitively | S-10 | D-16 | planned | tests/test_federation.py::test_federation_expands_one_level |
+| T-66 | Progress carries a rate and an eta | S-09 | D-07 | done | tests/test_watch.py::test_progress_reports_a_pass_and_then_an_idle |
+| T-67 | The progress file is keyed the way the graph is | S-09 | D-07 | done | tests/test_watch.py::test_an_index_pass_writes_its_progress_file |
+| T-68 | A rotated ledger still answers | S-09 | D-07 | done | tests/test_watch.py::test_the_ledger_rotates_and_still_answers |
+| T-69 | A failed pass leaves a row and a registry error | S-09 | D-07 | done | tests/test_watch.py::test_a_failed_pass_leaves_a_row_and_a_registry_error |
+| T-70 | A refused file never wakes the indexer | S-09 | D-07 | done | tests/test_watch.py::test_a_file_the_indexer_would_refuse_never_wakes_it |
+| T-71 | An unchanged reconcile does not re-arm | S-09 | D-07 | done | tests/test_watch.py::test_rearm_only_when_the_watched_set_moved |
+| T-72 | A trace id reaches the error text | S-09 | D-07 | done | tests/test_watch.py::test_a_trace_id_reaches_the_error_text |
+| T-73 | A healed project stops paging | S-09 | D-07 | done | tests/test_health.py::test_a_healed_project_stops_paging |
+| T-74 | A dead worker pages with no project failing | S-09 | D-07 | done | tests/test_health.py::test_a_dead_worker_pages_though_no_project_is_failing |
+| T-75 | A stalled queue pages at the stall | S-09 | D-07 | done | tests/test_health.py::test_a_stalled_queue_pages_at_the_stall |
+| T-76 | An unreachable daemon is reported, not ranked | S-09 | D-07 | done | tests/test_health.py::test_an_unreachable_daemon_is_reported_not_ranked |
 
 # User journeys
 
@@ -181,8 +192,8 @@ has no call capture in this project. An empty list here is a journey failure.
 **J-05 Enable the SCIP overlay.** Index a typed project with the tier on. Acceptance: resolved
 edges rise, and no edge contradicts the tree-sitter target file.
 
-**J-06 Re-index after one edit.** Change one file and wait for the watcher. Acceptance: the
-progress file shows one file reparsed, and not the tree.
+**J-06 Re-index after one edit.** Change one file and wait for the watcher. Acceptance: one index
+pass is queued for the one project, and the progress file names it.
 
 **J-07 Route two questions unprompted.** From a fresh session, ask a meaning question. Then ask a
 caller question. Acceptance: each reaches the engine the routing rule names, with neither engine
@@ -243,3 +254,22 @@ awk -F'|' '/^\| T-[0-9]/ {print $7}' docs/test-plan.md | tr -d ' ' | sort \
 
 The pattern is `T-[0-9]`, never a bare `T-`, so the vocabulary block above is not read as a row.
 The tree side is `git ls-files` rather than a walk, because the gate is about what a clone gets.
+
+
+# A correction `D-07` forced, 2026-08-27
+
+`T-16` read *One edit reparses one file*, and `J-06` accepted on the progress file showing one file
+reparsed. Both were wrong about this engine, so both are corrected here rather than left standing.
+
+Resolution is global. A reference is scored against the whole symbol table, so a pass that reparsed
+only the edited file would price every other file as a repo that does not define the name. `_facts`
+therefore parses the whole tree whenever the content hash of any file moved. Per-file facts are not
+persisted, so there is nothing to reuse.
+
+What the watcher does hold is the property the row was reaching for: an edit to two files inside one
+debounce window raises **one** index pass for the one project, never one per file. That is what
+`T-16` asserts now, and what `J-06` accepts on.
+
+`T-68` records a defect the case found. `ledger.append` stamped `ts` rounded to a millisecond, and
+`read` sorted `reverse=True`. A stable sort hands back the older of a tied pair first, so the newest
+row was not first. The stamp now carries full precision and the sort reverses an ascending result.

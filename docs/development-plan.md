@@ -164,7 +164,7 @@ for the callers of a known function and check them by hand.
 | D-04 | Index loop, traversal, query surface | done | src/graphrag/index.py, src/graphrag/indexwrite.py, src/graphrag/traverse.py, src/graphrag/query.py, tests/test_index.py, tests/test_perf.py | T-09, T-10, T-45..T-55 |
 | D-05 | Import queries, the remaining waves | done | src/graphrag/queries/imports, tests/test_import_queries.py | T-11, T-56, T-57, T-58 |
 | D-06 | MCP tools, daemon, CLI, stdio bridge | done | src/graphrag/tools.py, src/graphrag/server.py, src/graphrag/cli.py, src/graphrag/bridge.py, tests/test_tools.py, tests/test_server.py | T-12, T-13, T-14, T-15, T-21, T-61, T-62, T-63, T-64 |
-| D-07 | Watcher, health, progress, ledgers | planned | src/graphrag/watch.py, src/graphrag/health.py, src/graphrag/progress.py, src/graphrag/ledger.py, src/graphrag/trace.py | T-16, T-17 |
+| D-07 | Watcher, health, progress, ledgers | done | src/graphrag/watch.py, src/graphrag/health.py, src/graphrag/progress.py, src/graphrag/ledger.py, src/graphrag/trace.py, tests/test_watch.py, tests/test_health.py | T-16, T-17, T-66..T-76 |
 | D-08 | SCIP overlay behind the coverage guard | planned | (deferred, no code this pass) | T-18, T-19 |
 | D-09 | Fleet registration across five profiles | planned | (ccw) internal/policy/shared.go | T-20, T-21 |
 | D-10 | Two-engine gate and the routing rule | planned | (ccw) internal/hooks/treesearch.go | T-22, T-23, T-24, T-25 |
@@ -254,3 +254,23 @@ section names and no case covered.
 `D-16` is an under-record the Components table carried from the start. It names `scope.py`,
 `federation.py` and `peers.py`, and no task row owned them. They are the workspace half of the
 engine, so they get their own row rather than being folded into a surface row that is finished.
+
+
+# What `D-07` settled, 2026-08-27
+
+The watcher runs in the daemon, not beside it. `server.py` starts it in the lifespan and stops it on
+shutdown, and `/healthz` carries `watching` next to `worker_alive`. A dead watcher belongs to the
+thread and to no project row, so nothing else would report it: a fleet that simply stopped changing
+looks identical to one nobody edited.
+
+`watchfiles` is the one dependency the step added. The debounce happens in Rust before Python sees
+the batch, so a `git checkout` across four thousand files crosses into Python once. A raw inotify
+reader would queue four thousand passes for one project.
+
+The watcher shares `filters.language_of` and `filters.skipped_dir` with the indexer, and it stats
+nothing. A deleted file cannot be stat-ed, and the pass that follows is what notices the deletion,
+so passing a size here would drop exactly that event.
+
+`T-16` was corrected in the same commit. The test plan carries the reason: resolution is global, so
+a pass reparses the tree rather than the edited file, and what the watcher guarantees is one pass
+per project rather than one per file.
