@@ -112,7 +112,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-25 | Plan mode still escapes the gate | S-10 | D-10 | planned | tests/test_gate.py::test_plan_mode_escapes |
 | T-26 | The unit reports started after the store opens | S-09 | D-11 | planned | tests/test_systemd.py::test_notify_after_store_open |
 | T-27 | The reach hook enrols the session root | S-10 | D-11 | planned | tests/test_systemd.py::test_reach_registers_the_root |
-| T-28 | The bundle root declares its OKF version | S-11 | D-12 | planned | tests/test_bundle.py::test_root_index_declares_okf_version |
+| T-28 | The bundle root declares its OKF version | S-11 | D-12 | done | tests/test_bundle.py::test_root_index_declares_okf_version |
 | T-29 | The attester accepts a sound receipt | S-11 | D-13 | planned | tests/test_attester.py::test_sound_receipt_is_accepted |
 | T-30 | The attester rejects a changed number | S-11 | D-13 | planned | tests/test_attester.py::test_changed_number_is_rejected |
 | T-31 | An offset-free stale date is rejected | S-11 | D-14 | planned | tests/test_bundle.py::test_offset_free_stale_after_is_rejected |
@@ -122,6 +122,9 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-35 | One import row per import statement | S-01 | D-02 | done | tests/test_extract.py::test_one_import_row_per_statement |
 | T-36 | A same-class call outranks every homonym | S-02 | D-03 | done | tests/test_resolve.py::test_a_same_class_call_beats_every_other_candidate |
 | T-37 | A global set below the floor is dropped | S-02 | D-03 | done | tests/test_resolve.py::test_a_global_set_below_the_floor_is_dropped_rather_than_ranked |
+| T-38 | Every concept carries the families this repo writes | S-11 | D-12 | done | tests/test_bundle.py::test_every_concept_carries_the_families_this_repo_writes |
+| T-39 | A timestamp survives a round trip through this reader | S-11 | D-12 | done | tests/test_bundle.py::test_a_timestamp_survives_a_round_trip_through_this_reader |
+| T-40 | No link in the bundle starts at the root | S-11 | D-12 | done | tests/test_bundle.py::test_no_link_in_the_bundle_starts_at_the_root |
 
 # User journeys
 

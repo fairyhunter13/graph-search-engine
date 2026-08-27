@@ -169,7 +169,7 @@ for the callers of a known function and check them by hand.
 | D-09 | Fleet registration across five profiles | planned | (ccw) internal/policy/shared.go | T-20, T-21 |
 | D-10 | Two-engine gate and the routing rule | planned | (ccw) internal/hooks/treesearch.go | T-22, T-23, T-24, T-25 |
 | D-11 | systemd units and reach enrolment | planned | src/graphrag/systemd.py | T-26, T-27 |
-| D-12 | The OKF profile record and bundle root | planned | knowledge/index.md, knowledge/policies | T-28 |
+| D-12 | The OKF profile record and bundle root | done | knowledge/index.md, knowledge/log.md, knowledge/policies, tests/test_bundle.py | T-28, T-38, T-39, T-40 |
 | D-13 | The first working attester | planned | knowledge/attesters, knowledge/computations, knowledge/skills | T-29, T-30 |
 | D-14 | Gate lines and the attester contract check | planned | .githooks/pre-push | T-31, T-32 |
 
