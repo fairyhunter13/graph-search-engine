@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+# Pre-push gate. Two blocks: the docs/ plan pair, and the knowledge/ bundle.
+#
+# Skip with:  git push --no-verify
+#
+# Install:    git config core.hooksPath .githooks
+# Uninstall:  git config --unset core.hooksPath
+set -uo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+DEV="$REPO_ROOT/docs/development-plan.md"
+TST="$REPO_ROOT/docs/test-plan.md"
+
+# The severity ratchet. While the pair is being seeded a row may name a path not yet
+# written, which is a forward reference and not a mistake. Flip to 1 on the day the
+# output is empty; from then on a finding can only be new drift.
+PLAN_GATE_BLOCKING=0
+
+plan_ids() {  # $1 = file, $2 = D or T
+  grep -oE "\b$2-[0-9]+" "$1" | sort -u
+}
+
+# Arm 1: no pair, no gate. The block is opt-in per repo.
+if [[ -f "$DEV" && -f "$TST" ]]; then
+  findings=0
+
+  # Arm 2: fail closed on a missing tool. Not running and passing are different.
+  if ! command -v uv >/dev/null 2>&1; then
+    echo "[pre-push] x uv is not installed - the test-anchor check cannot run, so it is not passing"
+    exit 1
+  fi
+
+  # Arm 3: the refusal probe. Feed the checks a document that must fail.
+  PROBE="$(mktemp -d)"
+  printf '| T-99 | probe | S-99 | D-99 | planned | tests/test_nothing.py::test_absent |\n' \
+    > "$PROBE/test-plan.md"
+  : > "$PROBE/collected"
+  if ! awk -F'|' '/^\| T-[0-9]/ {print $7}' "$PROBE/test-plan.md" | tr -d ' ' | sort \
+       | comm -23 - "$PROBE/collected" | grep -q .; then
+    rm -rf "$PROBE"
+    echo "[pre-push] x the anchor check found nothing wrong with a deliberately broken row"
+    echo "[pre-push]   passing and not running are the same observation here"
+    exit 1
+  fi
+  rm -rf "$PROBE"
+
+  # Arm 4a: orphan IDs. Every D- in one document resolves to a row in the other.
+  for id in $(plan_ids "$TST" D); do
+    grep -qE "^\| $id \|" "$DEV" || { echo "[pre-push] orphan $id: named in the test plan, no row in the dev plan"; findings=1; }
+  done
+  for id in $(plan_ids "$DEV" T); do
+    grep -qE "^\| $id \|" "$TST" || { echo "[pre-push] orphan $id: named in the dev plan, no row in the test plan"; findings=1; }
+  done
+
+  # Arm 4b: dead paths. A (ccw) row owns paths in another checkout, so it is skipped.
+  while IFS= read -r paths; do
+    case "$paths" in *'(ccw)'*|*'(deferred'*) continue ;; esac
+    for p in ${paths//,/ }; do
+      [ -n "$(git -C "$REPO_ROOT" ls-files -- "$p")" ] || { echo "[pre-push] dead path: $p"; findings=1; }
+    done
+  done < <(awk -F'|' '/^\| D-[0-9]/ {print $5}' "$DEV")
+
+  # Arm 4c: uncollected tests.
+  COLLECTED="$(mktemp)"
+  if uv run pytest --collect-only -q >"$COLLECTED" 2>/dev/null; then
+    sort -o "$COLLECTED" "$COLLECTED"
+    while IFS= read -r node; do
+      [ -n "$node" ] || continue
+      grep -qF "$node" "$COLLECTED" || { echo "[pre-push] uncollected test: $node"; findings=1; }
+    done < <(awk -F'|' '/^\| T-[0-9]/ {print $7}' "$TST" | tr -d ' ')
+  else
+    echo "[pre-push] pytest collected nothing - every anchored test reads as uncollected"
+    findings=1
+  fi
+  rm -f "$COLLECTED"
+
+  if [ "$findings" -ne 0 ]; then
+    if [ "$PLAN_GATE_BLOCKING" -eq 1 ]; then
+      echo "[pre-push] x the plan pair does not match the tree - push blocked"
+      exit 1
+    fi
+    echo "[pre-push] ! findings above are advisory while the pair is seeded"
+  fi
+fi
+
+if [[ -d "$REPO_ROOT/knowledge" ]]; then
+  if ! command -v okfrules >/dev/null 2>&1; then
+    echo "[pre-push] x okfrules not installed - knowledge/ cannot be checked, and this hook is its only local gate"
+    echo "[pre-push]   go install github.com/fairyhunter13/okf/cmd/okfrules@v0.6.0"
+    exit 1
+  fi
+  # A hook chmod -x'd in the *index* is planted non-executable in every future clone, and git
+  # skips a hook it cannot execute without saying a word.
+  HOOK_MODE="$(git -C "$REPO_ROOT" ls-files -s .githooks/pre-push 2>/dev/null | awk '{print $1}')"
+  if [ "$HOOK_MODE" != "100755" ]; then
+    echo "[pre-push] x .githooks/pre-push is mode '$HOOK_MODE' in the index, want 100755 - every"
+    echo "[pre-push]   future clone of this repo would push ungated."
+    exit 1
+  fi
+  OKF_PROBE="$(mktemp -d)"
+  printf -- '---\ntitle: no type key\n---\n\nbody\n' > "$OKF_PROBE/broken.md"
+  if okfrules check "$OKF_PROBE" >/dev/null 2>&1; then
+    rm -rf "$OKF_PROBE"
+    echo "[pre-push] x okfrules accepted a concept with no type key - the checker on PATH gates nothing"
+    exit 1
+  fi
+  rm -rf "$OKF_PROBE"
+  # -strict, not the fleet default: TimestampsCarryAnOffset is a Strict rule, and an
+  # offset-free stale_after reads as fresh forever. This bundle is new and can be born clean.
+  if ! okfrules -strict check -Werror "$REPO_ROOT/knowledge"; then
+    echo "[pre-push] x knowledge/ is not a conformant OKF bundle - push blocked"
+    exit 1
+  fi
+fi
+
+exit 0
