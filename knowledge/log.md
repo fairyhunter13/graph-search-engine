@@ -18,3 +18,4 @@ title: graphrag knowledge history
 - **Creation**: `constraints/a-pass-reparses-the-tree-because-resolution-is-global.md` - the claim `T-16` and `J-06` had wrong, and why.
 - **Creation**: `defects/the-newest-ledger-row-was-not-first.md` - the rounded stamp and the stable sort `D-07` uncovered.
 - **Creation**: `computations/the-graph-answers-the-caller-question.md`, its executor skill and its attester - the routing rule, graded, and the class split a single F1 hides.
+- **Update**: `computations/the-graph-answers-the-caller-question.md` - re-measured after `D-19` captured the receiver. The graph moves from F1 0.743 to 0.913 and the `collides` class from 0.538 to 0.831. The split does not close, so the receipt keeps its class fields.

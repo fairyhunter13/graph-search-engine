@@ -42,13 +42,13 @@ SANCTIONED = {
 RECEIPT = {
     "test_node_id": SANCTIONED["test_node_id"],
     "corpus_ref": "graph-search-engine",
-    "commit_sha": "6be17f6",
+    "commit_sha": "0e8ffd6",
     "n_questions": 10,
-    "f1_graph": 0.743,
-    "f1_lexical": 0.569,
-    "f1_semantic": 0.383,
+    "f1_graph": 0.913,
+    "f1_lexical": 0.573,
+    "f1_semantic": 0.411,
     "f1_graph_distinctive": 1.0,
-    "f1_graph_collides": 0.538,
+    "f1_graph_collides": 0.831,
 }
 
 
@@ -93,14 +93,14 @@ def test_the_graph_wins_the_caller_question():
 def test_the_two_engine_receipt_is_attested():
     """T-92. A sound receipt passes, and a moved number does not."""
     claim = {
-        "f1_graph": 0.74,
+        "f1_graph": 0.91,
         "f1_lexical": 0.57,
         "f1_graph_distinctive": 1.0,
-        "f1_graph_collides": 0.54,
+        "f1_graph_collides": 0.83,
     }
     got = attester.attest(sanctioned_computation=SANCTIONED, receipt=RECEIPT, claimed_value=claim)
     assert got["ok"] is True
-    assert got["details"]["commit_sha"] == "6be17f6"
+    assert got["details"]["commit_sha"] == "0e8ffd6"
 
     moved = attester.attest(
         sanctioned_computation=SANCTIONED,

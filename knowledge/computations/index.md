@@ -6,6 +6,6 @@
   corpus, and import scoping gives 1.49.
 * [The graph answers the caller question, and only exactly where the name is
   distinctive](the-graph-answers-the-caller-question.md) - The measurement that decides whether a
-  second engine earns its process. Over ten caller questions the graph scores F1 0.743, coderag
-  lexical 0.569 and coderag semantic 0.383, and the graph is exact only where the name is
+  second engine earns its process. Over ten caller questions the graph scores F1 0.913, coderag
+  lexical 0.573 and coderag semantic 0.411, and the graph is exact only where the name is
   distinctive.

@@ -228,12 +228,13 @@ selected and not prompted.
 
 **J-08 Measure the two engines against each other.** Run a caller-question set against both. Score
 both against hand-verified edges. Acceptance: the numbers exist and are recorded. Measured
-2026-08-27 on this repo: graphrag F1 0.743, coderag lexical 0.569, coderag semantic 0.383, over ten
-questions. The result graduates to `knowledge/computations/`.
+2026-08-27 on this repo at commit `0e8ffd6`: graphrag F1 0.913, coderag lexical 0.573, coderag
+semantic 0.411, over ten questions. The result graduates to `knowledge/computations/`.
 
 The class split is the part a single number hides, and this journey reports both. A name called only
 through its own module scores 1.000 on precision and recall. A name the tree also carries as an
-attribute scores 0.412 on precision, because the extractor discards the receiver.
+attribute scores 0.711 on precision. That second figure was 0.412 before `D-19` captured the
+receiver, and what remains is a receiver naming a local variable.
 
 # Experience bar
 

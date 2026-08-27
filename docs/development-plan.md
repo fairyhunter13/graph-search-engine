@@ -401,3 +401,23 @@ and moved nothing about the engine.
 that module. A receiver that names anything else, and is not `self` or its siblings, leaves the
 repo and earns no edge. The second step is the one that pays: it is the difference between the two
 runs recorded below.
+
+# What `D-19` measured, 2026-08-27
+
+The same ten questions, at commit `0e8ffd6`, after the receiver landed.
+
+graphrag returns F1 0.913 against 0.573 for lexical retrieval and 0.411 for semantic. The
+`distinctive` class holds at 1.000 on precision and recall. The `collides` class rises from
+precision 0.412 to 0.711 and from F1 0.538 to 0.831, and recall reaches 1.000 on both classes.
+
+Two rules were tried in order, and the numbers picked the second. Narrowing the pool to the module
+the receiver names took F1 to 0.795. Refusing a receiver that names nothing the file imported took
+it to 0.913. So the loser was deleted rather than kept behind a switch.
+
+The price is sites, not recall. `T-07` refuses 43.7% of its scoped call sites on CPython, which is
+part A's `expr.method()` share almost exactly, while the collapse ratio rises from 7.4 to 8.7 and
+ambiguity falls from under 25% to 8.9%. Recall on the caller set stays 1.000, so nothing refused
+there was a real call.
+
+What is left is a receiver naming a local variable. No syntactic rule places it, and closing that
+gap needs the type of the receiver, which is the SCIP overlay `D-08` defers.

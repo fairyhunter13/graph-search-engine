@@ -2,7 +2,7 @@
 type: Attested Computation
 resource: scripts/two_engine_measure.py
 title: The graph answers the caller question, and only exactly where the name is distinctive
-description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 0.743, coderag lexical 0.569 and coderag semantic 0.383, and the graph is exact only where the name is distinctive."
+description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 0.913, coderag lexical 0.573 and coderag semantic 0.411, and the graph is exact only where the name is distinctive."
 tags: [routing, measurement, two-engine, attestation]
 status: stable
 runtime: python
@@ -26,18 +26,19 @@ sources:
 
 The routing rule says coderag names the symbol and graphrag walks the edges from it. No record
 measured that, so the rule was argued and never graded.[^two-engine-run] Ten caller questions over
-this repo, scored at file granularity against a ground truth read by hand, give the graph F1 0.743
-against 0.569 for lexical retrieval and 0.383 for semantic. So the second engine earns its process.
+this repo, scored at file granularity against a ground truth read by hand, give the graph F1 0.913
+against 0.573 for lexical retrieval and 0.411 for semantic. So the second engine earns its process.
 
 # The finding one number hides
 
-Every question carries a class, and the classes disagree. Where a name is called only through the
-module that defines it, the graph scores 1.000 on precision and 1.000 on recall. Where the tree also
-carries the name as an attribute of something else, precision falls to 0.412 and F1 to 0.538.
+Every question carries a class, and the classes still disagree. Where a name is called only through
+the module that defines it, the graph scores 1.000 on precision and 1.000 on recall. Where the tree
+also carries the name as an attribute of something else, precision is 0.711 and F1 is 0.831.
 
-The cause is in `extract.py`. A reference keeps the attribute name and discards the receiver, so
-`registry.load()` and `yaml.load()` are one name in the graph.[^extractor] That is the `expr.method()` limit
-this project documented from the start, and this is the first number on it.
+The first run of this measurement put that second figure at 0.412. The cause was in `extract.py`:
+a reference kept the attribute name and discarded the receiver, so `registry.load()` and
+`yaml.load()` were one name in the graph. `D-19` captured the receiver.[^extractor] What remains is
+the receiver this engine cannot place at all, which is a local variable rather than a module.
 
 # Computation
 
@@ -67,5 +68,15 @@ earn its process, and this concept is deprecated rather than relaxed.
 Or the receiver is captured and the `collides` class stops losing. Then the split is gone, one
 number is honest, and the receipt shrinks with a new concept that names this one.
 
-[^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member` and the attribute name only.
-[^two-engine-run]: Ten caller questions over this repo, 58 ground-truth caller files, measured 2026-08-27.
+# What `D-19` did to the second clause, 2026-08-27
+
+Half of it. The `collides` class stopped collapsing, and recall reached 1.000 on both classes. The
+split did not close: 0.711 against 1.000 on precision. So the receipt keeps its class fields, and
+this concept is amended rather than replaced.
+
+The remaining loss is not a discarded receiver any more. It is a receiver naming a local variable,
+which no syntactic rule places, and which this engine now refuses instead of guessing. Closing the
+rest needs the type of the receiver, and that is the SCIP overlay `D-08` defers.
+
+[^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
+[^two-engine-run]: Ten caller questions over this repo, 58 ground-truth caller files, measured 2026-08-27 at commit `0e8ffd6`.
