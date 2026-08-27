@@ -34,7 +34,7 @@ Expected: the symbol counts equal the recorded goldens for that language.
 **S-02 Import scoping collapses the candidate set.**
 Precondition: the CPython standard library at a pinned tag.
 Action: references resolve by global name, and then by import scope.
-Expected: the mean candidate count falls from about 9.65 to about 1.30.
+Expected: the mean candidate file count falls by at least six times, measured 10.86 to 1.49.
 
 **S-03 A gap is reported.**
 Precondition: a language whose grammar emits no call capture.
@@ -91,8 +91,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-04 | TypeScript needs the JavaScript query too | S-01 | D-02 | done | tests/test_queries.py::test_typescript_concatenates_javascript |
 | T-05 | Every capture name is mapped or ignored | S-01 | D-02 | done | tests/test_queries.py::test_every_capture_name_is_known |
 | T-06 | The capability counts hold under the pin | S-03 | D-02 | done | tests/test_grammars.py::test_capability_counts_under_the_pin |
-| T-07 | Import scoping beats global matching | S-02 | D-03 | planned | tests/test_resolve.py::test_import_scoping_collapses_candidates |
-| T-08 | An unknown name becomes an external node | S-02 | D-03 | planned | tests/test_resolve.py::test_unknown_name_is_external |
+| T-07 | Import scoping beats global matching | S-02 | D-03 | done | tests/test_resolve.py::test_import_scoping_collapses_candidates |
+| T-08 | An unknown name becomes an external node | S-02 | D-03 | done | tests/test_resolve.py::test_unknown_name_is_external |
 | T-09 | Blast radius terminates on a cycle | S-04 | D-04 | planned | tests/test_traverse.py::test_cycle_terminates_without_duplicates |
 | T-10 | Parse and query stay above the floor | S-05 | D-04 | planned | tests/test_perf.py::test_extraction_throughput_floor |
 | T-11 | Every import query compiles and extracts | S-01 | D-05 | planned | tests/test_import_queries.py::test_each_language_extracts_an_import |
@@ -120,6 +120,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-33 | TypeScript and PHP golden counts hold | S-01 | D-02 | done | tests/test_extract.py::test_typescript_golden_symbol_counts |
 | T-34 | A PHP static call needs the repair layer | S-01 | D-02 | done | tests/test_extract.py::test_a_php_static_call_needs_the_repair_layer |
 | T-35 | One import row per import statement | S-01 | D-02 | done | tests/test_extract.py::test_one_import_row_per_statement |
+| T-36 | A same-class call outranks every homonym | S-02 | D-03 | done | tests/test_resolve.py::test_a_same_class_call_beats_every_other_candidate |
+| T-37 | A global set below the floor is dropped | S-02 | D-03 | done | tests/test_resolve.py::test_a_global_set_below_the_floor_is_dropped_rather_than_ranked |
 
 # User journeys
 
@@ -172,12 +174,15 @@ reaches the semantic engine and stops there fails this plan, and not the prompt.
 
 Real, named, and built by `git init` in a temporary directory. No mocks, and no parser stubs.
 
-- `tests/fixtures/py_small/` — a package with a class, a method, a re-export and a shadowed name.
-- `tests/fixtures/ts_small/` — a TypeScript package that also exercises the TSX query path.
+- `tests/fixtures/wave1/` — one file per wave-one language, each holding a class, a method, a
+  member call, a static call and four import shapes. One directory rather than one per language,
+  because the goldens are read side by side and a split hides a difference between them.
 - `tests/fixtures/c_small/` — C, which has no call capture. The gap fixture.
 - `tests/fixtures/cycle/` — three modules importing each other, for `T-09`.
 - `tests/fixtures/unicode/` — a non-ASCII identifier, for the SCIP offset table.
-- The CPython standard library, checked out at a pinned tag, for `T-07`.
+- The CPython standard library at `v3.12.7`, cloned once into `~/.cache/graphrag/corpus`, for
+  `T-07`. The case is marked `corpus` and skips when the clone is absent, so a fresh machine runs
+  the suite without a network fetch. `GRAPHRAG_CORPUS_DIR` and `GRAPHRAG_CORPUS_REF` move it.
 
 # Traceability
 

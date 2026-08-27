@@ -106,6 +106,21 @@ FEDERATION_DEPTH = _env_int("FEDERATION_DEPTH", 1)
 # indexer needs a resolved build, and tree-sitter needs none.
 SCIP_ENABLED = _env_flag("SCIP_ENABLED", False)
 
+# ------------------------------------------------------------- the T-07 corpus
+
+# The measurement runs against a clone pinned to a tag, fetched once. A distro
+# copy of the standard library was rejected: an update moves the number, and no
+# other machine reproduces it. The tag rides in the receipt, so an attester
+# compares like with like.
+CORPUS_REF = _env("CORPUS_REF", "v3.12.7")
+CORPUS_DIR = Path(_env("CORPUS_DIR") or (Path.home() / ".cache" / APP / "corpus")).expanduser()
+
+
+def corpus_root(ref: str = "") -> Path:
+    """Where the pinned checkout lives. Absent means the case skips, not fails."""
+    return CORPUS_DIR / f"cpython-{ref or CORPUS_REF}"
+
+
 # ---------------------------------------------------------------- public gate
 
 # Unset is the failing state, and `none` is how a clean clone declares it has
