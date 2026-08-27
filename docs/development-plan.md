@@ -159,10 +159,10 @@ for the callers of a known function and check them by hand.
 | ID | Title | Status | Paths it owns | T-nn covering it |
 |---|---|---|---|---|
 | D-01 | The floor: config, store, discovery | done | src/graphrag/config.py, src/graphrag/filters.py, src/graphrag/store.py, src/graphrag/discover.py, src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/projcfg.py | T-01, T-02 |
-| D-02 | Grammars, queries, extraction, wave one | done | src/graphrag/grammars.py, src/graphrag/queries.py, src/graphrag/extract.py, src/graphrag/queries/imports, src/graphrag/queries/tags_extra, tests/fixtures/wave1 | T-03, T-04, T-05, T-06, T-33, T-34, T-35 |
+| D-02 | Grammars, queries, extraction, wave one | done | src/graphrag/grammars.py, src/graphrag/queries.py, src/graphrag/extract.py, src/graphrag/queries/imports, src/graphrag/queries/tags_extra, tests/fixtures/wave1 | T-03, T-04, T-05, T-06, T-33, T-34, T-35, T-60 |
 | D-03 | Symbol table and ranked resolution | done | src/graphrag/symtab.py, src/graphrag/resolve.py | T-07, T-08, T-36, T-37 |
 | D-04 | Index loop, traversal, query surface | done | src/graphrag/index.py, src/graphrag/indexwrite.py, src/graphrag/traverse.py, src/graphrag/query.py, tests/test_index.py, tests/test_perf.py | T-09, T-10, T-45..T-55 |
-| D-05 | Import queries, the remaining waves | planned | src/graphrag/queries/imports | T-11 |
+| D-05 | Import queries, the remaining waves | done | src/graphrag/queries/imports, tests/test_import_queries.py | T-11, T-56, T-57, T-58 |
 | D-06 | MCP tools, daemon, CLI, stdio bridge | planned | src/graphrag/tools.py, src/graphrag/server.py, src/graphrag/cli.py, src/graphrag/bridge.py | T-12, T-13, T-14, T-15 |
 | D-07 | Watcher, health, progress, ledgers | planned | src/graphrag/watch.py, src/graphrag/health.py, src/graphrag/progress.py, src/graphrag/ledger.py, src/graphrag/trace.py | T-16, T-17 |
 | D-08 | SCIP overlay behind the coverage guard | planned | (deferred, no code this pass) | T-18, T-19 |
@@ -172,6 +172,7 @@ for the callers of a known function and check them by hand.
 | D-12 | The OKF profile record and bundle root | done | knowledge/index.md, knowledge/log.md, knowledge/policies, tests/test_bundle.py | T-28, T-38, T-39, T-40 |
 | D-13 | The first working attester | done | knowledge/attesters, knowledge/computations, knowledge/skills, tests/test_attester.py | T-29, T-30, T-41, T-42, T-43, T-44 |
 | D-14 | Gate lines and the attester contract check | done | .githooks/pre-push, scripts/check_attester_contract.py, knowledge/constraints, knowledge/decisions | T-31, T-32 |
+| D-15 | Source roots, so a dotted import matches a path | planned | src/graphrag/symtab.py | T-59 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -188,6 +189,24 @@ to move is the ratio. If it drops below 6, the design premise is gone. `D-03` th
 with the observed numbers, and the design is not quietly relaxed.
 
 `D-08` is deferred by decision. The row stays `planned` and no code lands this pass.
+
+`D-05` ends with 32 of the 68 `tags.scm` languages carrying an import query. `scala` is a declared
+gap and not an oversight. Its grammar spells `import a.b.c` as three sibling `path:` fields, and the
+extractor reads the first capture, so any pattern returns one segment or garbage. A wrong module
+name scopes resolution to the wrong file, which is worse than the repo-global fallback the gap
+already prints.
+
+`D-15` is the second thing `D-05` revealed. For java, kotlin, scala and go an import names
+`com.acme.Foo`, while `symtab.module_name` derives `src.main.java.com.acme.Foo` from the path. The
+two never match, so import scoping does no work on those languages and every reference falls back to
+repo-global. The fix is a source-root prefix stripped before the module name is formed, and it is
+its own row rather than silent scope inside `D-05`.
+
+A vendored query with one node type the grammar does not carry fails to compile whole, and
+`extract._run` returns no matches rather than raising. The file then reads as a language with no
+import syntax. `sourcepawn` shipped that way inside this row, on a `string_content` child that
+grammar has no name for. `T-56` compiles every vendored query against its own grammar, which is the
+only check that sees it.
 
 `D-04` carries the throughput floor, and the floor moved. The design quoted 334 files per second
 from an upstream figure that timed a parse plus a tags query. This engine also runs capture

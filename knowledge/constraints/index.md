@@ -13,3 +13,7 @@
   334](extraction-runs-at-118-files-per-second.md) - The design quoted 334 files per second for a
   parse plus a tags query. This engine also normalizes captures, attributes scope and runs the
   import query, so it measures 117.8 on the same corpus and the floor is set from the measurement.
+* [One bad node type disables a whole import query,
+  silently](one-bad-node-type-disables-a-whole-query.md) - A tree-sitter query compiles whole or not
+  at all, and the extractor returns no matches rather than raising. A single wrong node type makes
+  every pattern in the file dead, and the language then reads as one with no import syntax.

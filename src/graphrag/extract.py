@@ -210,7 +210,9 @@ def _imports(lang: str, data: bytes, tree) -> list[Import]:
         aliases = caps.get("alias") or []
         if not mods and not syms:
             continue
-        module = _text(data, mods[0]).strip("\"'") if mods else ""
+        # Some grammars fold the surrounding space into the node, so the strip
+        # runs before the quotes come off and again after.
+        module = _text(data, mods[0]).strip().strip("\"'").strip() if mods else ""
         line = (mods or syms)[0].start_point[0] + 1
         if not syms:
             out.append(Import(module, alias=_text(data, aliases[0]) if aliases else "", line=line))

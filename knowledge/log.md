@@ -7,6 +7,7 @@ title: graphrag knowledge history
 
 ## 2026-08-27
 
+- **Creation**: `constraints/one-bad-node-type-disables-a-whole-query.md` - the silent query compile failure `sourcepawn` shipped, and the check that sees it.
 - **Creation**: `constraints/extraction-runs-at-118-files-per-second.md` - the measured throughput and the floor `T-10` sets from it.
 - **Creation**: the bundle root and the profile record.
 - **Creation**: the first Attested Computation, its executor skill and the attester that grades it.

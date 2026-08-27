@@ -41,6 +41,11 @@ Precondition: a language whose grammar emits no call capture.
 Action: a caller question arrives for a symbol in that language.
 Expected: the answer names the missing capability.
 
+**S-13 A vendored query compiles against its own grammar.**
+Precondition: an import query naming a node type the grammar does not carry.
+Action: the extractor runs the query over a file in that language.
+Expected: the compile case fails and names the language, rather than the file reporting no imports.
+
 **S-04 Traversal terminates.**
 Precondition: a fixture with a known import cycle.
 Action: `blast_radius` runs from a node inside the cycle.
@@ -100,7 +105,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-08 | An unknown name becomes an external node | S-02 | D-03 | done | tests/test_resolve.py::test_unknown_name_is_external |
 | T-09 | Blast radius terminates on a cycle | S-04 | D-04 | done | tests/test_index.py::test_blast_radius_terminates_over_the_cycle |
 | T-10 | Parse and query stay above the floor | S-05 | D-04 | done | tests/test_perf.py::test_extraction_throughput_floor |
-| T-11 | Every import query compiles and extracts | S-01 | D-05 | planned | tests/test_import_queries.py::test_each_language_extracts_an_import |
+| T-11 | Every import query compiles and extracts | S-01 | D-05 | done | tests/test_import_queries.py::test_each_language_extracts_an_import |
 | T-12 | The four tool schemas are conformant | S-08 | D-06 | planned | tests/test_tools.py::test_tool_schemas_are_conformant |
 | T-13 | Neighbors carries confidence and evidence | S-08 | D-06 | planned | tests/test_tools.py::test_neighbors_carries_confidence |
 | T-14 | A missing capability is named, not empty | S-03 | D-06 | planned | tests/test_tools.py::test_missing_capability_is_reported |
@@ -145,6 +150,11 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-53 | An unknown direction is refused | S-04 | D-04 | done | tests/test_index.py::test_an_unknown_direction_is_refused |
 | T-54 | find_symbol returns a location and never a body | S-08 | D-04 | done | tests/test_index.py::test_find_symbol_returns_a_location_and_never_a_body |
 | T-55 | The capability report names every language present | S-03 | D-04 | done | tests/test_index.py::test_the_capability_report_names_every_language_in_the_project |
+| T-56 | Every vendored import query compiles | S-13 | D-05 | done | tests/test_import_queries.py::test_every_vendored_import_query_compiles |
+| T-57 | Every vendored query has a sample | S-13 | D-05 | done | tests/test_import_queries.py::test_every_vendored_query_has_a_sample |
+| T-58 | A language with no import query says so | S-03 | D-05 | done | tests/test_import_queries.py::test_a_language_with_no_import_query_says_so |
+| T-59 | A source root prefix leaves the module name | S-02 | D-15 | planned | tests/test_symtab.py::test_a_source_root_prefix_leaves_the_module_name |
+| T-60 | The capability table reads the manifest, not the cache | S-03 | D-02 | done | tests/test_grammars.py::test_known_languages_does_not_depend_on_the_download_cache |
 
 # User journeys
 

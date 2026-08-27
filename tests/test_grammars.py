@@ -81,4 +81,13 @@ def test_the_capability_table_covers_what_it_is_asked_for():
 
 
 def test_known_languages_does_not_depend_on_the_download_cache():
-    assert grammars.cached_languages() <= grammars.known_languages()
+    """The manifest is the table, and the cache is a subset of it plus one alias.
+
+    The pack resolves `lisp` to the `commonlisp` parser and its manifest does not
+    list the name, so the cached set carries one name the manifest lacks. Every
+    other cached name is a manifest name, and the capability table reads the
+    manifest so it never shrinks to the download history.
+    """
+    known = grammars.known_languages()
+    assert grammars.cached_languages() - known == {"lisp"}
+    assert len(known) > len(grammars.cached_languages())
