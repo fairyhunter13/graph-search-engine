@@ -178,7 +178,7 @@ for the callers of a known function and check them by hand.
 | D-18 | The caller question, graded against both engines | done | scripts/two_engine_measure.py, tests/test_two_engine.py | T-91, T-92 |
 | D-19 | Capture the receiver, so a member call resolves to its own module | done | src/graphrag/extract.py, src/graphrag/resolve.py | T-93 |
 | D-20 | Continuous integration, the gate a skipped hook still meets | done | .github/workflows/ci.yml, tests/test_ci.py | T-112..T-115 |
-| D-21 | The receipt is an artifact of the run, never a literal | done | src/graphrag/config.py, tests/test_resolve.py, tests/test_attester.py | T-111 |
+| D-21 | The receipt is an artifact of the run, never a literal | done | src/graphrag/config.py, tests/test_resolve.py, tests/test_attester.py, scripts/two_engine_measure.py | T-111, T-123 |
 | D-22 | The re-export pass, so a name resolves through the package initialiser | planned | src/graphrag/symtab.py, src/graphrag/resolve.py, tests/test_resolve.py | T-116 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and

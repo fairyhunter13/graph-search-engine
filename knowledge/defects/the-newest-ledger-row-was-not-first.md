@@ -7,7 +7,7 @@ tags: [ledger, operations, sorting]
 status: stable
 generated: { by: claude/opus-5, at: 2026-08-27T06:54:11Z }
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T10:24:21Z }
+  - { by: process:okf-verify, at: 2026-08-27T11:36:40Z }
 sources:
   - id: ledger
     resource: src/graphrag/ledger.py

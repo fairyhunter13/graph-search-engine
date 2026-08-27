@@ -17,7 +17,15 @@ TST="$REPO_ROOT/docs/test-plan.md"
 PLAN_GATE_BLOCKING=1
 
 plan_ids() {  # $1 = file, $2 = D or T
-  grep -oE "\b$2-[0-9]+" "$1" | sort -u
+  # `T-94..T-101` is a range, and a token grep recovers only its two ends. Eight dev
+  # rows use the shorthand, so every interior ID went unchecked by arm 4a.
+  {
+    grep -oE "\b$2-[0-9]+\.\.$2-[0-9]+" "$1" | while IFS= read -r span; do
+      lo="${span%%..*}"; hi="${span##*..}"
+      seq "${lo#"$2-"}" "${hi#"$2-"}" | sed "s/^/$2-/"
+    done
+    grep -oE "\b$2-[0-9]+" "$1"
+  } | sort -u
 }
 
 # Arm 1: no pair, no gate. The block is opt-in per repo.
@@ -44,14 +52,39 @@ if [[ -f "$DEV" && -f "$TST" ]]; then
   fi
 
   uncollected_rows() {  # $1 = a test plan. Prints every anchored row the runner misses.
-    while IFS= read -r node; do
-      [ -n "$node" ] || continue
+    while IFS='|' read -r _ id _ _ _ status node; do
+      id="${id// /}"; status="${status// /}"; node="${node//[ |]/}"
+      if [ -z "$node" ]; then
+        # A blank column used to skip the row, so the one row of 122 with no test
+        # node ID was the only one the arm could not see. Only a case with no test
+        # yet earns the blank, and the skill requires an ID for every other status.
+        [ "$status" = planned ] || echo "$id: no test node ID, and the row is not planned"
+        continue
+      fi
       # A (ccw) row names a test in another checkout, the same limit arm 4b records for
       # paths. This runner cannot collect it, and reporting it would train the reader to
       # ignore the arm.
       case "$node" in '(ccw)'*) continue ;; esac
       grep -qF "$node" "$COLLECTED" || echo "$node"
-    done < <(awk -F'|' '/^\| T-[0-9]/ {print $7}' "$1" | tr -d ' ')
+    done < <(grep -E '^\| T-[0-9]' "$1")
+  }
+
+  orphan_ids() {  # $1 = source doc, $2 = D or T, $3 = the doc that must hold the row
+    for id in $(plan_ids "$1" "$2"); do
+      grep -qE "^\| $id \|" "$3" || echo "$id"
+    done
+  }
+
+  dead_paths() {  # $1 = a development plan. Prints every anchored path the tree lacks.
+    while IFS= read -r entry; do
+      # The skip is per path, never per row. One `(ccw)` token used to match the whole
+      # column and silence the check for every in-repo path sharing that row.
+      case "$entry" in '('*) continue ;; esac
+      [ -n "$(git -C "$REPO_ROOT" ls-files -- "$entry")" ] || echo "$entry"
+    done < <(awk -F'|' '/^\| D-[0-9]/ {
+      n = split($5, a, ",")
+      for (i = 1; i <= n; i++) { gsub(/^[ \t]+|[ \t]+$/, "", a[i]); if (a[i] != "") print a[i] }
+    }' "$1")
   }
 
   uncovered_dev_rows() {  # $1 = a development plan. Prints every D row naming no T-nn.
@@ -75,9 +108,14 @@ if [[ -f "$DEV" && -f "$TST" ]]; then
   {
     printf '| T-99 | probe | S-99 | D-99 | planned | tests/test_nothing.py::test_absent |\n'
     printf '| T-98 | probe | S-99 | none | planned |  |\n'
+    printf '| T-97 | probe | S-99 | D-97 | done |  |\n'
   } > "$PROBE/test-plan.md"
-  printf '| D-99 | probe | planned | src/graphrag/store.py | none |\n' \
-    > "$PROBE/development-plan.md"
+  {
+    # The path is one the tree does not carry, beside a `(ccw)` token in the same
+    # column. Naming a tracked path here would pass a dead-path check that never ran.
+    printf '| D-99 | probe | planned | (ccw) elsewhere.go, src/graphrag/no_such_module.py | T-99, T-96 |\n'
+    printf '| D-98 | probe | planned | src/graphrag/store.py | none |\n'
+  } > "$PROBE/development-plan.md"
   probe_failed() {
     rm -rf "$PROBE"
     echo "[pre-push] x $1"
@@ -94,23 +132,32 @@ if [[ -f "$DEV" && -f "$TST" ]]; then
   if [ -z "$(uncovered_test_rows "$PROBE/test-plan.md")" ]; then
     probe_failed "the coverage check accepted a T row that names no development row"
   fi
+  if [ -z "$(orphan_ids "$PROBE/test-plan.md" D "$PROBE/development-plan.md")" ]; then
+    probe_failed "the orphan check accepted a D-nn the dev plan has no row for"
+  fi
+  if [ -z "$(orphan_ids "$PROBE/development-plan.md" T "$PROBE/test-plan.md")" ]; then
+    probe_failed "the orphan check accepted a T-nn the test plan has no row for"
+  fi
+  if [ -z "$(dead_paths "$PROBE/development-plan.md")" ]; then
+    probe_failed "the dead-path check accepted a path the tree does not carry"
+  fi
   rm -rf "$PROBE"
 
   # Arm 4a: orphan IDs. Every D- in one document resolves to a row in the other.
-  for id in $(plan_ids "$TST" D); do
-    grep -qE "^\| $id \|" "$DEV" || { echo "[pre-push] orphan $id: named in the test plan, no row in the dev plan"; findings=1; }
-  done
-  for id in $(plan_ids "$DEV" T); do
-    grep -qE "^\| $id \|" "$TST" || { echo "[pre-push] orphan $id: named in the dev plan, no row in the test plan"; findings=1; }
-  done
+  while IFS= read -r id; do
+    echo "[pre-push] orphan $id: named in the test plan, no row in the dev plan"
+    findings=1
+  done < <(orphan_ids "$TST" D "$DEV")
+  while IFS= read -r id; do
+    echo "[pre-push] orphan $id: named in the dev plan, no row in the test plan"
+    findings=1
+  done < <(orphan_ids "$DEV" T "$TST")
 
-  # Arm 4b: dead paths. A (ccw) row owns paths in another checkout, so it is skipped.
-  while IFS= read -r paths; do
-    case "$paths" in *'(ccw)'*|*'(deferred'*) continue ;; esac
-    for p in ${paths//,/ }; do
-      [ -n "$(git -C "$REPO_ROOT" ls-files -- "$p")" ] || { echo "[pre-push] dead path: $p"; findings=1; }
-    done
-  done < <(awk -F'|' '/^\| D-[0-9]/ {print $5}' "$DEV")
+  # Arm 4b: dead paths. A (ccw) path lives in another checkout, so that path is skipped.
+  while IFS= read -r p; do
+    echo "[pre-push] dead path: $p"
+    findings=1
+  done < <(dead_paths "$DEV")
 
   # Arm 4c: uncollected tests. Arm 3 proved this function refuses a broken row.
   if [ "$COLLECTED_OK" -eq 1 ]; then
@@ -173,12 +220,40 @@ if [[ -d "$REPO_ROOT/knowledge" ]]; then
     exit 1
   fi
 
-  # Augment, never shrink. `okf check -against` reads each concept's previous version out of git
-  # and reports a dropped heading or a lost sources entry. No repo in the fleet runs it.
+  # Augment, never shrink. Two things were wrong here and each on its own disabled the arm.
+  # The ref was HEAD, and at push time HEAD *is* the tree, so every concept was compared
+  # against itself. And a shrink is a warning, so `okf check` exited 0 reporting one.
   if command -v okf >/dev/null 2>&1; then
-    if ! okf check -against HEAD "$REPO_ROOT/knowledge"; then
-      echo "[pre-push] x a concept lost content against HEAD - push blocked"
-      exit 1
+    # The upstream tip is what the push adds to. A first push has none, so fall back.
+    SHRINK_BASE="$(git -C "$REPO_ROOT" rev-parse --verify --quiet '@{upstream}' \
+      || git -C "$REPO_ROOT" rev-parse --verify --quiet HEAD~1 || true)"
+    if [ -z "$SHRINK_BASE" ]; then
+      echo "[pre-push] - no upstream and no parent commit, so there is nothing to shrink against"
+    else
+      NOSHRINK="$REPO_ROOT/scripts/check_no_shrink.py"
+      SHRINK_PROBE="$(mktemp -d)"
+      (
+        cd "$SHRINK_PROBE" && git init -q . \
+          && git -c user.email=probe@probe -c user.name=probe commit -qm root --allow-empty
+        mkdir knowledge
+        printf -- '---\ntype: Constraint\ntitle: probe\n---\n\n# One\n\nbody\n\n# Two\n\nbody\n' \
+          > knowledge/c.md
+        git add -A && git -c user.email=probe@probe -c user.name=probe commit -qm one
+        printf -- '---\ntype: Constraint\ntitle: probe\n---\n\n# One\n\nbody\n' > knowledge/c.md
+        git add -A && git -c user.email=probe@probe -c user.name=probe commit -qm two
+      ) >/dev/null 2>&1
+      if uv run --project "$REPO_ROOT" python "$NOSHRINK" HEAD~1 "$SHRINK_PROBE/knowledge" \
+        >/dev/null 2>&1; then
+        rm -rf "$SHRINK_PROBE"
+        echo "[pre-push] x the shrink check accepted a concept that lost a heading"
+        echo "[pre-push]   passing and not running are the same observation here"
+        exit 1
+      fi
+      rm -rf "$SHRINK_PROBE"
+      if ! uv run --project "$REPO_ROOT" python "$NOSHRINK" "$SHRINK_BASE" "$REPO_ROOT/knowledge"; then
+        echo "[pre-push] x a concept lost content against $SHRINK_BASE - push blocked"
+        exit 1
+      fi
     fi
   else
     echo "[pre-push] x okf not installed - the augment-never-shrink rule cannot be checked"

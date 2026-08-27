@@ -15,7 +15,7 @@ executor:
 attester:
   resource: ../attesters/measurement_equality.py
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T10:24:21Z }
+  - { by: process:okf-verify, at: 2026-08-27T11:36:40Z }
 stale_after: 2027-08-27T00:00:00Z
 sources:
   - id: cpython-measure

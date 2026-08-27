@@ -7,7 +7,7 @@ tags: [attestation, measurement, drift]
 status: stable
 generated: { by: claude/opus-5, at: 2026-08-27T09:45:00Z }
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T10:24:21Z }
+  - { by: process:okf-verify, at: 2026-08-27T11:36:40Z }
 sources:
   - id: attester-case
     resource: tests/test_attester.py
@@ -45,6 +45,19 @@ number now fails at the next run rather than at the next audit.
 
 A second consumer of the same measurement. The receipt is keyed by test node ID, so two sanctioned
 runs of one computation would collide on one path.
+
+# The second computation carried the same defect, 2026-08-27
+
+One computation was fixed and the other was not, and the audit found it. The two-engine case held
+its own `RECEIPT` literal, stamped `commit_sha: 0e8ffd6`, three commits behind the tree. So the
+same two-literal comparison it had just been closed for was still running one file away.
+
+`scripts/two_engine_measure.py` now writes the receipt, the case grades the file, and `T-123`
+compares the file to the prose. The first run of that check moved the graph F1 from 0.913 to 0.882,
+which is the drift nobody would have seen.
+
+The lesson is the general one. A fix to one instance of a shape is not a fix to the shape. What
+closes the class is a check that names every member of it.
 
 [^measurement]: `tests/test_resolve.py::test_import_scoping_collapses_candidates`, CPython v3.12.7,
     755 files, 53853 call sites.

@@ -31,19 +31,23 @@ ref, and nothing else in the run is negotiable.
 Run that one node ID under the repo toolchain:
 
 ```sh
-GRAPHRAG_NAME_BAN=none uv run pytest -q -m engines <test_node_id>
+GRAPHRAG_NAME_BAN=none uv run pytest -o addopts= -q -m engines <test_node_id>
 ```
 
-Read the scores from the run rather than from the concept. Record `f1_graph`, `f1_lexical`,
-`f1_semantic`, `f1_graph_distinctive` and `f1_graph_collides` exactly as the run reports them.
+`-o addopts=` is load-bearing. `pyproject.toml` already sets `-q`, so a second one gives `-qq` and
+the run prints no node ID at all.
 
-Record the two class figures separately, always. One number over the whole set hides the half where
-the graph loses, and hiding it is the finding this computation exists to carry.
+The run writes the receipt itself, to `~/.cache/graphrag/receipts/`, named for the node ID. Read
+that file. Never assemble a receipt by hand. A receipt typed beside the claim is a second copy of
+the claim, and `defects/the-attester-graded-a-literal.md` records what that cost.
 
-Record `test_node_id` and `corpus_ref` as run, not as intended. A run against another tree is a real
-finding, and rewriting it to match the concept destroys the only evidence of it.
+The two class figures are receipt fields for a reason. One number over the whole set hides the half
+where the graph loses, and hiding it is the finding this computation exists to carry.
 
-Record `commit_sha` from `git rev-parse HEAD`.
+`test_node_id` and `corpus_ref` come from the run, not from the intent. A run against another tree
+is a real finding, and rewriting it to match the concept destroys the only evidence of it.
+
+`commit_sha` is the short SHA, because the concept's footnote names the run by a short SHA.
 
 # Post-conditions
 

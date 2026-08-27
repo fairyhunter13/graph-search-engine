@@ -236,6 +236,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-120 | A stopped coderag daemon reports itself down | S-10 | D-11 | done | (ccw) internal/hooks/coderagreach_internal_test.go::TestAStoppedCoderagDaemonReportsItselfDown |
 | T-121 | The tier raises the resolved share and agrees with the parse | S-06 | D-08 | done | tests/test_scip_ingest.py::test_the_tier_raises_the_resolved_share_and_agrees_with_the_parse |
 | T-122 | The two closed kind sets have a reader | S-01 | D-01 | done | tests/test_store.py::test_the_two_closed_sets_have_a_reader |
+| T-123 | The two-engine receipt agrees with the concept | S-11 | D-21 | done | tests/test_two_engine.py::test_the_two_engine_receipt_agrees_with_the_concept |
 
 # User journeys
 
@@ -273,13 +274,17 @@ widen-then-confirm order, selected and not prompted.
 
 **J-08 Measure the two engines against each other.** Run a caller-question set against both. Score
 both against hand-verified edges. Acceptance: the numbers exist and are recorded. Measured
-2026-08-27 on this repo at commit `0e8ffd6`: graphrag F1 0.913, coderag lexical 0.573, coderag
-semantic 0.411, over ten questions. The result graduates to `knowledge/computations/`.
+2026-08-27 on this repo at commit `2be6825`: graphrag F1 0.882, coderag lexical 0.375, coderag
+semantic 0.338, over ten questions. The result graduates to `knowledge/computations/`.
 
 The class split is the part a single number hides, and this journey reports both. A name called only
 through its own module scores 1.000 on precision and recall. A name the tree also carries as an
-attribute scores 0.711 on precision. That second figure was 0.412 before `D-19` captured the
+attribute scores 0.625 on precision. That second figure was 0.412 before `D-19` captured the
 receiver, and what remains is a receiver naming a local variable.
+
+Only the graph figures are held to the prose, by `T-123`. The two retrieval arms move between runs
+on one tree, because the coderag index reindexes under them. So their digits are dated by the run
+above and are not graded.
 
 # Experience bar
 

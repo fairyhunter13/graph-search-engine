@@ -38,6 +38,13 @@ ROOT = Path(__file__).resolve().parents[1]
 DISTINCTIVE = "distinctive"
 COLLIDES = "collides"
 
+# The corpus is the repo under work, so the ref is what identifies a run. The
+# sanctioned node ID lives here beside the computation it names, never in the
+# test file: a receipt whose provenance is typed next to the assertion proves
+# nothing about which run produced it.
+CORPUS_REF = "graph-search-engine"
+NODE_ID = "tests/test_two_engine.py::test_the_graph_wins_the_caller_question"
+
 # symbol -> the file that defines it, and every file that calls it. Read, not
 # generated: a generated ground truth grades the generator. The census behind
 # each row is `<module>.<name>(` over `git ls-files`, then read by hand.
@@ -286,11 +293,16 @@ def measure(conn=None) -> dict:
             conn.close()
 
     sha = subprocess.run(
-        ["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+        # Short, because the concept's footnote names the run by a short SHA and the
+        # receipt is what a reader compares against that line.
+        ["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
     ).stdout.strip()
     return {
         "commit_sha": sha,
-        "corpus": "graph-search-engine",
+        "corpus_ref": CORPUS_REF,
         "n_questions": len(TRUTH),
         "summary": _summary(overall),
         "by_class": {name: _summary(tally) for name, tally in by_class.items()},
@@ -298,8 +310,36 @@ def measure(conn=None) -> dict:
     }
 
 
+def receipt(report: dict) -> dict:
+    """The declared shape, taken from the report a run produced.
+
+    It is built here rather than in the test, because a receipt assembled beside
+    the assertion is a literal again under another name.
+    """
+    return {
+        "test_node_id": NODE_ID,
+        "corpus_ref": report["corpus_ref"],
+        "commit_sha": report["commit_sha"],
+        "n_questions": report["n_questions"],
+        "f1_graph": report["summary"]["graphrag"]["f1"],
+        "f1_lexical": report["summary"]["coderag-lexical"]["f1"],
+        "f1_semantic": report["summary"]["coderag-semantic"]["f1"],
+        "f1_graph_distinctive": report["by_class"][DISTINCTIVE]["graphrag"]["f1"],
+        "f1_graph_collides": report["by_class"][COLLIDES]["graphrag"]["f1"],
+    }
+
+
+def write_receipt(report: dict) -> Path:
+    path = config.receipt_path(NODE_ID)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(receipt(report), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return path
+
+
 def main() -> int:
-    print(json.dumps(measure(), indent=2, sort_keys=True))
+    report = measure()
+    print(json.dumps(report, indent=2, sort_keys=True))
+    print(f"receipt: {write_receipt(report)}", file=sys.stderr)
     return 0
 
 

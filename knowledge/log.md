@@ -7,6 +7,9 @@ title: graphrag knowledge history
 
 ## 2026-08-27
 
+- **Update**: `defects/the-attester-graded-a-literal.md` - the second computation carried the same literal receipt and the audit found it. `scripts/two_engine_measure.py` now writes the receipt, and `T-123` grades the file against the prose.
+- **Update**: `computations/the-graph-answers-the-caller-question.md` - re-measured at commit `2be6825`. The graph moves from F1 0.913 to 0.882 and the `collides` class from 0.831 to 0.769. Only the graph figures are graded: the two retrieval arms move between runs on one tree.
+- **Update**: `skills/run-two-engine-measure.md` - the documented command printed nothing, because `pyproject.toml` already sets `-q`. The run now writes the receipt and the skill reads that file.
 - **Verified**: 28 of 33 concepts stamped `process:okf-verify`, 30 stampable. The same two stay blocked on the private `claude-code-workflows` citation, so an unauthenticated fetch still reads 404.
 - **Creation**: `decisions/tree-sitter-is-declined-for-chunking-and-adopted-for-graphs.md` - the founding record. coderag's chunker rejection and its `graph` tool drop are honoured, and the capability moved to its own engine.
 - **Creation**: `decisions/resolution-is-import-scoped-and-ranked-and-never-forced.md` - the six tiers, the never-forced edge, and the kill criterion, citing the computation rather than repeating its digits.

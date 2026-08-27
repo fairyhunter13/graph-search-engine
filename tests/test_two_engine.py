@@ -11,6 +11,7 @@ there. A pass with one arm returning nothing is not.
 from __future__ import annotations
 
 import importlib.util
+import json
 import shutil
 import sys
 from pathlib import Path
@@ -33,23 +34,22 @@ def _module(path: Path, name: str):
 
 
 attester = _module(ATTESTER, "two_engine_receipt")
+measure_mod = _module(ROOT / "scripts" / "two_engine_measure.py", "two_engine_measure")
 
 SANCTIONED = {
-    "test_node_id": "tests/test_two_engine.py::test_the_graph_wins_the_caller_question",
-    "corpus_ref": "graph-search-engine",
+    "test_node_id": measure_mod.NODE_ID,
+    "corpus_ref": measure_mod.CORPUS_REF,
 }
 
-RECEIPT = {
-    "test_node_id": SANCTIONED["test_node_id"],
-    "corpus_ref": "graph-search-engine",
-    "commit_sha": "0e8ffd6",
-    "n_questions": 10,
-    "f1_graph": 0.913,
-    "f1_lexical": 0.573,
-    "f1_semantic": 0.411,
-    "f1_graph_distinctive": 1.0,
-    "f1_graph_collides": 0.831,
-}
+CONCEPT = ROOT / "knowledge" / "computations" / "the-graph-answers-the-caller-question.md"
+
+
+def _receipt_on_disk() -> dict:
+    """What the sanctioned run wrote, or a skip. A literal here grades itself."""
+    path = config.receipt_path(measure_mod.NODE_ID)
+    if not path.is_file():
+        pytest.skip(f"no receipt at {path}: run the `engines` case first")
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 @pytest.mark.engines
@@ -63,13 +63,16 @@ def test_the_graph_wins_the_caller_question():
     """
     if shutil.which("coderag") is None:
         pytest.skip("no coderag CLI, so one arm would score zero for the wrong reason")
-    measure = _module(ROOT / "scripts" / "two_engine_measure.py", "two_engine_measure")
+    measure = measure_mod
     index.index_once(ROOT)
     conn = store.connect(config.index_path(ROOT), create=False)
     try:
         report = measure.measure(conn)
     finally:
         conn.close()
+    # The receipt is written before the assertions, so a run that moves a number
+    # leaves the artifact the attester grades rather than only a red test.
+    measure.write_receipt(report)
 
     summary = report["summary"]
     assert summary["graphrag"]["f1"] > summary["coderag-lexical"]["f1"]
@@ -90,27 +93,51 @@ def test_the_graph_wins_the_caller_question():
     assert summary["graphrag"]["recall"] == 1.0
 
 
+@pytest.mark.engines
 def test_the_two_engine_receipt_is_attested():
-    """T-92. A sound receipt passes, and a moved number does not."""
-    claim = {
-        "f1_graph": 0.91,
-        "f1_lexical": 0.57,
-        "f1_graph_distinctive": 1.0,
-        "f1_graph_collides": 0.83,
-    }
-    got = attester.attest(sanctioned_computation=SANCTIONED, receipt=RECEIPT, claimed_value=claim)
+    """T-92. The receipt the run wrote is graded, and a moved number is refused.
+
+    This case held a hand-typed `RECEIPT` with a stale SHA until the audit of
+    2026-08-27, so the attester compared the claim against a copy of itself.
+    `D-21` had already ruled that out for the sibling computation and this one
+    was missed.
+    """
+    receipt = _receipt_on_disk()
+    claim = {name: receipt[name] for name in ("f1_graph", "f1_lexical", "f1_graph_collides")}
+
+    got = attester.attest(sanctioned_computation=SANCTIONED, receipt=receipt, claimed_value=claim)
     assert got["ok"] is True
-    assert got["details"]["commit_sha"] == "0e8ffd6"
+    assert got["details"]["commit_sha"] == receipt["commit_sha"]
 
     moved = attester.attest(
         sanctioned_computation=SANCTIONED,
-        receipt=RECEIPT,
-        claimed_value={**claim, "f1_graph_collides": 0.95},
+        receipt=receipt,
+        claimed_value={**claim, "f1_graph_collides": receipt["f1_graph_collides"] + 0.1},
     )
     assert moved["ok"] is False
     assert "f1_graph_collides" in moved["reason"]
 
-    thin = {k: v for k, v in RECEIPT.items() if k != "f1_graph_collides"}
+    thin = {k: v for k, v in receipt.items() if k != "f1_graph_collides"}
     dropped = attester.attest(sanctioned_computation=SANCTIONED, receipt=thin, claimed_value=claim)
     assert dropped["ok"] is False
     assert dropped["details"]["missing"] == ["f1_graph_collides"]
+
+
+@pytest.mark.engines
+def test_the_two_engine_receipt_agrees_with_the_concept():
+    """T-123. The prose claims digits and nothing compared them to a run.
+
+    Only the graph figures are graded. The two retrieval arms move between runs
+    on the same tree, because the coderag index reindexes under them, so a digit
+    of theirs held to a receipt would red this concept on any edit. The concept
+    reports them as of the run its footnote names, and the footnote is what
+    dates them. The sibling rule is `T-111`.
+    """
+    receipt = _receipt_on_disk()
+    text = CONCEPT.read_text(encoding="utf-8")
+    assert receipt["corpus_ref"] == measure_mod.CORPUS_REF
+    assert f"F1 {receipt['f1_graph']:.3f}" in text
+    assert f"F1 is {receipt['f1_graph_collides']:.3f}" in text
+    assert f"{receipt['f1_graph_distinctive']:.3f} on precision" in text
+    # The commit SHA is not compared. The footnote names the run that measured the
+    # digits, and the next commit moves HEAD without moving a number.

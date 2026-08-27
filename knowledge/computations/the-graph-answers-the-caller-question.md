@@ -2,7 +2,7 @@
 type: Attested Computation
 resource: scripts/two_engine_measure.py
 title: The graph answers the caller question, and only exactly where the name is distinctive
-description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 0.913, coderag lexical 0.573 and coderag semantic 0.411, and the graph is exact only where the name is distinctive."
+description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 0.882, against 0.375 lexical and 0.338 semantic. The graph is exact only where the name is distinctive."
 tags: [routing, measurement, two-engine, attestation]
 status: stable
 runtime: python
@@ -15,7 +15,7 @@ executor:
 attester:
   resource: ../attesters/two_engine_receipt.py
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T10:24:21Z }
+  - { by: process:okf-verify, at: 2026-08-27T11:36:40Z }
 sources:
   - id: two-engine-run
     resource: scripts/two_engine_measure.py
@@ -28,14 +28,15 @@ sources:
 
 The routing rule says coderag names the symbol and graphrag walks the edges from it. No record
 measured that, so the rule was argued and never graded.[^two-engine-run] Ten caller questions over
-this repo, scored at file granularity against a ground truth read by hand, give the graph F1 0.913
-against 0.573 for lexical retrieval and 0.411 for semantic. So the second engine earns its process.
+this repo are scored at file granularity, against a ground truth read by hand. They give the graph
+F1 0.882, against 0.375 for lexical retrieval and 0.338 for semantic. So the second engine earns
+its process.
 
 # The finding one number hides
 
 Every question carries a class, and the classes still disagree. Where a name is called only through
 the module that defines it, the graph scores 1.000 on precision and 1.000 on recall. Where the tree
-also carries the name as an attribute of something else, precision is 0.711 and F1 is 0.831.
+also carries the name as an attribute of something else, precision is 0.625 and F1 is 0.769.
 
 The first run of this measurement put that second figure at 0.412. The cause was in `extract.py`:
 a reference kept the attribute name and discarded the receiver, so `registry.load()` and
@@ -73,7 +74,7 @@ number is honest, and the receipt shrinks with a new concept that names this one
 # What `D-19` did to the second clause, 2026-08-27
 
 Half of it. The `collides` class stopped collapsing, and recall reached 1.000 on both classes. The
-split did not close: 0.711 against 1.000 on precision. So the receipt keeps its class fields, and
+split did not close: 0.625 against 1.000 on precision. So the receipt keeps its class fields, and
 this concept is amended rather than replaced.
 
 The remaining loss is not a discarded receiver any more. It is a receiver naming a local variable,
@@ -81,4 +82,4 @@ which no syntactic rule places, and which this engine now refuses instead of gue
 rest needs the type of the receiver, and that is what the SCIP overlay in `D-08` reads.
 
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 58 ground-truth caller files, measured 2026-08-27 at commit `0e8ffd6`.
+[^two-engine-run]: Ten caller questions over this repo, 67 ground-truth caller files, measured 2026-08-27 at commit `2be6825`.

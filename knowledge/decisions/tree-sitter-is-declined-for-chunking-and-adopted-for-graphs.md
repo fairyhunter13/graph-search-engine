@@ -7,7 +7,7 @@ tags: [tree-sitter, scope, two-engine, coderag]
 status: stable
 generated: { by: claude/opus-5, at: 2026-08-27T10:15:05Z }
 verified:
-  - { by: process:okf-verify, at: 2026-08-27T10:24:21Z }
+  - { by: process:okf-verify, at: 2026-08-27T11:36:40Z }
 sources:
   - id: coderag-chunker
     resource: https://github.com/fairyhunter13/rag-search-engine/blob/main/knowledge/decisions/one-chunker-and-it-is-third-party.md
