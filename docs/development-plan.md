@@ -165,7 +165,7 @@ for the callers of a known function and check them by hand.
 | D-05 | Import queries, the remaining waves | done | src/graphrag/queries/imports, tests/test_import_queries.py | T-11, T-56, T-57, T-58 |
 | D-06 | MCP tools, daemon, CLI, stdio bridge | done | src/graphrag/tools.py, src/graphrag/server.py, src/graphrag/cli.py, src/graphrag/bridge.py, tests/test_tools.py, tests/test_server.py | T-12, T-13, T-14, T-15, T-21, T-61, T-62, T-63, T-64 |
 | D-07 | Watcher, health, progress, ledgers | done | src/graphrag/watch.py, src/graphrag/health.py, src/graphrag/progress.py, src/graphrag/ledger.py, src/graphrag/trace.py, tests/test_watch.py, tests/test_health.py | T-16, T-17, T-66..T-76 |
-| D-08 | SCIP overlay behind the coverage guard | planned | (deferred, no code this pass) | T-18, T-19 |
+| D-08 | SCIP overlay behind the coverage guard | done | src/graphrag/scip/, src/graphrag/config.py, src/graphrag/index.py, tests/scipwrite.py, tests/fixtures/scip/scip.proto, tests/test_scip_wire.py, tests/test_scip_read.py, tests/test_scip_offsets.py, tests/test_scip_symbol.py, tests/test_scip_guard.py, tests/test_scip_ingest.py, tests/test_scip_run.py | T-18, T-19, T-102..T-110 |
 | D-09 | Fleet registration across five profiles | done | (ccw) internal/policy/shared.go | T-20, T-21 |
 | D-10 | Two-engine gate and the routing rule | done | (ccw) internal/hooks/treesearch.go | T-22, T-23, T-24, T-25 |
 | D-11 | systemd units and reach enrolment | done | src/graphrag/systemd.py, src/graphrag/reach.py, tests/test_systemd.py | T-26, T-27, T-85..T-89 |
@@ -192,7 +192,17 @@ arms together, so an exact equality would fail on a bump that changed nothing. W
 to move is the ratio. If it drops below 6, the design premise is gone. `D-03` then goes `blocked`
 with the observed numbers, and the design is not quietly relaxed.
 
-`D-08` is deferred by decision. The row stays `planned` and no code lands this pass.
+`D-08` was deferred by answer and then asked for by name, so the row moved from `planned` to
+`done` in one pass. Two things in it deviate from part A and each has a `knowledge/decisions/`
+record. The reader is a stdlib protobuf decoder and not a vendored `scip_pb2.py`, because the plan
+already required a hand-written walk at `Document` granularity and gencode would add a second pin
+for a tier that is off by default. And the `GRAPHRAG_SCIP_ENABLED` switch defaults on, because the
+project's own `.graphrag.yaml` is the opt-in and a second switch defaulting off made the first one
+unreachable.
+
+The tier ships with the coverage guard from day one, and `T-19` is the case that proves the guard
+refuses before it writes. Exit status proves nothing here: `scip-python` retries a failed analysis
+100 times, drops the file, writes the index and exits 0.
 
 `D-05` ends with 32 of the 68 `tags.scm` languages carrying an import query. `scala` is a declared
 gap and not an oversight. Its grammar spells `import a.b.c` as three sibling `path:` fields, and the
@@ -420,4 +430,5 @@ ambiguity falls from under 25% to 8.9%. Recall on the caller set stays 1.000, so
 there was a real call.
 
 What is left is a receiver naming a local variable. No syntactic rule places it, and closing that
-gap needs the type of the receiver, which is the SCIP overlay `D-08` defers.
+gap needs the type of the receiver. `D-08` now ships that overlay, and a project that opts
+in gets a resolved edge at those sites from the indexer instead of a refusal.

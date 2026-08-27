@@ -17,5 +17,9 @@ title: graphrag knowledge history
 - **Creation**: `constraints/mcp-2-0-renames-the-schema-attributes.md` - the rename the conformance case in `D-06` hit.
 - **Creation**: `constraints/a-pass-reparses-the-tree-because-resolution-is-global.md` - the claim `T-16` and `J-06` had wrong, and why.
 - **Creation**: `defects/the-newest-ledger-row-was-not-first.md` - the rounded stamp and the stable sort `D-07` uncovered.
+- **Creation**: `decisions/the-scip-reader-is-stdlib-and-graded-against-protoc.md` - the reader `D-08` shipped, and why it is not the vendored gencode the plan named.
+- **Creation**: `decisions/the-project-config-is-the-scip-opt-in-and-the-env-only-subtracts.md` - two switches both defaulting off made the project one unreachable.
+- **Creation**: `defects/scip-python-drops-references-and-exits-zero.md` - the upstream failure the coverage guard exists to read.
+- **Creation**: `constraints/an-unset-position-encoding-does-not-mean-one-thing.md` - the column unit `T-18` grades, and the tool-name table that decides it.
 - **Creation**: `computations/the-graph-answers-the-caller-question.md`, its executor skill and its attester - the routing rule, graded, and the class split a single F1 hides.
 - **Update**: `computations/the-graph-answers-the-caller-question.md` - re-measured after `D-19` captured the receiver. The graph moves from F1 0.743 to 0.913 and the `collides` class from 0.538 to 0.831. The split does not close, so the receipt keeps its class fields.

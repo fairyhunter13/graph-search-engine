@@ -71,6 +71,9 @@ TRUTH: list[dict] = [
             "tests/test_index.py",
             "scripts/two_engine_measure.py",
             "tests/test_two_engine.py",
+            "tests/test_scip_guard.py",
+            "tests/test_scip_ingest.py",
+            "tests/test_scip_run.py",
         ],
     },
     {
@@ -145,6 +148,9 @@ TRUTH: list[dict] = [
             "tests/test_store.py",
             "scripts/two_engine_measure.py",
             "tests/test_two_engine.py",
+            "tests/test_scip_guard.py",
+            "tests/test_scip_ingest.py",
+            "tests/test_scip_run.py",
         ],
     },
     {
@@ -168,6 +174,9 @@ TRUTH: list[dict] = [
             "tests/test_tools.py",
             "tests/test_watch.py",
             "tests/test_two_engine.py",
+            "tests/test_scip_guard.py",
+            "tests/test_scip_ingest.py",
+            "tests/test_scip_run.py",
         ],
     },
 ]

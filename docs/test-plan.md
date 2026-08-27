@@ -57,9 +57,11 @@ Action: parsing and the tags query run over it.
 Expected: throughput stays above the floor, and the floor names the measurement that set it.
 
 **S-06 SCIP upgrades and never contradicts.**
-Precondition: a typed project, indexed with the overlay and without it.
-Action: the two runs are compared edge by edge.
-Expected: resolved edges rise, and no resolved edge disagrees on its target file.
+Precondition: a project tree-sitter has already indexed, and one SCIP index over it.
+Action: the overlay reads that index against the tree-sitter census.
+Expected: a definition is upgraded and never replaced, a call edge is rewritten only where
+tree-sitter recorded a call at the same byte, and an index that covers too little is refused
+before any write.
 
 **S-07 The floor is durable.**
 Precondition: a store stamped with an older extraction algorithm number.
@@ -123,8 +125,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-15 | An unknown argument names the valid set | S-08 | D-06 | done | tests/test_tools.py::test_unknown_argument_names_valid_set |
 | T-16 | One edit raises one index pass | S-09 | D-07 | done | tests/test_watch.py::test_single_edit_reparses_one_file |
 | T-17 | Health pages on the second failure only | S-09 | D-07 | done | tests/test_health.py::test_two_sample_rule |
-| T-18 | Two indexers agree on a non-ASCII range | S-06 | D-08 | planned | tests/test_scip_offsets.py::test_non_ascii_ranges_agree |
-| T-19 | A collapsed SCIP index is refused | S-06 | D-08 | planned | tests/test_scip_guard.py::test_collapsed_index_is_refused |
+| T-18 | Two indexers agree on a non-ASCII range | S-06 | D-08 | done | tests/test_scip_offsets.py::test_non_ascii_ranges_agree |
+| T-19 | A collapsed SCIP index is refused | S-06 | D-08 | done | tests/test_scip_guard.py::test_collapsed_index_is_refused |
 | T-20 | Five profiles carry the graphrag entry | S-10 | D-09 | done | (ccw) internal/hooks/mcpsync_test.go::TestFiveProfilesCarryBothEngines |
 | T-21 | The port is fixed and a collision errors | S-10 | D-06, D-09 | done | tests/test_server.py::test_port_collision_names_the_port |
 | T-22 | Either engine lifts the walk denial | S-10 | D-10 | done | (ccw) internal/hooks/twoengines_internal_test.go::TestEitherEngineLiftsTheWalkDenial |
@@ -207,6 +209,15 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-99 | Absent config is the defaults, and a valid one round trips | S-07 | D-01 | done | tests/test_projcfg.py::test_no_config_is_the_defaults |
 | T-100 | The name ban fails closed where it is unset | S-15 | D-01 | done | tests/test_hygiene.py::test_the_name_ban_fails_closed_when_it_is_unset |
 | T-101 | No module passes the line ceiling | S-15 | D-01 | done | tests/test_hygiene.py::test_every_module_is_under_the_line_ceiling |
+| T-102 | The wire decoder agrees with `protoc --decode` | S-06 | D-08 | done | tests/test_scip_wire.py::test_the_decoder_agrees_with_protoc |
+| T-103 | All three occurrence range shapes yield one span | S-06 | D-08 | done | tests/test_scip_read.py::test_all_three_range_shapes_yield_one_span |
+| T-104 | A definition is upgraded and its unset kind is kept | S-06 | D-08 | done | tests/test_scip_ingest.py::test_a_definition_is_upgraded_and_its_kind_is_kept |
+| T-105 | A call is rewritten only where tree-sitter found one | S-06 | D-08 | done | tests/test_scip_ingest.py::test_a_call_is_rewritten_only_where_tree_sitter_found_one |
+| T-106 | An implementation relationship becomes an edge | S-06 | D-08 | done | tests/test_scip_ingest.py::test_an_implementation_relationship_becomes_an_edge |
+| T-107 | A refusal is an outcome and never an exception | S-06 | D-08 | done | tests/test_scip_run.py::test_a_refusal_is_an_outcome_and_never_an_exception |
+| T-108 | The index pass runs the overlay only where the config asks | S-06 | D-08 | done | tests/test_scip_run.py::test_the_index_pass_runs_the_overlay_only_where_the_config_asks |
+| T-109 | An unknown indexer name is an error and never a guessed encoding | S-06 | D-08 | done | tests/test_scip_offsets.py::test_an_unknown_tool_is_an_error_and_never_a_guess |
+| T-110 | A symbol descriptor tail carries the kind of each step | S-06 | D-08 | done | tests/test_scip_symbol.py::test_the_descriptor_tail_carries_the_kind_of_each_step |
 
 # User journeys
 

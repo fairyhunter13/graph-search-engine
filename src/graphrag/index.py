@@ -26,6 +26,7 @@ from . import (
     indexwrite,
     ledger,
     progress,
+    projcfg,
     registry,
     resolve,
     store,
@@ -48,6 +49,9 @@ class IndexReport:
     parsed: int = 0
     languages: dict[str, int] = field(default_factory=dict)
     rebuilt: str = ""
+    # One line per SCIP indexer asked for, refusal included. Empty means the
+    # overlay was not asked for, which is the default.
+    scip: dict[str, str] = field(default_factory=dict)
     unchanged: bool = False
     errors: dict[str, str] = field(default_factory=dict)
 
@@ -68,6 +72,24 @@ def _facts(root: Path, metas: list[discover.FileMeta]) -> dict[str, extract.File
         out[meta.rel_path] = extract.extract(meta.lang, text)
         progress.advance()
     return out
+
+
+def _overlay(conn, root: Path) -> dict[str, str]:
+    """The SCIP tier, off unless the project asks for it and names a tool.
+
+    Imported here and not at module scope, so a project that never enables the
+    overlay never loads it. The tier is deletable in one move, and an
+    unconditional import is what would quietly stop that being true.
+    """
+    try:
+        cfg = projcfg.load(root)
+    except projcfg.ConfigError:
+        return {}
+    from . import scip
+
+    if not scip.enabled(cfg.scip) or not cfg.scip_indexers:
+        return {}
+    return scip.overlay(conn, root, cfg.scip_indexers)
 
 
 def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
@@ -118,6 +140,7 @@ def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
         for p, rows in resolutions.items():
             edges += indexwrite.reference_edges(p, rows, nodes, externals)
         indexwrite.write_edges(conn, edges)
+        report.scip = _overlay(conn, root)
         indexwrite.rebuild_fts(conn)
         store.stamp(conn)
 

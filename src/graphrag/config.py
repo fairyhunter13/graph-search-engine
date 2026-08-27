@@ -130,9 +130,18 @@ MAX_DEPTH = _env_int("MAX_DEPTH", 8)
 # Discovery stops here. A member's members are not the root's members.
 FEDERATION_DEPTH = _env_int("FEDERATION_DEPTH", 1)
 
-# The SCIP overlay is opt-in per project and off everywhere by default. Every
-# indexer needs a resolved build, and tree-sitter needs none.
-SCIP_ENABLED = _env_flag("SCIP_ENABLED", False)
+# The project's `.graphrag.yaml` is the opt-in, and the overlay is off in every
+# project that does not ask, because every indexer needs a resolved build and
+# tree-sitter needs none. This switch only ever subtracts: an operator sets it
+# to 0 to disable the tier on one machine without editing any project.
+SCIP_ENABLED = _env_flag("SCIP_ENABLED", True)
+
+# The coverage guard's two floors, as a share of the tree-sitter census. A SCIP
+# index under either is refused rather than ingested: `scip-python` drops every
+# cross-package reference on a `src/` layout and still exits 0, and a partial
+# overlay is worse than none because it reads as resolved.
+SCIP_FILE_COVERAGE = float(_env("SCIP_FILE_COVERAGE") or "0.60")
+SCIP_DEF_COVERAGE = float(_env("SCIP_DEF_COVERAGE") or "0.40")
 
 # ------------------------------------------------------------- the T-07 corpus
 

@@ -12,3 +12,13 @@
   walk](a-member-is-declared-and-never-discovered.md) - The semantic engine finds members by walking
   symlinks under the root. A graph engine will not, because an undeclared member adds candidate
   definitions the operator never chose.
+* [The SCIP reader is a standard-library wire decoder, graded against
+  protoc](the-scip-reader-is-stdlib-and-graded-against-protoc.md) - SCIP ships no Python binding.
+  Generated code would add a runtime pin that has to move with it, for a tier that is off by
+  default and reads eight messages. The wire format is frozen, so the decoder is the smaller
+  liability.
+* [The project config is the SCIP opt-in, and the environment switch only
+  subtracts](the-project-config-is-the-scip-opt-in-and-the-env-only-subtracts.md) - Two switches
+  that both default off make the first one unreachable. The project asks for the overlay in its
+  own config, and the environment variable exists so an operator can disable the tier on one
+  machine.

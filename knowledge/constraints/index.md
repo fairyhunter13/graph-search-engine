@@ -27,3 +27,7 @@
   things](an-unreachable-daemon-is-not-an-absent-edge.md) - A session that reads a missing
   structural answer as nothing calling the symbol produces a confidently wrong result. The notice
   and the tools each say which of the two happened.
+* [An unset position_encoding does not mean one
+  thing](an-unset-position-encoding-does-not-mean-one-thing.md) - Most indexers leave the field at
+  0, and 0 means UTF-8 on scip-go and UTF-16 on scip-python. So the fallback is keyed on the tool
+  name, and an unknown name is an error rather than a guess.

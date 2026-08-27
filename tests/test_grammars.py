@@ -80,14 +80,20 @@ def test_the_capability_table_covers_what_it_is_asked_for():
         assert caps <= grammars.CAPABILITIES
 
 
-def test_known_languages_does_not_depend_on_the_download_cache():
-    """The manifest is the table, and the cache is a subset of it plus one alias.
+# A name the pack resolves to another grammar's parser and then caches under the
+# alias. The manifest does not list either, so a cached name outside the manifest
+# is an alias and never a grammar the table missed.
+PACK_ALIASES = frozenset({"lisp", "shell"})
 
-    The pack resolves `lisp` to the `commonlisp` parser and its manifest does not
-    list the name, so the cached set carries one name the manifest lacks. Every
-    other cached name is a manifest name, and the capability table reads the
-    manifest so it never shrinks to the download history.
+
+def test_known_languages_does_not_depend_on_the_download_cache():
+    """The manifest is the table, and the cache is a subset of it plus the aliases.
+
+    The cache is download history and it grows as a machine parses more, so the
+    assertion is a containment and never an equality. The capability table reads
+    the manifest, which is why it never shrinks to what this machine happens to
+    have fetched.
     """
     known = grammars.known_languages()
-    assert grammars.cached_languages() - known == {"lisp"}
+    assert grammars.cached_languages() - known <= PACK_ALIASES
     assert len(known) > len(grammars.cached_languages())
