@@ -129,7 +129,10 @@ def neighbors(
     answer.results = traverse.one_hop(
         conn, start, direction=direction, kinds=kinds, include_ambiguous=include_ambiguous
     )
-    answer.ambiguous = sum(1 for r in answer.results if r.confidence < 1.0)
+    # Ambiguity is the candidate count, never the confidence. A same-file call
+    # scores 0.95 with exactly one candidate, so a confidence test reported
+    # every one of them as a guess and the number meant nothing.
+    answer.ambiguous = sum(1 for r in answer.results if r.candidate_count > 1)
     return answer
 
 
@@ -159,7 +162,10 @@ def blast_radius(
         kinds=("CALLS", "REFERENCES", "IMPORTS", "IMPLEMENTS"),
         include_ambiguous=include_ambiguous,
     )
-    answer.ambiguous = sum(1 for r in answer.results if r.confidence < 1.0)
+    # Ambiguity is the candidate count, never the confidence. A same-file call
+    # scores 0.95 with exactly one candidate, so a confidence test reported
+    # every one of them as a guess and the number meant nothing.
+    answer.ambiguous = sum(1 for r in answer.results if r.candidate_count > 1)
     return answer
 
 

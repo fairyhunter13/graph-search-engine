@@ -20,10 +20,11 @@ DOWNSTREAM = "downstream"
 # The path is a comma-wrapped id list, and the membership test is a substring
 # match on `,id,`. Without the commas `,12,` matches inside `,120,`.
 _WALK = """
-WITH RECURSIVE walk(id, depth, path, kind, confidence, evidence) AS (
-  SELECT :start, 0, ',' || :start || ',', '', 1.0, ''
+WITH RECURSIVE walk(id, depth, path, kind, confidence, evidence, candidate_count) AS (
+  SELECT :start, 0, ',' || :start || ',', '', 1.0, '', 1
   UNION ALL
-  SELECT e.{next}, w.depth + 1, w.path || e.{next} || ',', e.kind, e.confidence, e.evidence
+  SELECT e.{next}, w.depth + 1, w.path || e.{next} || ',', e.kind, e.confidence, e.evidence,
+         e.candidate_count
   FROM edges e JOIN walk w ON e.{here} = w.id
   WHERE w.depth < :depth
     AND instr(w.path, ',' || e.{next} || ',') = 0
@@ -31,7 +32,7 @@ WITH RECURSIVE walk(id, depth, path, kind, confidence, evidence) AS (
     AND (:resolved = 0 OR e.resolved = 1)
     AND (:kinds IS NULL OR instr(:kinds, ',' || e.kind || ',') > 0)
 )
-SELECT w.id, MIN(w.depth) AS depth, w.kind, w.confidence, w.evidence,
+SELECT w.id, MIN(w.depth) AS depth, w.kind, w.confidence, w.evidence, w.candidate_count,
        n.name, n.qualified_name, n.kind AS node_kind, n.start_line, f.path AS file
 FROM walk w JOIN nodes n ON n.id = w.id JOIN files f ON f.id = n.file_id
 WHERE w.depth > 0
@@ -53,10 +54,14 @@ class Reached:
     kind: str
     line: int
     path: str
-    # What the edge was resolved by: same_file, import, package, global, scip.
-    # A caller reading confidence alone cannot tell a same-file call from a
-    # repo-global guess that happens to have one candidate.
+    # What the edge was resolved by: same_file, import, package, global,
+    # external, scip. A caller reading confidence alone cannot tell a same-file
+    # call from a repo-global guess that happens to have one candidate.
     evidence: str = ""
+    # How many definitions the reference matched. This is what ambiguity means,
+    # and confidence is not: the same-file tier scores 0.95 with one candidate,
+    # so a confidence test reports an exact edge as a guess.
+    candidate_count: int = 1
 
 
 def _columns(direction: str) -> tuple[str, str]:
@@ -102,6 +107,7 @@ def walk(
             line=row["start_line"],
             path=row["file"],
             evidence=row["evidence"],
+            candidate_count=row["candidate_count"],
         )
         for row in rows
     ]

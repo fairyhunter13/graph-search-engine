@@ -180,6 +180,7 @@ for the callers of a known function and check them by hand.
 | D-20 | Continuous integration, the gate a skipped hook still meets | done | .github/workflows/ci.yml, tests/test_ci.py | T-112..T-115 |
 | D-21 | The receipt is an artifact of the run, never a literal | done | src/graphrag/config.py, tests/test_resolve.py, tests/test_attester.py, scripts/two_engine_measure.py | T-111, T-123 |
 | D-22 | The re-export pass, so a name resolves through the package initialiser | planned | src/graphrag/symtab.py, src/graphrag/resolve.py, tests/test_resolve.py | T-116 |
+| D-23 | Ambiguity is the candidate count, and the count reaches the caller | done | src/graphrag/traverse.py, src/graphrag/query.py, src/graphrag/tools.py, src/graphrag/store.py, tests/test_tools.py | T-124 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the

@@ -97,6 +97,15 @@ NODE_KINDS: frozenset[str] = frozenset(
     {"file", "module", "class", "function", "method", "field", "constant", "external"}
 )
 
+# What resolved an edge, closed. `resolve.py` produces the first five, the
+# containment and external writers in `indexwrite.py` produce `external`, and
+# the overlay in `scip/ingest.py` produces `scip`. Three modules write this
+# column and none of them read the others, so the set is graded against a real
+# index rather than trusted.
+EVIDENCE: frozenset[str] = frozenset(
+    {"same_class", "same_file", "import", "package", "global", "external", "scip"}
+)
+
 
 def connect(path: Path | str, *, create: bool = True) -> sqlite3.Connection:
     """Open one project's graph.

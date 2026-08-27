@@ -12,7 +12,7 @@ import asyncio
 
 import pytest
 
-from graphrag import cli, index, tools
+from graphrag import cli, config, index, store, tools
 
 CYCLE = {
     "a.py": "from b import beta\n\n\ndef alpha():\n    return beta()\n",
@@ -64,8 +64,32 @@ def test_neighbors_carries_confidence(indexed):
     assert answer["results"], answer
     for row in answer["results"]:
         assert 0.0 < row["confidence"] <= 1.0
-        assert row["evidence"] in ("same_file", "import", "package", "global", "scip")
+        assert row["evidence"] in store.EVIDENCE
+        # A caller that reads confidence alone cannot tell one candidate from
+        # ten, so the count travels with the row.
+        assert row["candidate_count"] >= 1
     assert answer["capabilities"]["python"]
+
+
+def test_every_evidence_value_a_real_index_writes_is_declared(indexed):
+    """`T-124`: the closed set is graded against a graph, not against itself.
+
+    `store.EVIDENCE` had no reader, and the one list of it in test source named
+    five of the seven values. So `external` shipped in `indexwrite.py` and
+    `same_class` shipped in `resolve.py` with nothing grading either.
+
+    A fixture reaches five of the seven. `scip` needs the overlay and an
+    indexer build, and `package` needs a second directory, so both are asserted
+    as declared rather than as written here.
+    """
+    conn = store.connect(config.index_path(indexed), create=False)
+    try:
+        written = {r["evidence"] for r in conn.execute("SELECT DISTINCT evidence FROM edges")}
+    finally:
+        conn.close()
+    assert written, "an indexed fixture with no edges grades nothing"
+    assert written <= store.EVIDENCE, sorted(written - store.EVIDENCE)
+    assert {"scip", "package"} <= store.EVIDENCE
 
 
 def test_missing_capability_is_reported(repo):

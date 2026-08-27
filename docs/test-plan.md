@@ -237,6 +237,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-121 | The tier raises the resolved share and agrees with the parse | S-06 | D-08 | done | tests/test_scip_ingest.py::test_the_tier_raises_the_resolved_share_and_agrees_with_the_parse |
 | T-122 | The two closed kind sets have a reader | S-01 | D-01 | done | tests/test_store.py::test_the_two_closed_sets_have_a_reader |
 | T-123 | The two-engine receipt agrees with the concept | S-11 | D-21 | done | tests/test_two_engine.py::test_the_two_engine_receipt_agrees_with_the_concept |
+| T-124 | Every evidence value a real index writes is declared | S-01 | D-23 | done | tests/test_tools.py::test_every_evidence_value_a_real_index_writes_is_declared |
 
 # User journeys
 

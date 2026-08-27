@@ -51,6 +51,10 @@ def _rows(reached) -> list[dict[str, Any]]:
             "edge_kind": r.edge_kind,
             "confidence": round(r.confidence, 4),
             "evidence": r.evidence,
+            # The plan says every tool reports this where it opens the ambiguous
+            # rows. Without it a caller reads one edge and cannot tell whether
+            # nine others were dropped beside it.
+            "candidate_count": r.candidate_count,
         }
         for r in reached
     ]
