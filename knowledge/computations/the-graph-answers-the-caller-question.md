@@ -2,7 +2,7 @@
 type: Attested Computation
 resource: scripts/two_engine_measure.py
 title: The graph answers the caller question, and the retrieval index does not
-description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 1.000, against 0.535 lexical and 0.331 semantic. The class split it once carried is closed."
+description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 1.000, against 0.510 lexical and 0.316 semantic. The class split it once carried is closed."
 tags: [routing, measurement, two-engine, attestation]
 status: stable
 runtime: python
@@ -30,7 +30,7 @@ sources:
 The routing rule says coderag names the symbol and graphrag walks the edges from it. No record
 measured that, so the rule was argued and never graded.[^two-engine-run] Ten caller questions over
 this repo are scored at file granularity, against a ground truth read by hand. They give the graph
-F1 1.000, against 0.535 for lexical retrieval and 0.331 for semantic. So the second engine earns
+F1 1.000, against 0.510 for lexical retrieval and 0.316 for semantic. So the second engine earns
 its process.
 
 # The finding one number hides
@@ -57,6 +57,11 @@ caller, and scoping it out prices a correct answer as a false positive.
 
 The test asserts the ordering and the class split, never the digits. A number moves with the corpus,
 and the corpus is the repo under work.
+
+The arm figures also move between runs on one commit. Two runs at `d64e8fc` and its parent gave
+0.535 and 0.510 lexical, 0.331 and 0.316 semantic, with the graph at 1.000 in both. The retrieval
+arms rank by an embedding over a live index, so read them as the scale of the gap and never as a
+constant.
 
 # What the receipt is for
 
@@ -99,4 +104,4 @@ followed, and the reason is evidence. The class fields at 1.000 are what shows t
 and a receipt without them cannot show it. So this concept is amended and the fields stay.
 
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 70 ground-truth caller files, measured 2026-08-27 at commit `e2a20c6`.
+[^two-engine-run]: Ten caller questions over this repo, 70 ground-truth caller files, measured 2026-08-27 at commit `d64e8fc`.

@@ -53,8 +53,12 @@ tree check inside the receipt where a consumer-side grader can reach it.
 `config.receipt_lock` refuses a second concurrent run of one node ID, and `config.write_receipt`
 replaces the file in one step. The two together retire the torn and clobbered receipt.
 
-A serialized run on the committed tree scores 0.535 lexical, 0.331 semantic and 1.000 graph on all
+A serialized run on the committed tree scores 0.510 lexical, 0.316 semantic and 1.000 graph on all
 three classes. Neither arm had regressed, and the graph had not either.
+
+A fourth shape stayed open after that run: a daemon that accepts the connection and never answers
+hung the measurement rather than failing it. `SEARCH_TIMEOUT_S` bounds each search, and a timeout
+raises the way an error exit does.
 
 # What would have to be true to revisit this
 

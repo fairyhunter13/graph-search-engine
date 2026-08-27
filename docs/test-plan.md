@@ -334,6 +334,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-213 | A second concurrent run refuses rather than clobbers | S-11 | D-33 | done | tests/test_attester.py::test_a_second_concurrent_run_refuses_rather_than_clobbers |
 | T-214 | A further save restarts the quiet window | S-09 | D-32 | done | tests/test_watch.py::test_a_further_save_restarts_the_quiet_window |
 | T-215 | An explicit call pulls a waiting job forward | S-09 | D-32 | done | tests/test_watch.py::test_an_explicit_call_pulls_a_waiting_job_forward |
+| T-216 | A hung search raises rather than scoring zero | S-11 | D-33 | done | tests/test_two_engine.py::test_a_hung_search_raises_rather_than_scoring_zero |
 
 # User journeys
 
@@ -546,8 +547,12 @@ The same receipt carried `f1_graph_distinctive: 0.987` from a run whose `distinc
 == 1.0` assertion had failed, because the receipt is written before the assertions. `T-212` is what
 stops that artifact grading as a measurement.
 
-A serialized run on the committed tree settles it: 0.535 lexical and 0.331 semantic, and neither is
+A serialized run on the committed tree settles it: 0.510 lexical and 0.316 semantic, and neither is
 zero. The concept now carries those figures, and its footnote names the run.
+
+`T-216` closes the last shape of the same hole. An error exit now raises, and so does unparsable
+output, but a daemon that accepts the connection and never answers hung the measurement instead.
+`SEARCH_TIMEOUT_S` bounds each search, and the timeout raises the way the other two do.
 
 The graph figure moved for a reason the `commit_sha` field hid. The test reindexes the working tree,
 and an uncommitted `extract.py` had gained a call to `grammars.capabilities`. The TRUTH row for that

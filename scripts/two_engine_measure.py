@@ -39,6 +39,10 @@ ROOT = Path(__file__).resolve().parents[1]
 DISTINCTIVE = "distinctive"
 COLLIDES = "collides"
 
+# A hung daemon is the case an error exit does not cover. Twenty searches run
+# under one measurement, and the whole of it takes about two minutes.
+SEARCH_TIMEOUT_S = 60.0
+
 # What a receipt says before the assertions have run over it.
 UNVERIFIED = "unverified"
 PASSED = "pass"
@@ -216,12 +220,16 @@ def coderag_files(question: str, mode: str) -> set[str]:
     handshake, and a script that posts JSON-RPC sends no workspace roots. The
     CLI takes the root as an argument and runs the same search behind it.
     """
-    run = subprocess.run(
-        ["coderag", "search", question, str(ROOT), "-k", "10", "--mode", mode],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        run = subprocess.run(
+            ["coderag", "search", question, str(ROOT), "-k", "10", "--mode", mode],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=SEARCH_TIMEOUT_S,
+        )
+    except subprocess.TimeoutExpired as err:
+        raise RuntimeError(f"`coderag search` answered nothing in {SEARCH_TIMEOUT_S}s") from err
     # An arm that cannot be reached scores zero and beats nothing, so a silent
     # empty set here is the friendliest possible opponent for the graph.
     if run.returncode != 0:

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -49,6 +50,17 @@ def _receipt_on_disk() -> dict:
     if not path.is_file():
         pytest.skip(f"no receipt at {path}: run the `engines` case first")
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_a_hung_search_raises_rather_than_scoring_zero(monkeypatch):
+    """T-216. A daemon that never answers is the case an error exit misses."""
+
+    def hang(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd=args[0], timeout=kwargs["timeout"])
+
+    monkeypatch.setattr(measure_mod.subprocess, "run", hang)
+    with pytest.raises(RuntimeError, match="answered nothing"):
+        measure_mod.coderag_files("index", "lexical")
 
 
 @pytest.mark.engines
