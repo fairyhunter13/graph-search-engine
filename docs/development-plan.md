@@ -166,8 +166,8 @@ for the callers of a known function and check them by hand.
 | D-06 | MCP tools, daemon, CLI, stdio bridge | done | src/graphrag/tools.py, src/graphrag/server.py, src/graphrag/cli.py, src/graphrag/bridge.py, tests/test_tools.py, tests/test_server.py | T-12, T-13, T-14, T-15, T-21, T-61, T-62, T-63, T-64 |
 | D-07 | Watcher, health, progress, ledgers | done | src/graphrag/watch.py, src/graphrag/health.py, src/graphrag/progress.py, src/graphrag/ledger.py, src/graphrag/trace.py, tests/test_watch.py, tests/test_health.py | T-16, T-17, T-66..T-76 |
 | D-08 | SCIP overlay behind the coverage guard | planned | (deferred, no code this pass) | T-18, T-19 |
-| D-09 | Fleet registration across five profiles | planned | (ccw) internal/policy/shared.go | T-20, T-21 |
-| D-10 | Two-engine gate and the routing rule | planned | (ccw) internal/hooks/treesearch.go | T-22, T-23, T-24, T-25 |
+| D-09 | Fleet registration across five profiles | done | (ccw) internal/policy/shared.go | T-20, T-21 |
+| D-10 | Two-engine gate and the routing rule | done | (ccw) internal/hooks/treesearch.go | T-22, T-23, T-24, T-25 |
 | D-11 | systemd units and reach enrolment | done | src/graphrag/systemd.py, src/graphrag/reach.py, tests/test_systemd.py | T-26, T-27, T-85..T-89 |
 | D-12 | The OKF profile record and bundle root | done | knowledge/index.md, knowledge/log.md, knowledge/policies, tests/test_bundle.py | T-28, T-38, T-39, T-40 |
 | D-13 | The first working attester | done | knowledge/attesters, knowledge/computations, knowledge/skills, tests/test_attester.py | T-29, T-30, T-41, T-42, T-43, T-44 |
@@ -325,3 +325,32 @@ answer a caller question. A gap met as silence is the failure this engine exists
 `graphrag doctor` runs under `SuccessExitStatus=0 1`, because a doctor that finds a problem is a
 finding and not a unit failure. Treating exit 1 as a failure pages for the report rather than the
 fault.
+
+
+# What `D-09` and `D-10` settled, 2026-08-27
+
+Both rows own paths in the `claude-code-workflows` checkout, so the gate skips their anchors and
+this section is the record instead. The engine was proven before the name was registered, which is
+the order the plan fixes: one commit per repo, `ccw` last.
+
+The roster held one element until today. `RequiredMCPServers` now names `graphrag` on 8766 beside
+`coderag` on 8765, and the merge needed no change for a second name. The port was checked free and
+checked for a tombstone before the line landed, because the first URL a name is seeded with is
+permanent and only a tombstone round trip undoes it. The daemon answered on 8766 before the roster
+line was written.
+
+Every risk lived in code shaped around one server, and each piece is now a set or a parameter.
+`ServerRegistered` takes the name. `Guard.Project` resolves against either registry, so a repo
+enrolled only here is gated rather than exempt. The `PostToolUse` matcher covers both tools.
+
+`searchFailed` learned the structural empty shapes, `nodes: []` and `edges: []`. Without that a
+graph miss reads as a successful retrieval and buys the walk marker, which is the exact failure the
+`PostToolUse` move was made to prevent.
+
+One thing the gate could not share is the denial text. The structural registry carries no chunk
+count, so the sentence that quotes one now branches on which registry answered. A gate that states a
+number the engine never held is the failure it exists to stop, printed by the gate itself.
+
+The gate accepts either engine and the order is doctrine. Four doctrine lines carry it, and each
+names a capability boundary rather than a second claim to be called first. The recorded contest says
+three escalations of "call this first" all lost to grep.

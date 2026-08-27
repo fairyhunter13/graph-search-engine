@@ -114,12 +114,12 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-17 | Health pages on the second failure only | S-09 | D-07 | done | tests/test_health.py::test_two_sample_rule |
 | T-18 | Two indexers agree on a non-ASCII range | S-06 | D-08 | planned | tests/test_scip_offsets.py::test_non_ascii_ranges_agree |
 | T-19 | A collapsed SCIP index is refused | S-06 | D-08 | planned | tests/test_scip_guard.py::test_collapsed_index_is_refused |
-| T-20 | Five profiles carry the graphrag entry | S-10 | D-09 | planned | tests/test_fleet.py::test_five_profiles_carry_the_entry |
+| T-20 | Five profiles carry the graphrag entry | S-10 | D-09 | done | (ccw) internal/hooks/mcpsync_test.go::TestFiveProfilesCarryBothEngines |
 | T-21 | The port is fixed and a collision errors | S-10 | D-06, D-09 | done | tests/test_server.py::test_port_collision_names_the_port |
-| T-22 | Either engine lifts the walk denial | S-10 | D-10 | planned | tests/test_gate.py::test_either_engine_lifts_the_denial |
-| T-23 | An empty graph answer buys no marker | S-10 | D-10 | planned | tests/test_gate.py::test_empty_answer_buys_no_marker |
-| T-24 | A graph-only project is still gated | S-10 | D-10 | planned | tests/test_gate.py::test_graph_only_project_is_gated |
-| T-25 | Plan mode still escapes the gate | S-10 | D-10 | planned | tests/test_gate.py::test_plan_mode_escapes |
+| T-22 | Either engine lifts the walk denial | S-10 | D-10 | done | (ccw) internal/hooks/twoengines_internal_test.go::TestEitherEngineLiftsTheWalkDenial |
+| T-23 | An empty graph answer buys no marker | S-10 | D-10 | done | (ccw) internal/hooks/twoengines_internal_test.go::TestAnEmptyGraphAnswerBuysNoMarker |
+| T-24 | A graph-only project is still gated | S-10 | D-10 | done | (ccw) internal/hooks/twoengines_internal_test.go::TestAGraphOnlyProjectIsStillGated |
+| T-25 | Plan mode still escapes the gate | S-10 | D-10 | done | (ccw) internal/hooks/twoengines_internal_test.go::TestPlanModeEscapesForEitherEngine |
 | T-26 | The unit reports started after the store opens | S-09 | D-11 | done | tests/test_systemd.py::test_notify_after_store_open |
 | T-27 | The reach hook enrols the session root | S-10 | D-11 | done | tests/test_systemd.py::test_reach_registers_the_root |
 | T-28 | The bundle root declares its OKF version | S-11 | D-12 | done | tests/test_bundle.py::test_root_index_declares_okf_version |

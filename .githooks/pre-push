@@ -69,6 +69,10 @@ if [[ -f "$DEV" && -f "$TST" ]]; then
     sort -o "$COLLECTED" "$COLLECTED"
     while IFS= read -r node; do
       [ -n "$node" ] || continue
+      # A (ccw) row names a test in another checkout, the same limit arm 4b records for
+      # paths. This runner cannot collect it, and reporting it would train the reader to
+      # ignore the arm.
+      case "$node" in '(ccw)'*) continue ;; esac
       grep -qF "$node" "$COLLECTED" || { echo "[pre-push] uncollected test: $node"; findings=1; }
     done < <(awk -F'|' '/^\| T-[0-9]/ {print $7}' "$TST" | tr -d ' ')
   else
