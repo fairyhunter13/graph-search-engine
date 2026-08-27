@@ -7,6 +7,8 @@ title: graphrag knowledge history
 
 ## 2026-08-27
 
+- **Update**: `computations/the-graph-answers-the-caller-question.md` - re-measured at commit `e76487a`. `T-124` added two real callers in `tests/test_tools.py` and the hand-read truth did not have them, so `T-123` went red. The truth is repaired and the graph holds F1 0.879 with the `distinctive` class back at 1.000.
+- **Creation**: `defects/the-overlay-doubled-its-own-edges.md` - a second SCIP ingest inserted every implements edge again. The delete keys on `producer`, which three modules wrote and none read.
 - **Update**: `defects/the-attester-graded-a-literal.md` - the second computation carried the same literal receipt and the audit found it. `scripts/two_engine_measure.py` now writes the receipt, and `T-123` grades the file against the prose.
 - **Update**: `computations/the-graph-answers-the-caller-question.md` - re-measured at commit `2be6825`. The graph moves from F1 0.913 to 0.882 and the `collides` class from 0.831 to 0.769. Only the graph figures are graded: the two retrieval arms move between runs on one tree.
 - **Update**: `skills/run-two-engine-measure.md` - the documented command printed nothing, because `pyproject.toml` already sets `-q`. The run now writes the receipt and the skill reads that file.

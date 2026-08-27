@@ -9,6 +9,7 @@ not reachable through this repo's own reader.
 from __future__ import annotations
 
 import importlib.util
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -81,11 +82,28 @@ def test_a_timestamp_survives_a_round_trip_through_this_reader():
     assert not isinstance(yaml.safe_load(raw)["stale_after"], str)
 
 
+_LINK = re.compile(r"\]\(([^)\s]+)\)")
+
+
 def test_no_link_in_the_bundle_starts_at_the_root():
     """The spec recommends a leading slash and GitHub renders it as a 404."""
     for path in sorted(BUNDLE.rglob("*.md")):
         for line in path.read_text(encoding="utf-8").splitlines():
             assert "](/" not in line, f"{path}: {line}"
+
+
+def test_every_relative_link_in_the_bundle_resolves():
+    """The other half. A link with no slash is well formed and still dead.
+
+    Checked from the file's own directory, because that is what a relative link
+    means and what GitHub does with it.
+    """
+    for path in sorted(BUNDLE.rglob("*.md")):
+        for target in _LINK.findall(path.read_text(encoding="utf-8")):
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            landing = (path.parent / target.split("#")[0]).resolve()
+            assert landing.exists(), f"{path}: {target}"
 
 
 def _okfrules(args: list[str], target: Path) -> subprocess.CompletedProcess[str]:
@@ -134,8 +152,13 @@ def test_offset_free_stale_after_is_rejected(tmp_path):
     assert plain.returncode == 0, plain.stdout + plain.stderr
 
 
-def test_dropped_receipt_field_fails():
-    """A receipt field the attester never reads is a claim nothing checks."""
+def test_dropped_receipt_field_fails(tmp_path):
+    """A receipt field the attester never reads is a claim nothing checks.
+
+    The break lands on a copy. An earlier version edited the tracked concept and
+    restored it in a `finally`, which leaves the working tree dirty the moment
+    the run is killed between the two writes.
+    """
     contract = ROOT / "scripts" / "check_attester_contract.py"
     spec = importlib.util.spec_from_file_location("check_attester_contract", contract)
     assert spec is not None and spec.loader is not None
@@ -144,14 +167,13 @@ def test_dropped_receipt_field_fails():
 
     assert module.check(BUNDLE) == []
 
-    concept = BUNDLE / "computations" / "import-scoping-collapses-the-candidate-set.md"
+    bundle = tmp_path / "knowledge"
+    shutil.copytree(BUNDLE, bundle)
+    concept = bundle / "computations" / "import-scoping-collapses-the-candidate-set.md"
     text = concept.read_text(encoding="utf-8")
     broken = text.replace("commit_sha,", "commit_sha, wall_clock_s,")
     assert broken != text
     concept.write_text(broken, encoding="utf-8")
-    try:
-        findings = module.check(BUNDLE)
-    finally:
-        concept.write_text(text, encoding="utf-8")
+    findings = module.check(bundle)
     assert len(findings) == 1
     assert "wall_clock_s" in findings[0]

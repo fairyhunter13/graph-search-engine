@@ -2,7 +2,7 @@
 type: Attested Computation
 resource: scripts/two_engine_measure.py
 title: The graph answers the caller question, and only exactly where the name is distinctive
-description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 0.882, against 0.375 lexical and 0.338 semantic. The graph is exact only where the name is distinctive."
+description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 0.879, against 0.470 lexical and 0.346 semantic. The graph is exact only where the name is distinctive."
 tags: [routing, measurement, two-engine, attestation]
 status: stable
 runtime: python
@@ -29,14 +29,14 @@ sources:
 The routing rule says coderag names the symbol and graphrag walks the edges from it. No record
 measured that, so the rule was argued and never graded.[^two-engine-run] Ten caller questions over
 this repo are scored at file granularity, against a ground truth read by hand. They give the graph
-F1 0.882, against 0.375 for lexical retrieval and 0.338 for semantic. So the second engine earns
+F1 0.879, against 0.470 for lexical retrieval and 0.346 for semantic. So the second engine earns
 its process.
 
 # The finding one number hides
 
 Every question carries a class, and the classes still disagree. Where a name is called only through
 the module that defines it, the graph scores 1.000 on precision and 1.000 on recall. Where the tree
-also carries the name as an attribute of something else, precision is 0.625 and F1 is 0.769.
+also carries the name as an attribute of something else, precision is 0.620 and F1 is 0.765.
 
 The first run of this measurement put that second figure at 0.412. The cause was in `extract.py`:
 a reference kept the attribute name and discarded the receiver, so `registry.load()` and
@@ -82,4 +82,4 @@ which no syntactic rule places, and which this engine now refuses instead of gue
 rest needs the type of the receiver, and that is what the SCIP overlay in `D-08` reads.
 
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 67 ground-truth caller files, measured 2026-08-27 at commit `2be6825`.
+[^two-engine-run]: Ten caller questions over this repo, 69 ground-truth caller files, measured 2026-08-27 at commit `e76487a`.

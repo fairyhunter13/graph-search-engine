@@ -140,6 +140,36 @@ def test_an_implementation_relationship_becomes_an_edge(repo, tmp_path):
     conn.close()
 
 
+def test_a_second_ingest_replaces_its_own_implements_edges(repo, tmp_path):
+    """T-125. The overlay is re-run on every re-index, so it has to be idempotent.
+
+    A call edge is keyed by its call site byte and replaces itself. An implements
+    edge is keyed by nothing, so the second run doubled every one of them and the
+    graph reported one interface twice.
+    """
+    root, conn = _store(repo, {"a.py": PAIR})
+    path = tmp_path / "index.scip"
+    document = w.document(
+        "a.py",
+        occurrences=[
+            w.occurrence(BASE, roles=DEFINITION, span=(0, 6, 0, 10)),
+            w.occurrence(CHILD, roles=DEFINITION, span=(5, 6, 5, 11)),
+        ],
+        symbols=[
+            w.symbol_info(BASE),
+            w.symbol_info(CHILD, relationships=[w.relationship(BASE, implementation=True)]),
+        ],
+    )
+    w.write(path, "scip-python", [document])
+
+    assert ingest.ingest(conn, path, root).implements == 1
+    assert ingest.ingest(conn, path, root).implements == 1
+    rows = conn.execute("SELECT * FROM edges WHERE kind = 'IMPLEMENTS'").fetchall()
+    assert len(rows) == 1
+    assert rows[0]["producer"] == "scip-python"
+    conn.close()
+
+
 def test_a_relationship_that_is_not_an_implementation_is_ignored(repo, tmp_path):
     """The field is one flag among four, so a reference relationship earns nothing."""
     root, conn = _store(repo, {"a.py": PAIR})

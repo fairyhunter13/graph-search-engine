@@ -9,3 +9,6 @@
   the difference.
 * [The attester graded a literal](the-attester-graded-a-literal.md) - `D-19` moved the number
   in one of seven places, and the receipt the attester grades was a literal in test source.
+* [The overlay doubled its own edges](the-overlay-doubled-its-own-edges.md) - A call edge is keyed
+  by its call site byte and replaces itself. An implements edge was keyed by nothing, so a second
+  ingest inserted every one of them again.

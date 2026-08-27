@@ -218,6 +218,11 @@ def ingest(conn: sqlite3.Connection, path: Path | str, root: Path | str) -> Inge
         if dst is not None and _rewrite_call(conn, file_id, site, dst, meta.tool_name):
             report.calls += 1
 
+    # This producer's own implements edges, dropped before they are written again.
+    # A call edge is keyed by its byte and replaces itself; an implements edge is
+    # keyed by nothing, so a second ingest of one index doubled every one of them.
+    conn.execute("DELETE FROM edges WHERE kind = 'IMPLEMENTS' AND producer = ?", (meta.tool_name,))
+
     for child, parent in implements:
         src, dst = nodes.get(child), nodes.get(parent)
         if src is None or dst is None or src == dst:

@@ -169,7 +169,7 @@ for the callers of a known function and check them by hand.
 | D-09 | Fleet registration across five profiles | done | (ccw) internal/policy/shared.go | T-20, T-21 |
 | D-10 | Two-engine gate and the routing rule | done | (ccw) internal/hooks/treesearch.go | T-22, T-23, T-24, T-25 |
 | D-11 | systemd units and reach enrolment | done | src/graphrag/systemd.py, src/graphrag/reach.py, tests/test_systemd.py, (ccw) internal/hooks/graphragreach.go | T-26, T-27, T-85..T-89, T-117, T-118, T-119, T-120 |
-| D-12 | The OKF profile record and bundle root | done | knowledge/index.md, knowledge/log.md, knowledge/policies, tests/test_bundle.py | T-28, T-38, T-39, T-40 |
+| D-12 | The OKF profile record and bundle root | done | knowledge/index.md, knowledge/log.md, knowledge/policies, tests/test_bundle.py | T-28, T-38, T-39, T-40, T-126 |
 | D-13 | The first working attester | done | knowledge/attesters, knowledge/computations, knowledge/skills, tests/test_attester.py | T-29, T-30, T-41, T-42, T-43, T-44 |
 | D-14 | Gate lines and the attester contract check | done | .githooks/pre-push, scripts/check_attester_contract.py, knowledge/constraints, knowledge/decisions | T-31, T-32 |
 | D-15 | Source roots, so a dotted import matches a path | done | src/graphrag/symtab.py, tests/test_resolve.py | T-59 |
@@ -181,6 +181,8 @@ for the callers of a known function and check them by hand.
 | D-21 | The receipt is an artifact of the run, never a literal | done | src/graphrag/config.py, tests/test_resolve.py, tests/test_attester.py, scripts/two_engine_measure.py | T-111, T-123 |
 | D-22 | The re-export pass, so a name resolves through the package initialiser | planned | src/graphrag/symtab.py, src/graphrag/resolve.py, tests/test_resolve.py | T-116 |
 | D-23 | Ambiguity is the candidate count, and the count reaches the caller | done | src/graphrag/traverse.py, src/graphrag/query.py, src/graphrag/tools.py, src/graphrag/store.py, tests/test_tools.py | T-124 |
+| D-24 | The overlay replaces its own edges, so a re-ingest is idempotent | done | src/graphrag/scip/ingest.py, tests/test_scip_ingest.py | T-125 |
+| D-25 | An import query for each of the 36 remaining `tags.scm` languages | dropped | src/graphrag/queries/imports | T-11 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -207,6 +209,20 @@ unreachable.
 The tier ships with the coverage guard from day one, and `T-19` is the case that proves the guard
 refuses before it writes. Exit status proves nothing here: `scip-python` retries a failed analysis
 100 times, drops the file, writes the index and exits 0.
+
+`D-24` gives the `producer` column its first reader. Part A asked for three columns on every edge
+row: `producer`, `producer_version` and the source commit SHA. Their stated purpose was a scoped
+delete plus insert per language. Only the delete is load-bearing, and it keys on the producer alone.
+
+So `producer_version` and the commit SHA are **dropped**. Neither has a reader. A pin move rebuilds
+the whole store through `store.incompatible`, and a re-ingest of one index replaces that producer's
+rows whatever version wrote them. Two columns nothing queries are two columns to keep true.
+
+`D-25` is the reason `D-05` is `done` at 32 languages. The design asked for an import query for all
+68, and wave 4 is the half that never landed. It is `dropped` and not `planned`, because the census
+that set the waves put every remaining language under 300 tracked files here. A gap the capability
+report names costs a caller less than a query nobody grades. A row is added the day one of those
+languages carries real work.
 
 `D-05` ends with 32 of the 68 `tags.scm` languages carrying an import query. `scala` is a declared
 gap and not an oversight. Its grammar spells `import a.b.c` as three sibling `path:` fields, and the
@@ -242,7 +258,7 @@ counts are tracked files by extension across every clone under `~/git`.
 wave 1  php, javascript, typescript, tsx, python      D-02
 wave 2  java, go, rust, swift                         D-05
 wave 3  kotlin, scala, ruby, c, cpp, csharp           D-05
-wave 4  the remaining tags.scm languages              D-05
+wave 4  the remaining tags.scm languages              D-25, dropped
 ```
 
 `php` leads on 35657 files, ahead of `js` at 31024 and `ts` at 21816. It also carries a full

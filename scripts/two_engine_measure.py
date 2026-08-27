@@ -81,6 +81,7 @@ TRUTH: list[dict] = [
             "tests/test_scip_guard.py",
             "tests/test_scip_ingest.py",
             "tests/test_scip_run.py",
+            "tests/test_tools.py",
         ],
     },
     {
@@ -158,6 +159,7 @@ TRUTH: list[dict] = [
             "tests/test_scip_guard.py",
             "tests/test_scip_ingest.py",
             "tests/test_scip_run.py",
+            "tests/test_tools.py",
         ],
     },
     {

@@ -6,5 +6,5 @@
   corpus, and import scoping gives 1.24.
 * [The graph answers the caller question, and only exactly where the name is
   distinctive](the-graph-answers-the-caller-question.md) - The measurement that decides whether a
-  second engine earns its process. Over ten caller questions the graph scores F1 0.882, against
-  0.375 lexical and 0.338 semantic. The graph is exact only where the name is distinctive.
+  second engine earns its process. Over ten caller questions the graph scores F1 0.879, against
+  0.470 lexical and 0.346 semantic. The graph is exact only where the name is distinctive.
