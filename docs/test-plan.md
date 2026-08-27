@@ -49,7 +49,7 @@ Expected: the answer is bounded, and no node is counted twice.
 **S-05 Extraction stays fast.**
 Precondition: a fixture corpus and one core.
 Action: parsing and the tags query run over it.
-Expected: throughput stays above about 200 files per second.
+Expected: throughput stays above the floor, and the floor names the measurement that set it.
 
 **S-06 SCIP upgrades and never contradicts.**
 Precondition: a typed project, indexed with the overlay and without it.
@@ -76,6 +76,11 @@ Precondition: a fresh session in a repo the engine holds.
 Action: a structural question arrives.
 Expected: the graph tool is called, and that call lifts the tree-walk denial.
 
+**S-12 The index pass follows the content hash.**
+Precondition: a repo indexed once.
+Action: the pass runs again, unchanged and then after one edit.
+Expected: the unchanged pass parses nothing, and the edited one parses the tree.
+
 **S-11 The bundle carries its own guarantees.**
 Precondition: a concept declaring an attested computation.
 Action: the pre-push gate runs.
@@ -93,8 +98,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-06 | The capability counts hold under the pin | S-03 | D-02 | done | tests/test_grammars.py::test_capability_counts_under_the_pin |
 | T-07 | Import scoping beats global matching | S-02 | D-03 | done | tests/test_resolve.py::test_import_scoping_collapses_candidates |
 | T-08 | An unknown name becomes an external node | S-02 | D-03 | done | tests/test_resolve.py::test_unknown_name_is_external |
-| T-09 | Blast radius terminates on a cycle | S-04 | D-04 | planned | tests/test_traverse.py::test_cycle_terminates_without_duplicates |
-| T-10 | Parse and query stay above the floor | S-05 | D-04 | planned | tests/test_perf.py::test_extraction_throughput_floor |
+| T-09 | Blast radius terminates on a cycle | S-04 | D-04 | done | tests/test_index.py::test_blast_radius_terminates_over_the_cycle |
+| T-10 | Parse and query stay above the floor | S-05 | D-04 | done | tests/test_perf.py::test_extraction_throughput_floor |
 | T-11 | Every import query compiles and extracts | S-01 | D-05 | planned | tests/test_import_queries.py::test_each_language_extracts_an_import |
 | T-12 | The four tool schemas are conformant | S-08 | D-06 | planned | tests/test_tools.py::test_tool_schemas_are_conformant |
 | T-13 | Neighbors carries confidence and evidence | S-08 | D-06 | planned | tests/test_tools.py::test_neighbors_carries_confidence |
@@ -129,6 +134,17 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-42 | A missing receipt field is named | S-11 | D-13 | done | tests/test_attester.py::test_a_missing_receipt_field_is_named_rather_than_skipped |
 | T-43 | A claim no receipt field carries is refused | S-11 | D-13 | done | tests/test_attester.py::test_a_claim_no_receipt_field_carries_is_refused |
 | T-44 | An empty claim attests nothing | S-11 | D-13 | done | tests/test_attester.py::test_an_empty_claim_attests_nothing_and_a_partial_one_attests_itself |
+| T-45 | A pass writes nodes and edges | S-12 | D-04 | done | tests/test_index.py::test_a_pass_writes_nodes_and_edges |
+| T-46 | An unchanged tree is not reparsed | S-12 | D-04 | done | tests/test_index.py::test_an_unchanged_tree_is_not_reparsed |
+| T-47 | A changed file makes the pass run | S-12 | D-04 | done | tests/test_index.py::test_a_changed_file_makes_the_pass_run |
+| T-48 | The queue drops a queued job and requeues a running one | S-12 | D-04 | done | tests/test_index.py::test_the_queue_drops_a_queued_job_and_requeues_a_running_one |
+| T-49 | Callers of a function in the cycle | S-04 | D-04 | done | tests/test_index.py::test_callers_of_a_function_in_the_cycle |
+| T-50 | A depth over the ceiling is refused | S-04 | D-04 | done | tests/test_index.py::test_a_depth_over_the_ceiling_is_refused |
+| T-51 | An unknown question names the valid set | S-03 | D-04 | done | tests/test_index.py::test_an_unknown_question_names_the_valid_set |
+| T-52 | An unknown symbol is a gap and not an empty list | S-03 | D-04 | done | tests/test_index.py::test_an_unknown_symbol_is_a_gap_and_not_an_empty_list |
+| T-53 | An unknown direction is refused | S-04 | D-04 | done | tests/test_index.py::test_an_unknown_direction_is_refused |
+| T-54 | find_symbol returns a location and never a body | S-08 | D-04 | done | tests/test_index.py::test_find_symbol_returns_a_location_and_never_a_body |
+| T-55 | The capability report names every language present | S-03 | D-04 | done | tests/test_index.py::test_the_capability_report_names_every_language_in_the_project |
 
 # User journeys
 
@@ -185,7 +201,9 @@ Real, named, and built by `git init` in a temporary directory. No mocks, and no 
   member call, a static call and four import shapes. One directory rather than one per language,
   because the goldens are read side by side and a split hides a difference between them.
 - `tests/fixtures/c_small/` — C, which has no call capture. The gap fixture.
-- `tests/fixtures/cycle/` — three modules importing each other, for `T-09`.
+- The cycle fixture is three modules importing each other, built by the `repo` factory in
+  `tests/test_index.py` rather than by a checked-in directory. It is five lines per module, and
+  a directory on disk would hide them from the case that reads them.
 - `tests/fixtures/unicode/` — a non-ASCII identifier, for the SCIP offset table.
 - The CPython standard library at `v3.12.7`, cloned once into `~/.cache/graphrag/corpus`, for
   `T-07`. The case is marked `corpus` and skips when the clone is absent, so a fresh machine runs

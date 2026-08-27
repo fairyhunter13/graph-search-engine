@@ -9,3 +9,7 @@
   recommends a link that begins with a slash, and the upstream authoring prompt forbids one because
   it breaks GitHub rendering. Both are right about their own concern, and this bundle lives in a git
   repo.
+* [Extraction runs at about 118 files per second, not
+  334](extraction-runs-at-118-files-per-second.md) - The design quoted 334 files per second for a
+  parse plus a tags query. This engine also normalizes captures, attributes scope and runs the
+  import query, so it measures 117.8 on the same corpus and the floor is set from the measurement.

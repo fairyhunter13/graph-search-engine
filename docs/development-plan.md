@@ -161,7 +161,7 @@ for the callers of a known function and check them by hand.
 | D-01 | The floor: config, store, discovery | done | src/graphrag/config.py, src/graphrag/filters.py, src/graphrag/store.py, src/graphrag/discover.py, src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/projcfg.py | T-01, T-02 |
 | D-02 | Grammars, queries, extraction, wave one | done | src/graphrag/grammars.py, src/graphrag/queries.py, src/graphrag/extract.py, src/graphrag/queries/imports, src/graphrag/queries/tags_extra, tests/fixtures/wave1 | T-03, T-04, T-05, T-06, T-33, T-34, T-35 |
 | D-03 | Symbol table and ranked resolution | done | src/graphrag/symtab.py, src/graphrag/resolve.py | T-07, T-08, T-36, T-37 |
-| D-04 | Index loop, traversal, query surface | planned | src/graphrag/index.py, src/graphrag/indexwrite.py, src/graphrag/traverse.py, src/graphrag/query.py | T-09, T-10 |
+| D-04 | Index loop, traversal, query surface | done | src/graphrag/index.py, src/graphrag/indexwrite.py, src/graphrag/traverse.py, src/graphrag/query.py, tests/test_index.py, tests/test_perf.py | T-09, T-10, T-45..T-55 |
 | D-05 | Import queries, the remaining waves | planned | src/graphrag/queries/imports | T-11 |
 | D-06 | MCP tools, daemon, CLI, stdio bridge | planned | src/graphrag/tools.py, src/graphrag/server.py, src/graphrag/cli.py, src/graphrag/bridge.py | T-12, T-13, T-14, T-15 |
 | D-07 | Watcher, health, progress, ledgers | planned | src/graphrag/watch.py, src/graphrag/health.py, src/graphrag/progress.py, src/graphrag/ledger.py, src/graphrag/trace.py | T-16, T-17 |
@@ -188,6 +188,13 @@ to move is the ratio. If it drops below 6, the design premise is gone. `D-03` th
 with the observed numbers, and the design is not quietly relaxed.
 
 `D-08` is deferred by decision. The row stays `planned` and no code lands this pass.
+
+`D-04` carries the throughput floor, and the floor moved. The design quoted 334 files per second
+from an upstream figure that timed a parse plus a tags query. This engine also runs capture
+normalization, scope attribution and the import query, so the two count different work. Measured
+2026-08-27 on the same 755 files, single core, three runs: 117.8 files per second and 1.9 MB per
+second. `T-10` therefore sets its floor at 80, which is 32 percent under the measurement. It is a
+regression detector, and the margin absorbs a loaded machine.
 
 ## The language waves
 
