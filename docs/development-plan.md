@@ -183,6 +183,7 @@ for the callers of a known function and check them by hand.
 | D-23 | Ambiguity is the candidate count, and the count reaches the caller | done | src/graphrag/traverse.py, src/graphrag/query.py, src/graphrag/tools.py, src/graphrag/store.py, tests/test_tools.py | T-124 |
 | D-24 | The overlay replaces its own edges, so a re-ingest is idempotent | done | src/graphrag/scip/ingest.py, tests/test_scip_ingest.py | T-125 |
 | D-25 | An import query for each of the 36 remaining `tags.scm` languages | dropped | src/graphrag/queries/imports | T-11 |
+| D-26 | The headless probe, so a selection claim is an artifact of the run | done | scripts/headless_probe.py, tests/test_probe.py | T-127, T-128 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -384,8 +385,9 @@ One thing the gate could not share is the denial text. The structural registry c
 count, so the sentence that quotes one now branches on which registry answered. A gate that states a
 number the engine never held is the failure it exists to stop, printed by the gate itself.
 
-The gate accepts either engine and the order is doctrine. Four doctrine lines carry it, and each
-names a capability boundary rather than a second claim to be called first. The recorded contest says
+The gate accepts either engine and the order is doctrine. Five doctrine lines carry it: the four
+the plan drafted, plus the loader line that names the `ToolSearch` query. Each names a capability
+boundary rather than a second claim to be called first. The recorded contest says
 three escalations of "call this first" all lost to grep.
 
 # What `D-17` settled, 2026-08-27
@@ -508,6 +510,12 @@ bootstraps and the hook maintains, and neither does the other job.
 Seven planning skills were retired here for zero dispatches, so a skill that is never selected is
 the failure this pair had to avoid. The receipt is `partb-skill-dispatch.json`.
 
-One headless session in a scratch Python package, outside the fleet repos, was asked for a test
-plan with no skill named. It read the tree, then dispatched `test-plan` and followed the procedure.
-The trigger is the document, and the body carries a template and a procedure the doctrine does not.
+Two headless sessions ran, in two scratch Python packages outside the fleet repos. Each one asked
+for a test plan and named no skill. The one-file service dispatched nothing, which the skill's own
+refusal condition demands. The six-module package read the tree, dispatched `test-plan`, and
+followed the procedure.
+
+One arm alone reads either way, and that is why there are two. A session that skips the skill on a
+one-file service obeyed it rather than missed it. So the second arm is the whole evidence that the
+skill can earn a dispatch at all. `scripts/headless_probe.py` wrote the receipt out of the
+session's own tool stream, and `T-128` grades it.

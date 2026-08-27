@@ -105,6 +105,11 @@ Precondition: the workflow file, and a run on `main`.
 Action: the suite, the linter and the bundle checks run.
 Expected: every action is pinned to a commit, no step continues on error, and the token reads only.
 
+**S-17 A procedure is selected, not named.**
+Precondition: two scratch packages outside the fleet repos, one earning a plan pair and one not.
+Action: a headless session is asked for a test plan, with no skill named.
+Expected: the earning repo dispatches the skill, and the one-file service does not.
+
 **S-11 The bundle carries its own guarantees.**
 Precondition: a concept declaring an attested computation.
 Action: the pre-push gate runs.
@@ -240,6 +245,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-124 | Every evidence value a real index writes is declared | S-01 | D-23 | done | tests/test_tools.py::test_every_evidence_value_a_real_index_writes_is_declared |
 | T-125 | A second ingest replaces its own implements edges | S-06 | D-24 | done | tests/test_scip_ingest.py::test_a_second_ingest_replaces_its_own_implements_edges |
 | T-126 | Every relative link in the bundle resolves | S-11 | D-12 | done | tests/test_bundle.py::test_every_relative_link_in_the_bundle_resolves |
+| T-127 | The two questions reach the engines in order | S-10 | D-26 | done | tests/test_probe.py::test_the_two_questions_reach_the_engines_in_order |
+| T-128 | The plan skill is selected where it is earned | S-17 | D-26 | done | tests/test_probe.py::test_the_plan_skill_is_selected_where_it_is_earned |
 
 # User journeys
 
@@ -274,6 +281,9 @@ The meaning question called `mcp__coderag__search` in semantic mode, then read t
 The caller question called `mcp__coderag__search` in lexical mode to name the symbol, then
 `mcp__graphrag__neighbors` with `question=callers` to walk the edges from it. That is the
 widen-then-confirm order, selected and not prompted.
+
+`scripts/headless_probe.py` wrote that receipt out of the session's own tool stream, and `T-127`
+grades it. A summary typed afterwards is a claim about the run rather than the run.
 
 **J-08 Measure the two engines against each other.** Run a caller-question set against both. Score
 both against hand-verified edges. Acceptance: the numbers exist and are recorded. Measured

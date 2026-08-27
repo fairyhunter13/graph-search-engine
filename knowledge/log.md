@@ -7,6 +7,7 @@ title: graphrag knowledge history
 
 ## 2026-08-27
 
+- **Update**: `D-26` landed `scripts/headless_probe.py`, so the two selection claims are artifacts of the run rather than self-reports. `J-07` and part B were both graded from a session's own tool stream. The dispatch probe runs two arms, because a session that skips the skill on a one-file service obeyed its refusal condition.
 - **Update**: `computations/the-graph-answers-the-caller-question.md` - re-measured at commit `e76487a`. `T-124` added two real callers in `tests/test_tools.py` and the hand-read truth did not have them, so `T-123` went red. The truth is repaired and the graph holds F1 0.879 with the `distinctive` class back at 1.000.
 - **Creation**: `defects/the-overlay-doubled-its-own-edges.md` - a second SCIP ingest inserted every implements edge again. The delete keys on `producer`, which three modules wrote and none read.
 - **Update**: `defects/the-attester-graded-a-literal.md` - the second computation carried the same literal receipt and the audit found it. `scripts/two_engine_measure.py` now writes the receipt, and `T-123` grades the file against the prose.
