@@ -91,6 +91,12 @@ Precondition: a caller-question set, and a ground truth read by hand over the wh
 Action: the graph engine and both semantic modes answer each question.
 Expected: the graph scores highest overall, and it is exact only where the name is distinctive.
 
+**S-15 The module shape holds.**
+Precondition: the tracked source tree.
+Action: the hygiene suite reads every module.
+Expected: no module passes the line ceiling, carries a home path or imports a sibling from
+`config.py`, `scip` is the only subpackage, and the name ban fails closed where it is unset.
+
 **S-11 The bundle carries its own guarantees.**
 Precondition: a concept declaring an attested computation.
 Action: the pre-push gate runs.
@@ -193,6 +199,14 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-91 | The graph wins the caller question, and only where the name is distinctive | S-14 | D-18 | done | tests/test_two_engine.py::test_the_graph_wins_the_caller_question |
 | T-92 | The two-engine receipt is attested, and a moved number is refused | S-11 | D-18 | done | tests/test_two_engine.py::test_the_two_engine_receipt_is_attested |
 | T-93 | A member call resolves to the module its receiver names | S-14 | D-19 | done | tests/test_resolve.py::test_the_receiver_picks_the_module |
+| T-94 | Enumeration follows git and the shared indexable predicate | S-12 | D-01 | done | tests/test_discover.py::test_git_ignored_files_are_never_enumerated |
+| T-95 | The diff reads content and never mtime | S-12 | D-01 | done | tests/test_discover.py::test_the_diff_ignores_mtime_and_reads_content |
+| T-96 | A home or system directory is refused as a root | S-07 | D-01 | done | tests/test_discover.py::test_a_home_or_system_directory_is_refused_as_a_root |
+| T-97 | The language count is what doctor reports | S-08 | D-01 | done | tests/test_discover.py::test_the_language_count_is_what_doctor_reports |
+| T-98 | Strict config refuses an unknown key, a wrong type and a retired filename | S-07 | D-01 | done | tests/test_projcfg.py::test_an_unknown_key_is_an_error_that_names_the_closest_one |
+| T-99 | Absent config is the defaults, and a valid one round trips | S-07 | D-01 | done | tests/test_projcfg.py::test_no_config_is_the_defaults |
+| T-100 | The name ban fails closed where it is unset | S-15 | D-01 | done | tests/test_hygiene.py::test_the_name_ban_fails_closed_when_it_is_unset |
+| T-101 | No module passes the line ceiling | S-15 | D-01 | done | tests/test_hygiene.py::test_every_module_is_under_the_line_ceiling |
 
 # User journeys
 

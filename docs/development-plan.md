@@ -158,7 +158,7 @@ for the callers of a known function and check them by hand.
 
 | ID | Title | Status | Paths it owns | T-nn covering it |
 |---|---|---|---|---|
-| D-01 | The floor: config, store, discovery | done | src/graphrag/config.py, src/graphrag/filters.py, src/graphrag/store.py, src/graphrag/discover.py, src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/projcfg.py | T-01, T-02 |
+| D-01 | The floor: config, store, discovery | done | src/graphrag/config.py, src/graphrag/filters.py, src/graphrag/store.py, src/graphrag/discover.py, src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/projcfg.py, tests/test_discover.py, tests/test_projcfg.py, tests/test_hygiene.py | T-01, T-02, T-94..T-101 |
 | D-02 | Grammars, queries, extraction, wave one | done | src/graphrag/grammars.py, src/graphrag/queries.py, src/graphrag/extract.py, src/graphrag/queries/imports, src/graphrag/queries/tags_extra, tests/fixtures/wave1 | T-03, T-04, T-05, T-06, T-33, T-34, T-35, T-60 |
 | D-03 | Symbol table and ranked resolution | done | src/graphrag/symtab.py, src/graphrag/resolve.py | T-07, T-08, T-36, T-37 |
 | D-04 | Index loop, traversal, query surface | done | src/graphrag/index.py, src/graphrag/indexwrite.py, src/graphrag/traverse.py, src/graphrag/query.py, tests/test_index.py, tests/test_perf.py | T-09, T-10, T-45..T-55 |
