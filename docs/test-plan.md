@@ -220,11 +220,16 @@ pass is queued for the one project, and the progress file names it.
 
 **J-07 Route two questions unprompted.** From a fresh session, ask a meaning question. Then ask a
 caller question. Acceptance: each reaches the engine the routing rule names, with neither engine
-named in the prompt.
+named in the prompt. Run 2026-08-27, two scripted sessions, neither prompt naming an engine.
+
+The meaning question called `mcp__coderag__search` in semantic mode first. The caller question
+called `mcp__coderag__search` in lexical mode to name the symbol, then `mcp__graphrag__neighbors`
+and `mcp__graphrag__blast_radius` to walk the edges from it. That is the widen-then-confirm order,
+selected and not prompted.
 
 **J-08 Measure the two engines against each other.** Run a caller-question set against both. Score
 both against hand-verified edges. Acceptance: the numbers exist and are recorded. Measured
-2026-08-27 on this repo: graphrag F1 0.743, coderag lexical 0.573, coderag semantic 0.394, over ten
+2026-08-27 on this repo: graphrag F1 0.743, coderag lexical 0.569, coderag semantic 0.383, over ten
 questions. The result graduates to `knowledge/computations/`.
 
 The class split is the part a single number hides, and this journey reports both. A name called only
