@@ -1,0 +1,101 @@
+"""Attest that a measurement receipt came from the sanctioned computation.
+
+Two checks, and they answer different questions. Provenance asks whether the
+computation that ran is the one the concept sanctions. Fidelity asks whether
+the value about to be displayed is the value the receipt carries.
+
+Never uses an LLM. Never makes network calls. Safe to run consumer-side.
+Nothing here raises: every failure path returns a reason and a details map
+naming what was compared.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+# Every field a receipt must carry, and every field this module reads. The
+# `D-14` contract check compares a concept's `executor.receipt` against this
+# tuple, so a receipt field nothing inspects fails the gate rather than riding
+# along unread.
+RECEIPT_FIELDS = (
+    "test_node_id",
+    "corpus_ref",
+    "commit_sha",
+    "mean_global",
+    "mean_scoped",
+    "n_files",
+)
+
+# The fields provenance compares. A commit SHA is recorded and not compared:
+# the sanctioned computation outlives the commit that last ran it.
+PROVENANCE_FIELDS = ("test_node_id", "corpus_ref")
+
+# Two decimal places. A float carries more digits than a measurement means, and
+# comparing the raw repr makes an attester fail on a rounding difference that
+# changes no claim.
+PLACES = 2
+
+
+def _verdict(ok: bool, reason: str | None, **details: Any) -> dict:
+    return {"ok": ok, "reason": reason, "details": details}
+
+
+def _canonical(value: Any) -> Any:
+    """One shape per value, so two spellings of one number compare equal."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return round(float(value), PLACES)
+    return str(value).strip()
+
+
+def attest(*, sanctioned_computation: dict, receipt: dict, claimed_value: dict) -> dict:
+    """Grade one run. Returns `{"ok", "reason", "details"}` and never raises."""
+    missing = [f for f in RECEIPT_FIELDS if f not in receipt]
+    if missing:
+        return _verdict(False, f"the receipt omits {', '.join(missing)}", missing=missing)
+
+    for field in PROVENANCE_FIELDS:
+        if field not in sanctioned_computation:
+            return _verdict(False, f"the sanctioned computation omits {field}", field=field)
+        want = _canonical(sanctioned_computation[field])
+        got = _canonical(receipt[field])
+        if want != got:
+            return _verdict(
+                False,
+                f"the run used {field}={got!r} and the sanctioned computation names {want!r}",
+                field=field,
+                sanctioned=want,
+                ran=got,
+            )
+
+    unknown = [k for k in claimed_value if k not in RECEIPT_FIELDS]
+    if unknown:
+        return _verdict(
+            False,
+            f"the claim names {', '.join(unknown)}, which no receipt field carries",
+            unknown=unknown,
+        )
+    if not claimed_value:
+        return _verdict(False, "the claim is empty, so there is nothing to attest")
+
+    for field, claimed in claimed_value.items():
+        want = _canonical(claimed)
+        got = _canonical(receipt[field])
+        if want != got:
+            return _verdict(
+                False,
+                f"the concept claims {field}={want!r} and the receipt carries {got!r}",
+                field=field,
+                claimed=want,
+                measured=got,
+            )
+
+    return _verdict(
+        True,
+        None,
+        test_node_id=_canonical(receipt["test_node_id"]),
+        corpus_ref=_canonical(receipt["corpus_ref"]),
+        commit_sha=_canonical(receipt["commit_sha"]),
+        attested=sorted(claimed_value),
+    )

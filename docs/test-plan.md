@@ -113,8 +113,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-26 | The unit reports started after the store opens | S-09 | D-11 | planned | tests/test_systemd.py::test_notify_after_store_open |
 | T-27 | The reach hook enrols the session root | S-10 | D-11 | planned | tests/test_systemd.py::test_reach_registers_the_root |
 | T-28 | The bundle root declares its OKF version | S-11 | D-12 | done | tests/test_bundle.py::test_root_index_declares_okf_version |
-| T-29 | The attester accepts a sound receipt | S-11 | D-13 | planned | tests/test_attester.py::test_sound_receipt_is_accepted |
-| T-30 | The attester rejects a changed number | S-11 | D-13 | planned | tests/test_attester.py::test_changed_number_is_rejected |
+| T-29 | The attester accepts a sound receipt | S-11 | D-13 | done | tests/test_attester.py::test_sound_receipt_is_accepted |
+| T-30 | The attester rejects a changed number | S-11 | D-13 | done | tests/test_attester.py::test_changed_number_is_rejected |
 | T-31 | An offset-free stale date is rejected | S-11 | D-14 | planned | tests/test_bundle.py::test_offset_free_stale_after_is_rejected |
 | T-32 | A dropped receipt field fails the check | S-11 | D-14 | planned | tests/test_bundle.py::test_dropped_receipt_field_fails |
 | T-33 | TypeScript and PHP golden counts hold | S-01 | D-02 | done | tests/test_extract.py::test_typescript_golden_symbol_counts |
@@ -125,6 +125,10 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-38 | Every concept carries the families this repo writes | S-11 | D-12 | done | tests/test_bundle.py::test_every_concept_carries_the_families_this_repo_writes |
 | T-39 | A timestamp survives a round trip through this reader | S-11 | D-12 | done | tests/test_bundle.py::test_a_timestamp_survives_a_round_trip_through_this_reader |
 | T-40 | No link in the bundle starts at the root | S-11 | D-12 | done | tests/test_bundle.py::test_no_link_in_the_bundle_starts_at_the_root |
+| T-41 | A run against another corpus is rejected | S-11 | D-13 | done | tests/test_attester.py::test_a_run_against_another_corpus_is_rejected |
+| T-42 | A missing receipt field is named | S-11 | D-13 | done | tests/test_attester.py::test_a_missing_receipt_field_is_named_rather_than_skipped |
+| T-43 | A claim no receipt field carries is refused | S-11 | D-13 | done | tests/test_attester.py::test_a_claim_no_receipt_field_carries_is_refused |
+| T-44 | An empty claim attests nothing | S-11 | D-13 | done | tests/test_attester.py::test_an_empty_claim_attests_nothing_and_a_partial_one_attests_itself |
 
 # User journeys
 

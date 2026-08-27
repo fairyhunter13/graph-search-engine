@@ -170,7 +170,7 @@ for the callers of a known function and check them by hand.
 | D-10 | Two-engine gate and the routing rule | planned | (ccw) internal/hooks/treesearch.go | T-22, T-23, T-24, T-25 |
 | D-11 | systemd units and reach enrolment | planned | src/graphrag/systemd.py | T-26, T-27 |
 | D-12 | The OKF profile record and bundle root | done | knowledge/index.md, knowledge/log.md, knowledge/policies, tests/test_bundle.py | T-28, T-38, T-39, T-40 |
-| D-13 | The first working attester | planned | knowledge/attesters, knowledge/computations, knowledge/skills | T-29, T-30 |
+| D-13 | The first working attester | done | knowledge/attesters, knowledge/computations, knowledge/skills, tests/test_attester.py | T-29, T-30, T-41, T-42, T-43, T-44 |
 | D-14 | Gate lines and the attester contract check | planned | .githooks/pre-push | T-31, T-32 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
