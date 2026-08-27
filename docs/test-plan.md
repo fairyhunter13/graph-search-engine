@@ -327,19 +327,39 @@ Real, named, and built by `git init` in a temporary directory. No mocks, and no 
 Every `T-nn` names exactly one `S-nn` and at least one `D-nn`. Every `D-nn` names at least one
 `T-nn`. An ID is never reused and never deleted.
 
-Three checks, run by the pre-push gate. Silence is the pass.
+Four checks, run by the pre-push gate. Silence is the pass. The hook is the copy that runs, and
+this is its shape.
 
 ```sh
-git ls-files > /tmp/tracked
-awk -F'|' '/^\| D-[0-9]/ {print $5}' docs/development-plan.md | tr ',' '\n' | tr -d ' ' \
-  | grep -vFx -f /tmp/tracked
+# A dead path, per path. A `(ccw)` token marks a row's foreign paths, and the skip is
+# per entry, so an in-repo path beside one is still checked.
+awk -F'|' '/^\| D-[0-9]/ {n = split($5, a, ","); for (i = 1; i <= n; i++) {
+  gsub(/^[ \t]+|[ \t]+$/, "", a[i]); if (a[i] != "") print a[i] }}' docs/development-plan.md \
+  | while IFS= read -r p; do
+      case "$p" in '('*) continue ;; esac
+      [ -n "$(git ls-files -- "$p")" ] || echo "dead path: $p"
+    done
 
+# An uncollected test node ID.
 uv run pytest --collect-only -q -o addopts= | sort > /tmp/collected
-awk -F'|' '/^\| T-[0-9]/ {print $7}' docs/test-plan.md | tr -d ' ' | while read -r node; do
-  [ -n "$node" ] || continue
+grep -E '^\| T-[0-9]' docs/test-plan.md | while IFS='|' read -r _ id _ _ _ status node; do
+  node="${node//[ |]/}"; status="${status// /}"
+  if [ -z "$node" ]; then
+    [ "$status" = planned ] || echo "${id// /}: no test node ID, and the row is not planned"
+    continue
+  fi
+  [ "${node#'(ccw)'}" != "$node" ] && continue
   grep -qF "$node" /tmp/collected || echo "uncollected test: $node"
 done
 
+# An orphan ID, both directions. `T-94..T-101` is a range, and the hook expands it
+# before resolving each ID to a row of its own in the other document.
+plan_ids docs/test-plan.md D | while IFS= read -r id
+do
+  grep -qE "^\| $id \|" docs/development-plan.md || echo "orphan $id"
+done
+
+# Coverage. A row that names no ID at all resolves nothing, so the arm above never sees it.
 grep -E '^\| D-[0-9]' docs/development-plan.md | grep -vE 'T-[0-9]'
 grep -E '^\| T-[0-9]' docs/test-plan.md | cut -d'|' -f5 | grep -vE 'D-[0-9]'
 ```
@@ -347,12 +367,25 @@ grep -E '^\| T-[0-9]' docs/test-plan.md | cut -d'|' -f5 | grep -vE 'D-[0-9]'
 `-o addopts=` is load-bearing. This repo sets `-q` there, and a second `-q` collapses collection to
 a per-file count with no node ID in it. Every anchored row then reads as uncollected.
 
-The match is `grep -qF` per row rather than `comm -23` over two sorted lists. A collected line
-carries text around the node ID. An exact-line compare therefore reports a row the runner does
-collect. An empty node cell is a case not yet written, and is skipped.
+The dead-path side is `git ls-files -- "$p"` per path, never `grep -vFx` against one dump. The dump
+form matches a whole line. A directory anchor such as `src/graphrag/queries/imports/` never appears
+in it, so every directory row read as dead.
 
-The third check is coverage rather than a dangling reference. A row naming nothing at all passes an
-orphan check, because it has no ID to resolve.
+The match on the test side is `grep -qF` per row rather than `comm -23` over two sorted lists. A
+collected line carries text around the node ID. An exact-line compare therefore reports a row the
+runner does collect.
+
+**A blank node cell is a finding unless the row is `planned`.** It used to be skipped outright. One
+row of 122 was then the only row the check could not see.
+
+A `(ccw)` node ID is skipped, for the reason a `(ccw)` path is. That test lives in another checkout
+and this runner cannot collect it.
+
+The orphan check expands a range before it resolves an ID. Eight dev rows write `T-94..T-101`, and
+a token grep recovers only the two ends of one. The six interior IDs went unchecked.
+
+The fourth check is coverage rather than a dangling reference. A row naming nothing at all passes
+an orphan check, because it has no ID to resolve. It runs in both directions.
 
 The pattern is `T-[0-9]`, never a bare `T-`, so the vocabulary block above is not read as a row.
 The tree side is `git ls-files` rather than a walk, because the gate is about what a clone gets.
