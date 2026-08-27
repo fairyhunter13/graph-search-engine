@@ -123,6 +123,33 @@ def cmd_bridge(args: argparse.Namespace) -> int:
     return bridge.run(url=args.url, idle_seconds=args.idle)
 
 
+def cmd_health(args: argparse.Namespace) -> int:
+    from . import health
+
+    ok, said = health.check(args.url)
+    print(said, file=sys.stdout if ok else sys.stderr)
+    return 0 if ok else 1
+
+
+def cmd_reach(args: argparse.Namespace) -> int:
+    from . import reach
+
+    print(reach.notice(args.root, url=args.url))
+    return 0
+
+
+def cmd_install(args: argparse.Namespace) -> int:
+    from . import systemd
+
+    return _out(systemd.install(binary=args.binary))
+
+
+def cmd_uninstall(_args: argparse.Namespace) -> int:
+    from . import systemd
+
+    return _out(systemd.uninstall())
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog=config.APP, description="Structural code search: the operator surface."
@@ -158,6 +185,22 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--url", default="")
     p.add_argument("--idle", type=float, default=0.0)
     p.set_defaults(func=cmd_bridge)
+
+    p = sub.add_parser("health", help="the two-sample check the hourly timer runs")
+    p.add_argument("--url", default="")
+    p.set_defaults(func=cmd_health)
+
+    p = sub.add_parser("reach", help="enrol this directory and print the session notice")
+    p.add_argument("root", nargs="?", default=".")
+    p.add_argument("--url", default="")
+    p.set_defaults(func=cmd_reach)
+
+    p = sub.add_parser("install", help="write and enable the per-user units")
+    p.add_argument("--binary", default="", help="the console script the units call")
+    p.set_defaults(func=cmd_install)
+
+    p = sub.add_parser("uninstall", help="disable and remove the per-user units")
+    p.set_defaults(func=cmd_uninstall)
     return parser
 
 

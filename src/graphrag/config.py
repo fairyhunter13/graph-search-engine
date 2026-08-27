@@ -88,6 +88,8 @@ HOST = _env("HOST", "127.0.0.1")
 PORT = _env_int("PORT", 8766)
 MCP_URL = f"http://{HOST}:{PORT}/mcp"
 HEALTHZ_URL = f"http://{HOST}:{PORT}/healthz"
+# A SessionStart hook carries no MCP client roots, so it enrols over plain HTTP.
+REGISTER_URL = f"http://{HOST}:{PORT}/register"
 
 # ---------------------------------------------------------------- operations
 

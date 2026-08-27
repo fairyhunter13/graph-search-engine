@@ -23,3 +23,7 @@
   inputSchema raises rather than failing, so it never reports the schema it was written to grade.
 * [A pass reparses the tree, because resolution is global](a-pass-reparses-the-tree-because-resolution-is-global.md) - why one edit does
   not mean one file, and what the watcher guarantees instead.
+* [An unreachable daemon and an absent edge look identical, and mean opposite
+  things](an-unreachable-daemon-is-not-an-absent-edge.md) - A session that reads a missing
+  structural answer as nothing calling the symbol produces a confidently wrong result. The notice
+  and the tools each say which of the two happened.

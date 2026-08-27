@@ -120,8 +120,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-23 | An empty graph answer buys no marker | S-10 | D-10 | planned | tests/test_gate.py::test_empty_answer_buys_no_marker |
 | T-24 | A graph-only project is still gated | S-10 | D-10 | planned | tests/test_gate.py::test_graph_only_project_is_gated |
 | T-25 | Plan mode still escapes the gate | S-10 | D-10 | planned | tests/test_gate.py::test_plan_mode_escapes |
-| T-26 | The unit reports started after the store opens | S-09 | D-11 | planned | tests/test_systemd.py::test_notify_after_store_open |
-| T-27 | The reach hook enrols the session root | S-10 | D-11 | planned | tests/test_systemd.py::test_reach_registers_the_root |
+| T-26 | The unit reports started after the store opens | S-09 | D-11 | done | tests/test_systemd.py::test_notify_after_store_open |
+| T-27 | The reach hook enrols the session root | S-10 | D-11 | done | tests/test_systemd.py::test_reach_registers_the_root |
 | T-28 | The bundle root declares its OKF version | S-11 | D-12 | done | tests/test_bundle.py::test_root_index_declares_okf_version |
 | T-29 | The attester accepts a sound receipt | S-11 | D-13 | done | tests/test_attester.py::test_sound_receipt_is_accepted |
 | T-30 | The attester rejects a changed number | S-11 | D-13 | done | tests/test_attester.py::test_changed_number_is_rejected |
@@ -179,6 +179,11 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-82 | Scope reaches a member and stops there | S-10 | D-16 | done | tests/test_federation.py::test_scope_reaches_a_member_and_stops_there |
 | T-83 | The deepest enrolled root owns a path | S-10 | D-16 | done | tests/test_federation.py::test_the_deepest_enrolled_root_owns_a_path |
 | T-84 | A peer is looked up, never guessed | S-10 | D-16 | done | tests/test_federation.py::test_this_process_is_named_by_its_own_source_port |
+| T-85 | Only the three named units are enabled | S-09 | D-11 | done | tests/test_systemd.py::test_only_the_three_named_units_are_enabled |
+| T-86 | Uninstall removes only what it wrote | S-09 | D-11 | done | tests/test_systemd.py::test_the_units_are_removed_by_name |
+| T-87 | The notice names the languages that answer nothing | S-10 | D-11 | done | tests/test_systemd.py::test_the_notice_names_the_languages_that_answer_nothing |
+| T-88 | An enrolled but unindexed root says so | S-10 | D-11 | done | tests/test_systemd.py::test_an_enrolled_but_unindexed_root_says_so |
+| T-89 | An unreachable daemon refuses rather than reports nothing | S-10 | D-11 | done | tests/test_systemd.py::test_an_unreachable_daemon_refuses_rather_than_reports_nothing |
 
 # User journeys
 

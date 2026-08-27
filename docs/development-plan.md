@@ -168,7 +168,7 @@ for the callers of a known function and check them by hand.
 | D-08 | SCIP overlay behind the coverage guard | planned | (deferred, no code this pass) | T-18, T-19 |
 | D-09 | Fleet registration across five profiles | planned | (ccw) internal/policy/shared.go | T-20, T-21 |
 | D-10 | Two-engine gate and the routing rule | planned | (ccw) internal/hooks/treesearch.go | T-22, T-23, T-24, T-25 |
-| D-11 | systemd units and reach enrolment | planned | src/graphrag/systemd.py | T-26, T-27 |
+| D-11 | systemd units and reach enrolment | done | src/graphrag/systemd.py, src/graphrag/reach.py, tests/test_systemd.py | T-26, T-27, T-85..T-89 |
 | D-12 | The OKF profile record and bundle root | done | knowledge/index.md, knowledge/log.md, knowledge/policies, tests/test_bundle.py | T-28, T-38, T-39, T-40 |
 | D-13 | The first working attester | done | knowledge/attesters, knowledge/computations, knowledge/skills, tests/test_attester.py | T-29, T-30, T-41, T-42, T-43, T-44 |
 | D-14 | Gate lines and the attester contract check | done | .githooks/pre-push, scripts/check_attester_contract.py, knowledge/constraints, knowledge/decisions | T-31, T-32 |
@@ -303,3 +303,25 @@ loses the distinction the two rows exist to hold.
 `peers.of` is best effort by construction. A short-lived client is gone before the lookup runs, and
 `unknown` is the honest result. The daemon serves every session on the machine, so a ledger row
 naming no caller names nothing useful.
+
+# What `D-11` settled, 2026-08-27
+
+`Type=notify` is the line the row exists for. The daemon sends READY after the worker runs and the
+queue is served, so systemd reports started only when the process can answer. Without it the first
+session's tool call lands on a daemon that accepts it and does nothing with it.
+
+The caps are lower than the semantic engine's, and that is deliberate. Two indexers now compete with
+the editor for the same cores, so the second one to arrive takes the smaller share: `MemoryHigh=2G`
+against 4G, and a heavier `Nice`.
+
+`reach.py` is the other half, and it is the larger one. A SessionStart hook stands in a directory
+and speaks plain HTTP, because it carries no MCP client roots and cannot call a tool at all. Four
+variants, and the unreachable one is the reason the module is not a one-line POST: it says the graph
+is unavailable and structural questions are unanswered. It never says nothing calls the symbol.
+
+The notice also carries the capability line, so a session learns before it asks which languages here
+answer a caller question. A gap met as silence is the failure this engine exists to avoid.
+
+`graphrag doctor` runs under `SuccessExitStatus=0 1`, because a doctor that finds a problem is a
+finding and not a unit failure. Treating exit 1 as a failure pages for the report rather than the
+fault.
