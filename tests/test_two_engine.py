@@ -75,13 +75,19 @@ def test_the_graph_wins_the_caller_question():
     assert summary["graphrag"]["f1"] > summary["coderag-lexical"]["f1"]
     assert summary["coderag-lexical"]["f1"] > summary["coderag-semantic"]["f1"]
 
-    # The finding. A distinctive name resolves exactly. A name the tree also
-    # carries as an attribute does not, because the receiver is discarded.
+    # The finding, after `D-19`. A distinctive name still resolves exactly, and
+    # a colliding one no longer collapses, because the receiver now names the
+    # module. The split survives and is smaller, so both bounds are asserted.
     distinctive = report["by_class"][measure.DISTINCTIVE]["graphrag"]
     collides = report["by_class"][measure.COLLIDES]["graphrag"]
     assert distinctive["precision"] == 1.0
     assert distinctive["recall"] == 1.0
-    assert collides["precision"] < 0.6
+    assert collides["precision"] > 0.6
+    assert collides["precision"] < distinctive["precision"]
+
+    # The rule refuses a receiver it cannot place, so recall is what proves it
+    # refuses no real call. A drop here is the rule eating edges it should keep.
+    assert summary["graphrag"]["recall"] == 1.0
 
 
 def test_the_two_engine_receipt_is_attested():

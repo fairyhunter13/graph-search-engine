@@ -16,9 +16,12 @@ from tree_sitter_language_pack import get_language
 from . import grammars, queries
 
 # The byte that precedes an identifier in a member call. `expr.method()` is about
-# 43% of call sites, and no syntactic rule resolves the receiver, so the flag
-# rides along and resolution prices it down rather than guessing.
+# 43% of call sites.
 _MEMBER_BYTES = (b".", b">", b":")
+
+# What a receiver name is spelled with. `$` is here for PHP, where `$this` is
+# the receiver and dropping the sigil would make it a different name.
+_IDENT_BYTES = frozenset(b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$")
 
 
 @dataclass(slots=True)
@@ -42,6 +45,7 @@ class Reference:
     line: int
     scope: int | None = None
     is_member: bool = False
+    receiver: str = ""
 
 
 @dataclass(slots=True)
@@ -112,11 +116,27 @@ def _link(defs: list[Definition]) -> None:
         d.qualified_name = ".".join(reversed(chain))
 
 
-def _is_member(data: bytes, node) -> bool:
+def _member(data: bytes, node) -> tuple[bool, str]:
+    """The separator before an identifier, and the receiver that precedes it.
+
+    The receiver is what tells `registry.load()` from `yaml.load()`. Discarding
+    it made the two one name, and `D-18` measured what that costs.
+    """
     i = node.start_byte - 1
     while i >= 0 and data[i : i + 1].isspace():
         i -= 1
-    return i >= 0 and data[i : i + 1] in _MEMBER_BYTES
+    if i < 0 or data[i : i + 1] not in _MEMBER_BYTES:
+        return False, ""
+    # `->` and `::` are two bytes, and the receiver sits before both of them.
+    if data[i : i + 1] in (b">", b":") and i > 0 and data[i - 1 : i] in (b"-", b":"):
+        i -= 1
+    i -= 1
+    while i >= 0 and data[i : i + 1].isspace():
+        i -= 1
+    end = i + 1
+    while i >= 0 and data[i] in _IDENT_BYTES:
+        i -= 1
+    return True, data[i + 1 : end].decode("utf-8", "replace")
 
 
 def extract(path_lang: str, text: str) -> FileFacts:
@@ -153,13 +173,15 @@ def extract(path_lang: str, text: str) -> FileFacts:
                 continue
             edge = queries.REFERENCE_KINDS.get(capture)
             if edge:
+                member, receiver = _member(data, ident)
                 facts.references.append(
                     Reference(
                         kind=edge,
                         name=_text(data, ident),
                         call_site_byte=ident.start_byte,
                         line=ident.start_point[0] + 1,
-                        is_member=_is_member(data, ident),
+                        is_member=member,
+                        receiver=receiver,
                     )
                 )
 

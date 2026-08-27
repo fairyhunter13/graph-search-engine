@@ -10,9 +10,10 @@ truth prices a correct answer as a false positive.
 Every case carries a class, and the classes are the finding. A `distinctive`
 name is called only through the module that defines it. A `collides` name is
 also an attribute of something else in this tree -- `list.append`,
-`Path.resolve`, `sqlite3.connect` -- and the extractor keeps the attribute name
-while it discards the receiver, so the two classes cannot be reported as one
-number.
+`Path.resolve`, `sqlite3.connect`. Before `D-19` the extractor discarded the
+receiver, so the two were one name and the `collides` class collapsed. The
+receiver now names the module, and the classes stay split because a receiver
+that names a local variable is refused rather than placed.
 
 Scoring is at file granularity, because that is the coarsest unit both engines
 answer in -- coderag returns a chunk, graphrag returns a node, and a file holds

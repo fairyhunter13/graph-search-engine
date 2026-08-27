@@ -29,6 +29,10 @@ IMPORTED_MODULE = 0.70
 SAME_PACKAGE = 0.40
 GLOBAL_UNIQUE = 0.30
 
+# A receiver that names the enclosing object and not a module. The class and
+# file tiers already price these, so the receiver rule steps aside for them.
+_SELF = frozenset({"self", "this", "$this", "cls", "me", "static", "parent", "super"})
+
 
 @dataclass(slots=True)
 class Candidate:
@@ -96,6 +100,27 @@ def _tier(
     return None
 
 
+def _receiver_modules(ref: Reference, names: dict[str, str], modules: set[str]) -> set[str] | None:
+    """Every module a member call's receiver could name.
+
+    None means the receiver decides nothing, so the tiers score the whole pool.
+    That covers a plain call and a call on the enclosing object. An empty set
+    means the receiver names something this file never imported, and the call
+    leaves the repo: `path.resolve()` is not `registry.resolve`.
+
+    `from . import registry` maps the name to the package, and the receiver then
+    names the submodule under it, so both spellings are candidates.
+    """
+    if not ref.is_member or not ref.receiver or ref.receiver in _SELF:
+        return None
+    out = {module for module in modules if module.rsplit(".", 1)[-1] == ref.receiver}
+    base = names.get(ref.receiver)
+    if base is not None:
+        out.add(base)
+        out.add(f"{base}.{ref.receiver}" if base else ref.receiver)
+    return out
+
+
 def resolve_reference(table: SymbolTable, path: str, ref: Reference) -> Resolution:
     """One reference against the whole table. The candidate set is never forced."""
     pool = table.defines(ref.name)
@@ -105,6 +130,15 @@ def resolve_reference(table: SymbolTable, path: str, ref: Reference) -> Resoluti
     names = imported_names(table, path)
     modules = imported_modules(table, path)
     holder = _enclosing_class(table, path, ref.scope)
+
+    # A receiver that names a module is the strongest syntactic fact a call site
+    # carries, so it narrows the pool before any tier is scored. `yaml.load()`
+    # leaves nothing, and a name defined only elsewhere is external, not a guess.
+    targets = _receiver_modules(ref, names, modules)
+    if targets is not None:
+        pool = [s for s in pool if table.path_module.get(s.path, "") in targets]
+        if not pool:
+            return Resolution(reference=ref, candidates=[], external=True)
 
     scoped: list[Candidate] = []
     for symbol in pool:

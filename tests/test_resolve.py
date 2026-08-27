@@ -73,6 +73,48 @@ def test_unknown_name_is_external():
     assert got.resolved is False
 
 
+RECEIVER = """\
+from . import rates
+from .rates import convert
+
+
+def go(path):
+    rates.convert(1)
+    convert(2)
+    return path.convert()
+"""
+
+
+def test_the_receiver_picks_the_module():
+    """`T-93`. A member call names its module, and a stranger leaves the repo.
+
+    Three call sites, one name. The receiver names the module, the receiver is
+    absent, and the receiver is a local variable this file never imported. Only
+    the third is external, and before `D-19` all three landed on `rates.convert`.
+    """
+    table = _table({"pkg/orders.py": RECEIVER, "pkg/rates.py": RATES, "other/rates.py": DECOY})
+    facts = table.files["pkg/orders.py"]
+    sites = [r for r in facts.references if r.name == "convert"]
+    assert [r.receiver for r in sites] == ["rates", "", "path"]
+
+    through_module, bare, stranger = (
+        resolve.resolve_reference(table, "pkg/orders.py", r) for r in sites
+    )
+    assert through_module.resolved
+    assert through_module.candidates[0].symbol.path == "pkg/rates.py"
+    assert bare.resolved
+    assert bare.candidates[0].symbol.path == "pkg/rates.py"
+    assert stranger.external is True
+    assert stranger.candidates == []
+
+
+def test_a_self_receiver_still_reaches_the_enclosing_class():
+    """`self` names no module, so the class tier keeps pricing it."""
+    table = _table({"pkg/orders.py": CALLER, "pkg/rates.py": RATES})
+    got = _one(table, "pkg/orders.py", "subtotal")
+    assert got.candidates[0].evidence == "same_class"
+
+
 def test_an_out_of_scope_name_falls_to_a_ranked_global_set():
     sources = {f"m{i}/x.py": DECOY for i in range(4)}
     sources["far/caller.py"] = "def go():\n    return convert(1)\n"
@@ -142,6 +184,11 @@ def test_import_scoping_collapses_candidates():
     The bands are wide on purpose. The claim is a collapse of roughly seven
     times, not a pair of exact numbers, and a corpus at a different tag moves
     both arms together. What is not allowed to move is the ratio.
+
+    The scoped arm answers at fewer sites than the unscoped one, and that is the
+    `D-19` rule and not a loss. A member call whose receiver names nothing this
+    file imported leaves the repo, so it earns no edge at all. The refused share
+    is asserted here because it is the price of the precision `T-91` measures.
     """
     if not (config.corpus_root() / "Lib").is_dir():
         pytest.skip(f"no corpus at {config.corpus_root()}")
@@ -153,12 +200,16 @@ def test_import_scoping_collapses_candidates():
     scoped, scoped_ambiguity, scoped_sites = resolve.mean_candidates(table, scoped=True)
 
     assert sites > 40000
-    assert scoped_sites > 40000
     assert 8.0 <= unscoped <= 14.0
     assert 1.0 <= scoped <= 2.0
     assert unscoped / scoped >= 6.0
     assert unscoped_ambiguity > 0.45
     assert scoped_ambiguity < 0.25
+
+    # `expr.method()` is about 43% of call sites, and the receiver rule refuses
+    # them rather than guessing. A share far under this means the rule stopped
+    # firing; far over it means it started eating calls it can resolve.
+    assert 0.30 <= 1 - scoped_sites / sites <= 0.55
 
 
 @pytest.mark.corpus
