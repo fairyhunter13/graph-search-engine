@@ -253,9 +253,10 @@ only check that sees it.
 `D-04` carries the throughput floor, and the floor moved. The design quoted 334 files per second
 from an upstream figure that timed a parse plus a tags query. This engine also runs capture
 normalization, scope attribution and the import query, so the two count different work. Measured
-2026-08-27 on the same 755 files, single core, three runs: 117.8 files per second and 1.9 MB per
-second. `T-10` therefore sets its floor at 80, which is 32 percent under the measurement. It is a
-regression detector, and the margin absorbs a loaded machine.
+2026-08-27 on the same 755 files, single core, three runs: 303.7, 307.2 and 306.6 files per second
+and 5.0 MB per second. An earlier run the same day read 117.8, and that build compiled a fresh
+`ts.Query` for every file. `T-10` therefore sets its floor at 200, which is 34 percent under the
+measurement. It is a regression detector, and the margin absorbs a loaded machine.
 
 ## The language waves
 
