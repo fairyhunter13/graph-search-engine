@@ -1,7 +1,7 @@
 ---
 type: Attested Computation
 resource: src/graphrag/resolve.py
-title: Import scoping collapses the candidate set by roughly seven times
+title: Import scoping collapses the candidate set by roughly nine times
 description: "The measurement the whole resolution design rests on. Global name matching gives 10.86 candidate files per call site on the pinned corpus, and import scoping gives 1.19."
 tags: [resolution, measurement, cpython, attestation]
 status: stable

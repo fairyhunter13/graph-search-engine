@@ -79,7 +79,8 @@ def _run(cmd: list[str], cwd: Path | None = None, timeout: float = 120.0):
 def _write(name: str, receipt: dict) -> Path:
     receipt.setdefault("commit_sha", _sha())
     receipt.setdefault("written_at", _now())
-    return config.write_receipt(name, receipt)
+    with config.receipt_lock(name):
+        return config.write_receipt(name, receipt)
 
 
 def _int(raw: str) -> int:

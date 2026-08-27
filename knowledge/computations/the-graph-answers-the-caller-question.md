@@ -104,4 +104,4 @@ followed, and the reason is evidence. The class fields at 1.000 are what shows t
 and a receipt without them cannot show it. So this concept is amended and the fields stay.
 
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 70 ground-truth caller files, measured 2026-08-27 at commit `d64e8fc`.
+[^two-engine-run]: Ten caller questions over this repo, 70 ground-truth caller files, measured 2026-08-27 at commit `396f183`.

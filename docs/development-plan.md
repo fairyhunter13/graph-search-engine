@@ -604,5 +604,9 @@ has to travel inside the artifact to reach it.
 name is a pure function of the node ID, so two runs share one path, and a second run now refuses
 rather than clobbers.
 
+An audit of this row found two of the four writers short. `scripts/partc_probe.py` and
+`scripts/headless_probe.py` took the atomic write and never the lock, so two probes of one node ID
+could still race. Both now write through a `_write` helper that holds `receipt_lock`.
+
 `check_attester_contract.py` gained the reverse direction. It checked that every receipt field was
 declared. A concept that under-declares ships a run whose artifact its own attester rejects.

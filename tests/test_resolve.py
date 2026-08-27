@@ -244,7 +244,7 @@ NODE_ID = "tests/test_resolve.py::test_import_scoping_collapses_candidates"
 def test_import_scoping_collapses_candidates():
     """The design premise, measured. If this stops holding, `D-03` goes blocked.
 
-    The bands are wide on purpose. The claim is a collapse of roughly seven
+    The bands are wide on purpose. The claim is a collapse of roughly nine
     times, not a pair of exact numbers, and a corpus at a different tag moves
     both arms together. What is not allowed to move is the ratio.
 

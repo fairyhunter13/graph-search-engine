@@ -103,6 +103,12 @@ def _names_an_engine(prompt: str, words: tuple[str, ...]) -> bool:
     return any(word in lowered for word in words)
 
 
+def _write(name: str, receipt: dict) -> Path:
+    # The lock, so a second probe of the same node ID refuses instead of clobbering.
+    with config.receipt_lock(name):
+        return config.write_receipt(name, receipt)
+
+
 def routing() -> Path:
     """`J-07`, two sessions in this repo, neither prompt naming an engine."""
     sessions = []
@@ -118,7 +124,7 @@ def routing() -> Path:
                 "names_an_engine": _names_an_engine(prompt, ENGINES),
             }
         )
-    return config.write_receipt(
+    return _write(
         "j07-routing-selection",
         {
             "journey_id": "J-07",
@@ -184,7 +190,7 @@ def dispatch() -> Path:
                 "skills_dispatched": [t for t in used if t.startswith("Skill(")],
             }
         )
-    return config.write_receipt(
+    return _write(
         "partb-skill-dispatch",
         {
             "check": "the test-plan skill is selected without being named",

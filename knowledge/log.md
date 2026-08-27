@@ -64,3 +64,5 @@ title: graphrag knowledge history
 - **Creation**: `constraints/an-unset-position-encoding-does-not-mean-one-thing.md` - the column unit `T-18` grades, and the tool-name table that decides it.
 - **Creation**: `computations/the-graph-answers-the-caller-question.md`, its executor skill and its attester - the routing rule, graded, and the class split a single F1 hides.
 - **Update**: `computations/the-graph-answers-the-caller-question.md` - re-measured after `D-19` captured the receiver. The graph moves from F1 0.743 to 0.913 and the `collides` class from 0.538 to 0.831. The split does not close, so the receipt keeps its class fields.
+- **Update**: `computations/import-scoping-collapses-the-candidate-set.md` - the title said seven times while the body and the receipt both said 9.1. The measurement never moved; the title was stale.
+- **Update**: `computations/the-graph-answers-the-caller-question.md` - the run footnote named `d64e8fc` while the receipt behind the figures carries `396f183`.
