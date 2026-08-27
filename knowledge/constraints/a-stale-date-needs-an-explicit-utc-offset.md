@@ -5,10 +5,13 @@ title: A stale date without an explicit UTC offset reads as fresh forever
 description: "OKF section 5 wants an absolute instant. An offset-free value parses, passes the standard rule set, and turns freshness checking off with no error, so the gate here runs the strict rule set."
 tags: [okf, gate, freshness, strict]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T06:15:16Z }
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
 sources:
   - id: okf-spec
     resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md
+    digest: sha256:26aa5da029278939f914e578107242d9607d4f2dc5fe153272b82f9ed1030101
   - id: okfrules
     resource: https://github.com/fairyhunter13/okf
 ---

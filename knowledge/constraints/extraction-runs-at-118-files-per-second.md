@@ -5,7 +5,9 @@ title: Extraction runs at about 118 files per second, not 334
 description: "The design quoted 334 files per second for a parse plus a tags query. This engine also normalizes captures, attributes scope and runs the import query, so it measures 117.8 on the same corpus and the floor is set from the measurement."
 tags: [throughput, extraction, measurement]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T06:24:30Z }
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
 sources:
   - id: cpython-lib
     resource: https://github.com/python/cpython/tree/v3.12.7/Lib

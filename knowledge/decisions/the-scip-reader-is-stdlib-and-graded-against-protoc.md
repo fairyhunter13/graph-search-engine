@@ -5,10 +5,13 @@ title: The SCIP reader is a standard-library wire decoder, graded against protoc
 description: "SCIP ships no Python binding. Generated code would add a runtime pin that has to move with it, for a tier that is off by default and reads eight messages. The wire format is frozen, so the decoder is the smaller liability."
 tags: [scip, protobuf, dependencies, overlay]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T09:15:52Z }
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
 sources:
   - id: scip-proto
     resource: https://github.com/sourcegraph/scip/blob/v0.9.0/scip.proto
+    digest: sha256:04cb20f2b8be73f6c0376b5b3e84c3ae20ebaff0ad3d23ba2d16f866b395ed7d
   - id: scip-bindings
     resource: https://github.com/sourcegraph/scip/tree/v0.9.0/bindings
 ---

@@ -5,7 +5,9 @@ title: The newest ledger row was not first
 description: "append stamped ts rounded to a millisecond and read sorted with reverse=True. A stable sort keeps the original order inside a tie, so the older row of a tied pair came back first."
 tags: [ledger, operations, sorting]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T23:10:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T06:54:11Z }
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
 sources:
   - id: ledger
     resource: src/graphrag/ledger.py

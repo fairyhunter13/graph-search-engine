@@ -5,7 +5,9 @@ title: A pass reparses the tree, because resolution is global
 description: "Every reference is scored against the whole symbol table, so a pass that reparsed only the edited file would price every other file as a repo that does not define the name. Per-file facts are not persisted, so there is nothing to reuse."
 tags: [indexing, resolution, watcher, progress]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T23:10:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T06:54:11Z }
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
 sources:
   - id: pass
     resource: src/graphrag/index.py

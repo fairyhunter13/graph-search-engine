@@ -5,10 +5,13 @@ title: An unset position_encoding does not mean one thing
 description: "Most indexers leave the field at 0, and 0 means UTF-8 on scip-go and UTF-16 on scip-python. So the fallback is keyed on the tool name, and an unknown name is an error rather than a guess."
 tags: [scip, offsets, encoding]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T09:15:52Z }
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
 sources:
   - id: scip-proto
     resource: https://github.com/sourcegraph/scip/blob/v0.9.0/scip.proto
+    digest: sha256:04cb20f2b8be73f6c0376b5b3e84c3ae20ebaff0ad3d23ba2d16f866b395ed7d
 ---
 
 # The trap

@@ -5,7 +5,7 @@ title: A load-bearing number is an Attested Computation, and its receipt carries
 description: "A passing test proves nothing on its own, because the assertion can move in the same commit as the number it guards. The receipt lets a deterministic attester re-read both and compare."
 tags: [okf, attestation, measurement, verification]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T06:15:16Z }
 sources:
   - id: okf-spec
     resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md

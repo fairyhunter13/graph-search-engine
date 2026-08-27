@@ -5,7 +5,9 @@ title: One bad node type disables a whole import query, silently
 description: "A tree-sitter query compiles whole or not at all, and the extractor returns no matches rather than raising. A single wrong node type makes every pattern in the file dead, and the language then reads as one with no import syntax."
 tags: [tree-sitter, queries, imports, silent-failure]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T18:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T06:34:13Z }
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
 sources:
   - id: sourcepawn-case
     resource: src/graphrag/queries/imports/sourcepawn.scm

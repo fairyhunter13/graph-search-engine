@@ -5,10 +5,13 @@ title: This bundle is a strict profile of OKF v0.2, and a producer may be strict
 description: "OKF v0.2 names no fixed taxonomy and forbids a consumer from rejecting a bundle over an unknown type. The gate here refuses one. The two are not in conflict, because the rule the spec writes is a rule for readers, and this repo is a writer."
 tags: [okf, knowledge, gate, profile]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T06:09:50Z }
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
 sources:
   - id: okf-spec
     resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md
+    digest: sha256:26aa5da029278939f914e578107242d9607d4f2dc5fe153272b82f9ed1030101
   - id: okfrules
     resource: https://github.com/fairyhunter13/okf
 ---

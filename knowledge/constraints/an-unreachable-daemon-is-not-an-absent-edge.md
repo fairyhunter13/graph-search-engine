@@ -5,7 +5,9 @@ title: An unreachable daemon and an absent edge look identical, and mean opposit
 description: "A session that reads a missing structural answer as nothing calling the symbol produces a confidently wrong result. The notice and the tools each say which of the two happened."
 tags: [reach, daemon, degradation, honesty]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T07:08:13Z }
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
 sources:
   - id: notice
     resource: src/graphrag/reach.py

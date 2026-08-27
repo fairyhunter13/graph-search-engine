@@ -5,7 +5,9 @@ title: A member is declared in the project config and never discovered by a walk
 description: "The semantic engine finds members by walking symlinks under the root. A graph engine will not, because an undeclared member adds candidate definitions the operator never chose."
 tags: [federation, scope, registry, workspace]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T07:04:49Z }
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
 sources:
   - id: coderag-federation
     resource: https://github.com/fairyhunter13/rag-search-engine

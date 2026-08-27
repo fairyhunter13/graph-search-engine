@@ -5,7 +5,7 @@ title: The project config is the SCIP opt-in, and the environment switch only su
 description: "Two switches that both default off make the first one unreachable. The project asks for the overlay in its own config, and the environment variable exists so an operator can disable the tier on one machine."
 tags: [scip, config, overlay]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T09:15:52Z }
 ---
 
 # The defect this corrects

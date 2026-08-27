@@ -5,10 +5,13 @@ title: Links here are relative, because the spec and the reference agent disagre
 description: "OKF section 6.1 recommends a link that begins with a slash, and the upstream authoring prompt forbids one because it breaks GitHub rendering. Both are right about their own concern, and this bundle lives in a git repo."
 tags: [okf, links, github]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T06:15:16Z }
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
 sources:
   - id: okf-spec
     resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md
+    digest: sha256:26aa5da029278939f914e578107242d9607d4f2dc5fe153272b82f9ed1030101
 ---
 
 # Two upstream rules, pointing opposite ways

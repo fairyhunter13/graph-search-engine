@@ -5,7 +5,9 @@ title: mcp 2.0 renames the server class and the tool schema attributes
 description: "The 2.0 line renames FastMCP to MCPServer and spells the tool schema attributes in snake_case. A conformance check written against inputSchema raises rather than failing, so it never reports the schema it was written to grade."
 tags: [mcp, tools, dependencies, conformance]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T21:30:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T06:42:41Z }
+verified:
+  - { by: process:okf-verify, at: 2026-08-27T09:35:58Z }
 sources:
   - id: pin
     resource: pyproject.toml

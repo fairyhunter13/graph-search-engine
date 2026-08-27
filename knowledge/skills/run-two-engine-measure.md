@@ -5,7 +5,7 @@ title: Run the two-engine caller-question set and return a receipt
 description: "The run procedure behind the routing-rule measurement. It runs one anchored test over this repo's own tree with both engines live, reads the scores out of the run, and returns the receipt fields the attester inspects."
 tags: [okf, attestation, measurement, routing, two-engine]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T07:57:11Z }
 ---
 
 # When to use

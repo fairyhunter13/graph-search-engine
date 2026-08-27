@@ -5,7 +5,7 @@ title: Run a pinned pytest measurement and return a receipt
 description: "The run procedure behind every Attested Computation in this bundle. It runs one anchored test against the pinned corpus, reads the numbers out of the run, and returns the receipt fields the attester inspects."
 tags: [okf, attestation, measurement, pytest]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T06:12:26Z }
 ---
 
 # When to use

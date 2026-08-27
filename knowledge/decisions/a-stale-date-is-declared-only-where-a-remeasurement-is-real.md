@@ -5,7 +5,7 @@ title: A stale date is declared only where a re-measurement date is real
 description: "Reachability beats a calendar. The nightly sweep catches a moved page, a rewritten commit and a deleted path, and a date with no owner and no runbook is a scheduled outage."
 tags: [okf, freshness, nightly]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T12:00:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T06:15:16Z }
 sources:
   - id: nightly
     resource: https://github.com/fairyhunter13/claude-code-workflows
