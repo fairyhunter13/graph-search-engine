@@ -25,6 +25,7 @@ Run: `uv run python scripts/two_engine_measure.py`. It needs the coderag daemon.
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -37,6 +38,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 DISTINCTIVE = "distinctive"
 COLLIDES = "collides"
+
+# What a receipt says before the assertions have run over it.
+UNVERIFIED = "unverified"
+PASSED = "pass"
 
 # The corpus is the repo under work, so the ref is what identifies a run. The
 # sanctioned node ID lives here beside the computation it names, never in the
@@ -127,6 +132,7 @@ TRUTH: list[dict] = [
         "callers": [
             "src/graphrag/grammars.py",
             "src/graphrag/cli.py",
+            "src/graphrag/extract.py",
             "src/graphrag/index.py",
             "src/graphrag/query.py",
             "tests/test_grammars.py",
@@ -216,13 +222,17 @@ def coderag_files(question: str, mode: str) -> set[str]:
         text=True,
         check=False,
     )
+    # An arm that cannot be reached scores zero and beats nothing, so a silent
+    # empty set here is the friendliest possible opponent for the graph.
+    if run.returncode != 0:
+        raise RuntimeError(f"`coderag search` exited {run.returncode}: {run.stderr.strip()[-400:]}")
     start = run.stdout.find("{")
     if start < 0:
-        return set()
+        raise RuntimeError(f"`coderag search` returned no JSON: {run.stderr.strip()[-400:]}")
     try:
         data = json.loads(run.stdout[start:])
-    except json.JSONDecodeError:
-        return set()
+    except json.JSONDecodeError as err:
+        raise RuntimeError(f"`coderag search` returned unparsable JSON: {err}") from err
     out = set()
     for hit in data.get("results", []):
         path = hit.get("path", "")
@@ -230,6 +240,21 @@ def coderag_files(question: str, mode: str) -> set[str]:
             path = str(Path(path).relative_to(ROOT))
         out.add(path)
     return out
+
+
+def arm_unreachable() -> str:
+    """Why the retrieval arms cannot be measured, or empty where they answer.
+
+    `shutil.which` proves the CLI is installed and never that the daemon behind
+    it answers, and the daemon being down is the case a skip exists for.
+    """
+    if shutil.which("coderag") is None:
+        return "no coderag CLI on PATH"
+    try:
+        coderag_files("index", "lexical")
+    except RuntimeError as err:
+        return str(err)
+    return ""
 
 
 ARMS = ("graphrag", "coderag-semantic", "coderag-lexical")
@@ -294,16 +319,8 @@ def measure(conn=None) -> dict:
         if mine:
             conn.close()
 
-    sha = subprocess.run(
-        # Short, because the concept's footnote names the run by a short SHA and the
-        # receipt is what a reader compares against that line.
-        ["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.strip()
     return {
-        "commit_sha": sha,
+        **config.provenance(ROOT),
         "corpus_ref": CORPUS_REF,
         "n_questions": len(TRUTH),
         "summary": _summary(overall),
@@ -312,7 +329,7 @@ def measure(conn=None) -> dict:
     }
 
 
-def receipt(report: dict) -> dict:
+def receipt(report: dict, outcome: str = UNVERIFIED) -> dict:
     """The declared shape, taken from the report a run produced.
 
     It is built here rather than in the test, because a receipt assembled beside
@@ -322,6 +339,8 @@ def receipt(report: dict) -> dict:
         "test_node_id": NODE_ID,
         "corpus_ref": report["corpus_ref"],
         "commit_sha": report["commit_sha"],
+        "tree_dirty": report["tree_dirty"],
+        "outcome": outcome,
         "n_questions": report["n_questions"],
         "f1_graph": report["summary"]["graphrag"]["f1"],
         "f1_lexical": report["summary"]["coderag-lexical"]["f1"],
@@ -331,17 +350,21 @@ def receipt(report: dict) -> dict:
     }
 
 
-def write_receipt(report: dict) -> Path:
-    path = config.receipt_path(NODE_ID)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(receipt(report), indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return path
+def write_receipt(report: dict, outcome: str = UNVERIFIED) -> Path:
+    """The run writes `unverified` before its assertions, and `pass` after them.
+
+    A receipt still lands on a red run, because a number that moved is worth the
+    artifact. `outcome` is what keeps that artifact from grading as a measurement.
+    """
+    return config.write_receipt(NODE_ID, receipt(report, outcome))
 
 
 def main() -> int:
-    report = measure()
-    print(json.dumps(report, indent=2, sort_keys=True))
-    print(f"receipt: {write_receipt(report)}", file=sys.stderr)
+    with config.receipt_lock(NODE_ID):
+        report = measure()
+        print(json.dumps(report, indent=2, sort_keys=True))
+        # The script has no assertions to run, so nothing here earns `pass`.
+        print(f"receipt: {write_receipt(report)}", file=sys.stderr)
     return 0
 
 

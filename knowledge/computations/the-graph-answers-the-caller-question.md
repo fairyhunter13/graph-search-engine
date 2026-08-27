@@ -11,7 +11,7 @@ parameters:
   - { name: corpus, type: path, required: true }
 executor:
   resource: ../skills/run-two-engine-measure.md
-  receipt: [test_node_id, corpus_ref, commit_sha, n_questions, f1_graph, f1_lexical, f1_semantic, f1_graph_distinctive, f1_graph_collides]
+  receipt: [test_node_id, corpus_ref, commit_sha, tree_dirty, outcome, n_questions, f1_graph, f1_lexical, f1_semantic, f1_graph_distinctive, f1_graph_collides]
 attester:
   resource: ../attesters/two_engine_receipt.py
 verified:

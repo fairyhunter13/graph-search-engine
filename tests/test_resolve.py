@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -279,27 +278,23 @@ def test_import_scoping_collapses_candidates():
 
 
 def _write_receipt(mean_global: float, mean_scoped: float, n_files: int) -> None:
-    """The artifact the attester grades. A literal in test source grades nothing."""
-    sha = subprocess.run(
-        ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=False
-    ).stdout.strip()
-    path = config.receipt_path(NODE_ID)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(
+    """The artifact the attester grades. A literal in test source grades nothing.
+
+    This runs after the assertions, so the outcome it records is always a pass.
+    """
+    with config.receipt_lock(NODE_ID):
+        config.write_receipt(
+            NODE_ID,
             {
                 "test_node_id": NODE_ID,
                 "corpus_ref": config.CORPUS_REF,
-                "commit_sha": sha,
+                **config.provenance(Path(__file__).resolve().parent.parent),
+                "outcome": "pass",
                 "mean_global": round(mean_global, 4),
                 "mean_scoped": round(mean_scoped, 4),
                 "n_files": n_files,
             },
-            indent=2,
         )
-        + "\n",
-        encoding="utf-8",
-    )
 
 
 CONCEPT = (

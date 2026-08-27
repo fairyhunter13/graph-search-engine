@@ -329,6 +329,9 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-208 | An expression receiver leaves the repo rather than picking a homonym | S-14 | D-27 | done | tests/test_resolve.py::test_an_expression_receiver_leaves_the_repo_rather_than_picking_a_homonym |
 | T-209 | The receipt on disk is attested | S-11 | D-30 | done | tests/test_attester.py::test_the_receipt_on_disk_is_attested |
 | T-210 | A corrected citation is not a dropped source | S-11 | D-31 | done | tests/test_bundle.py::test_a_corrected_citation_is_not_a_dropped_source |
+| T-211 | A run on a dirty tree is rejected | S-11 | D-33 | done | tests/test_attester.py::test_a_run_on_a_dirty_tree_is_rejected |
+| T-212 | A run whose assertions never ran is rejected | S-11 | D-33 | done | tests/test_attester.py::test_a_run_whose_assertions_never_ran_is_rejected |
+| T-213 | A second concurrent run refuses rather than clobbers | S-11 | D-33 | done | tests/test_attester.py::test_a_second_concurrent_run_refuses_rather_than_clobbers |
 
 # User journeys
 
@@ -528,3 +531,21 @@ before it binds the listening socket, and `READY=1` is sent from inside that lif
 `server.listen` binds and listens before uvicorn runs, so the socket exists before systemd is told
 anything. Four of four starts then answered on the first sample. The same bind retires the
 check-then-bind race that `port_free` left open in the collision guard.
+
+# What `T-211` to `T-213` found, 2026-08-27
+
+The two-engine receipt on disk carried `f1_lexical: 0.0` and `f1_semantic: 0.0` against a concept
+claiming `0.412` and `0.312`. Neither arm regressed. `coderag_files` returned an empty set on a
+failed `coderag search`, and an empty set scores `f1 = 0.0`, so an unreachable daemon read as a
+measurement. The `shutil.which` skip guard proved the CLI was installed and never that the daemon
+answered, which is the exact case the skip was written for.
+
+The same receipt carried `f1_graph_distinctive: 0.987` from a run whose `distinctive["precision"]
+== 1.0` assertion had failed, because the receipt is written before the assertions. `T-212` is what
+stops that artifact grading as a measurement.
+
+The graph figure moved for a reason the `commit_sha` field hid. The test reindexes the working tree,
+and an uncommitted `extract.py` had gained a call to `grammars.capabilities`. The TRUTH row for that
+symbol named six caller files and the tree held seven, so the seventh priced as a false positive.
+The row now names `src/graphrag/extract.py`. `T-211` is what refuses a run over a tree the SHA does
+not describe.

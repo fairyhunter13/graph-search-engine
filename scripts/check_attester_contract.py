@@ -90,6 +90,12 @@ def check(bundle: Path) -> list[str]:
         unread = [f for f in receipt if f not in declared]
         if unread:
             findings.append(f"{path}: the attester never reads {', '.join(unread)}")
+        # The other direction, because the attester refuses a receipt that omits
+        # a field it reads. A concept that under-declares ships a run whose
+        # artifact its own attester rejects.
+        undeclared = [f for f in declared if f not in receipt]
+        if undeclared:
+            findings.append(f"{path}: the run never produces {', '.join(undeclared)}")
     return findings
 
 

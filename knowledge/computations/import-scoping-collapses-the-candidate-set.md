@@ -11,7 +11,7 @@ parameters:
   - { name: corpus, type: path, required: true }
 executor:
   resource: ../skills/run-pytest-measure.md
-  receipt: [test_node_id, corpus_ref, commit_sha, mean_global, mean_scoped, n_files]
+  receipt: [test_node_id, corpus_ref, commit_sha, tree_dirty, outcome, mean_global, mean_scoped, n_files]
 attester:
   resource: ../attesters/measurement_equality.py
 verified:

@@ -77,12 +77,9 @@ def _run(cmd: list[str], cwd: Path | None = None, timeout: float = 120.0):
 
 
 def _write(name: str, receipt: dict) -> Path:
-    path = config.RECEIPT_DIR / f"{name}.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
     receipt.setdefault("commit_sha", _sha())
     receipt.setdefault("written_at", _now())
-    path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
-    return path
+    return config.write_receipt(name, receipt)
 
 
 def _int(raw: str) -> int:

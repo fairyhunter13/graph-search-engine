@@ -7,7 +7,10 @@ so a cycle would be unresolvable.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
+import subprocess
+from contextlib import contextmanager
 from pathlib import Path
 
 APP = "graphrag"
@@ -173,6 +176,57 @@ RECEIPT_DIR = Path(_env("RECEIPT_DIR") or (Path.home() / ".cache" / APP / "recei
 def receipt_path(node_id: str) -> Path:
     """One file per sanctioned test, named by its node ID."""
     return RECEIPT_DIR / (node_id.replace("/", "_").replace(":", "-") + ".json")
+
+
+def provenance(root: Path | str) -> dict:
+    """The commit a run happened on, and whether the tree matched it.
+
+    The SHA alone names code that did not run when the tree is dirty, and the
+    attester reads the receipt rather than the tree. So the tree state has to
+    travel inside the receipt for anything downstream to catch it.
+    """
+
+    def git(*args: str) -> str:
+        return subprocess.run(
+            ["git", "-C", str(root), *args], capture_output=True, text=True, check=True
+        ).stdout.strip()
+
+    # Short, because a concept footnote names the run by a short SHA.
+    return {
+        "commit_sha": git("rev-parse", "--short", "HEAD"),
+        "tree_dirty": bool(git("status", "--porcelain")),
+    }
+
+
+@contextmanager
+def receipt_lock(node_id: str):
+    """One writer per node ID. A second concurrent run refuses, never clobbers.
+
+    The name is a pure function of the node ID, so two runs otherwise truncate
+    one file and can leave torn JSON for the attester to read.
+    """
+    path = receipt_path(node_id).with_suffix(".lock")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        handle = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError as err:
+        raise RuntimeError(f"a run of {node_id} already holds {path}") from err
+    try:
+        os.write(handle, f"{os.getpid()}\n".encode())
+        os.close(handle)
+        yield
+    finally:
+        path.unlink(missing_ok=True)
+
+
+def write_receipt(node_id: str, body: dict) -> Path:
+    """Replace the receipt in one step, so no reader sees a half-written file."""
+    path = receipt_path(node_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(f".{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(body, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
+    return path
 
 
 # ---------------------------------------------------------------- public gate

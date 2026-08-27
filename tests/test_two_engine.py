@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -61,18 +60,27 @@ def test_the_graph_wins_the_caller_question():
     graph beats both semantic arms on a caller question, and it is exact only
     where the name is distinctive.
     """
-    if shutil.which("coderag") is None:
-        pytest.skip("no coderag CLI, so one arm would score zero for the wrong reason")
+    reason = measure_mod.arm_unreachable()
+    if reason:
+        pytest.skip(f"{reason}, so one arm would score zero for the wrong reason")
     measure = measure_mod
-    index.index_once(ROOT)
-    conn = store.connect(config.index_path(ROOT), create=False)
-    try:
-        report = measure.measure(conn)
-    finally:
-        conn.close()
-    # The receipt is written before the assertions, so a run that moves a number
-    # leaves the artifact the attester grades rather than only a red test.
-    measure.write_receipt(report)
+    with config.receipt_lock(measure.NODE_ID):
+        index.index_once(ROOT)
+        conn = store.connect(config.index_path(ROOT), create=False)
+        try:
+            report = measure.measure(conn)
+        finally:
+            conn.close()
+        # The receipt is written before the assertions, so a run that moves a
+        # number leaves the artifact rather than only a red test. It says
+        # `unverified` until the assertions below have run over it.
+        measure.write_receipt(report)
+        _assert_the_graph_wins(report)
+        measure.write_receipt(report, measure.PASSED)
+
+
+def _assert_the_graph_wins(report: dict) -> None:
+    measure = measure_mod
 
     summary = report["summary"]
     # The rule claims the graph beats both arms, and it claims nothing about

@@ -1,8 +1,9 @@
 """Attest that a measurement receipt came from the sanctioned computation.
 
-Two checks, and they answer different questions. Provenance asks whether the
-computation that ran is the one the concept sanctions. Fidelity asks whether
-the value about to be displayed is the value the receipt carries.
+Three checks, and they answer different questions. Integrity asks whether the
+run is one anything may be read off. Provenance asks whether the computation
+that ran is the one the concept sanctions. Fidelity asks whether the value
+about to be displayed is the value the receipt carries.
 
 Never uses an LLM. Never makes network calls. Safe to run consumer-side.
 Nothing here raises: every failure path returns a reason and a details map
@@ -21,14 +22,22 @@ RECEIPT_FIELDS = (
     "test_node_id",
     "corpus_ref",
     "commit_sha",
+    "tree_dirty",
+    "outcome",
     "mean_global",
     "mean_scoped",
     "n_files",
 )
 
 # The fields provenance compares. A commit SHA is recorded and not compared:
-# the sanctioned computation outlives the commit that last ran it.
+# the sanctioned computation outlives the commit that last ran it. What is
+# compared is whether the tree matched that SHA, because a dirty tree makes the
+# SHA name code that did not run and this module reads no tree.
 PROVENANCE_FIELDS = ("test_node_id", "corpus_ref")
+
+# What a receipt says once the assertions have run over it and held. A run
+# writes its receipt before them, so a red run leaves numbers on disk too.
+PASSED = "pass"
 
 # Two decimal places. A float carries more digits than a measurement means, and
 # comparing the raw repr makes an attester fail on a rounding difference that
@@ -77,6 +86,22 @@ def grade(
     missing = [f for f in fields if f not in receipt]
     if missing:
         return _verdict(False, f"the receipt omits {', '.join(missing)}", missing=missing)
+
+    if receipt["tree_dirty"]:
+        return _verdict(
+            False,
+            "the run happened on a dirty tree, so its commit_sha names code that did not run",
+            commit_sha=_canonical(receipt["commit_sha"]),
+            tree_dirty=True,
+        )
+
+    outcome = _canonical(receipt["outcome"])
+    if outcome != PASSED:
+        return _verdict(
+            False,
+            f"the run recorded outcome={outcome!r}, so nothing asserted over these numbers",
+            outcome=outcome,
+        )
 
     for field in provenance:
         if field not in sanctioned_computation:

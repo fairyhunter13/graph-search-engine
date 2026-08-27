@@ -14,3 +14,7 @@
 * [The overlay doubled its own edges](the-overlay-doubled-its-own-edges.md) - A call edge is keyed
   by its call site byte and replaces itself. An implements edge was keyed by nothing. A second
   ingest of one index inserted every one of them again, and the graph reported one interface twice.
+* [An unreachable arm scored zero](the-unreachable-arm-scored-zero.md) - The two-engine receipt
+  carried f1_lexical 0.0 against a claim of 0.412. Neither arm regressed: the coderag daemon was
+  down, an empty result set scores zero, and the run wrote its receipt before the assertion that
+  would have failed on it.

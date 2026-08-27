@@ -33,6 +33,8 @@ RECEIPT_FIELDS = (
     "test_node_id",
     "corpus_ref",
     "commit_sha",
+    "tree_dirty",
+    "outcome",
     "n_questions",
     "f1_graph",
     "f1_lexical",

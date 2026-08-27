@@ -39,6 +39,8 @@ RECEIPT = {
     "test_node_id": "tests/test_resolve.py::test_import_scoping_collapses_candidates",
     "corpus_ref": "v3.12.7",
     "commit_sha": "9e4212f",
+    "tree_dirty": False,
+    "outcome": "pass",
     "mean_global": 10.8576,
     "mean_scoped": 1.2437,
     "n_files": 755,
@@ -65,6 +67,28 @@ def test_changed_number_is_rejected():
     assert got["ok"] is False
     assert "mean_scoped" in got["reason"]
     assert got["details"] == {"field": "mean_scoped", "claimed": 1.1, "measured": 1.24}
+
+
+def test_a_run_on_a_dirty_tree_is_rejected():
+    """The SHA names code that did not run, and no attester can read a tree."""
+    got = attester.attest(
+        sanctioned_computation=SANCTIONED,
+        receipt={**RECEIPT, "tree_dirty": True},
+        claimed_value=CLAIM,
+    )
+    assert got["ok"] is False
+    assert got["details"]["tree_dirty"] is True
+
+
+def test_a_run_whose_assertions_never_ran_is_rejected():
+    """A receipt lands before the assertions, so a red run leaves one too."""
+    got = attester.attest(
+        sanctioned_computation=SANCTIONED,
+        receipt={**RECEIPT, "outcome": "unverified"},
+        claimed_value=CLAIM,
+    )
+    assert got["ok"] is False
+    assert got["details"]["outcome"] == "unverified"
 
 
 def test_a_run_against_another_corpus_is_rejected():
@@ -98,6 +122,22 @@ def test_a_claim_no_receipt_field_carries_is_refused():
 def test_an_empty_claim_attests_nothing_and_a_partial_one_attests_itself(claim):
     got = attester.attest(sanctioned_computation=SANCTIONED, receipt=RECEIPT, claimed_value=claim)
     assert got["ok"] is bool(claim)
+
+
+def test_a_second_concurrent_run_refuses_rather_than_clobbers(tmp_path, monkeypatch):
+    """The name is a pure function of the node ID, so two runs share one file."""
+    monkeypatch.setattr(config, "RECEIPT_DIR", tmp_path)
+    with config.receipt_lock(NODE_ID):
+        config.write_receipt(NODE_ID, {"test_node_id": NODE_ID})
+        with pytest.raises(RuntimeError, match="already holds"):
+            with config.receipt_lock(NODE_ID):
+                pass
+    assert json.loads(config.receipt_path(NODE_ID).read_text(encoding="utf-8")) == {
+        "test_node_id": NODE_ID
+    }
+    # The lock is released, so the next run is not blocked by the last one.
+    with config.receipt_lock(NODE_ID):
+        pass
 
 
 def test_the_receipt_on_disk_is_attested():

@@ -103,13 +103,6 @@ def _names_an_engine(prompt: str, words: tuple[str, ...]) -> bool:
     return any(word in lowered for word in words)
 
 
-def _write(name: str, receipt: dict) -> Path:
-    path = config.RECEIPT_DIR / f"{name}.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
-    return path
-
-
 def routing() -> Path:
     """`J-07`, two sessions in this repo, neither prompt naming an engine."""
     sessions = []
@@ -125,7 +118,7 @@ def routing() -> Path:
                 "names_an_engine": _names_an_engine(prompt, ENGINES),
             }
         )
-    return _write(
+    return config.write_receipt(
         "j07-routing-selection",
         {
             "journey_id": "J-07",
@@ -191,7 +184,7 @@ def dispatch() -> Path:
                 "skills_dispatched": [t for t in used if t.startswith("Skill(")],
             }
         )
-    return _write(
+    return config.write_receipt(
         "partb-skill-dispatch",
         {
             "check": "the test-plan skill is selected without being named",
