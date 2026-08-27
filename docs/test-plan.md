@@ -549,7 +549,8 @@ The same receipt carried `f1_graph_distinctive: 0.987` from a run whose `distinc
 stops that artifact grading as a measurement.
 
 A serialized run on the committed tree settles it: 0.510 lexical and 0.316 semantic, and neither is
-zero. The concept now carries those figures, and its footnote names the run.
+zero. The arms move a little between runs, so the concept carries the latest pair and names its
+commit in the footnote.
 
 `T-216` closes the last shape of the same hole. An error exit now raises, and so does unparsable
 output, but a daemon that accepts the connection and never answers hung the measurement instead.
