@@ -177,6 +177,8 @@ for the callers of a known function and check them by hand.
 | D-17 | The registry row carries the reach figures | done | src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/index.py, src/graphrag/cli.py | T-90 |
 | D-18 | The caller question, graded against both engines | done | scripts/two_engine_measure.py, tests/test_two_engine.py | T-91, T-92 |
 | D-19 | Capture the receiver, so a member call resolves to its own module | done | src/graphrag/extract.py, src/graphrag/resolve.py | T-93 |
+| D-20 | Continuous integration, the gate a skipped hook still meets | done | .github/workflows/ci.yml, tests/test_ci.py | T-112..T-115 |
+| D-21 | The receipt is an artifact of the run, never a literal | done | src/graphrag/config.py, tests/test_resolve.py, tests/test_attester.py | T-111 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -184,8 +186,8 @@ gate, and it is written down rather than worked around.
 
 `D-03` carries the load-bearing claim of the whole project. `T-07` measures it on CPython
 `v3.12.7`, 755 files of `Lib` with the test tree excluded, 53853 call sites. Global name matching
-gives 10.86 candidate files per site and 54.5% of sites are ambiguous. Import scoping gives 1.49
-and 17.7%. That is a collapse of 7.3 times.
+gives 10.86 candidate files per site and 54.5% of sites are ambiguous. Import scoping gives 1.24
+and 8.9%. That is a collapse of 8.7 times.
 
 The case asserts the ratio and a wide band, not the two numbers. A corpus at another tag moves both
 arms together, so an exact equality would fail on a bump that changed nothing. What is not allowed
@@ -425,7 +427,7 @@ the receiver names took F1 to 0.795. Refusing a receiver that names nothing the 
 it to 0.913. So the loser was deleted rather than kept behind a switch.
 
 The price is sites, not recall. `T-07` refuses 43.7% of its scoped call sites on CPython, which is
-part A's `expr.method()` share almost exactly, while the collapse ratio rises from 7.4 to 8.7 and
+part A's `expr.method()` share almost exactly, while the collapse ratio rises from 7.3 to 8.7 and
 ambiguity falls from under 25% to 8.9%. Recall on the caller set stays 1.000, so nothing refused
 there was a real call.
 

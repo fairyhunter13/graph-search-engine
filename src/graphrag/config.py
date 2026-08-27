@@ -158,6 +158,17 @@ def corpus_root(ref: str = "") -> Path:
     return CORPUS_DIR / f"cpython-{ref or CORPUS_REF}"
 
 
+# A receipt is what the sanctioned run actually produced, and the attester
+# grades it. `D-19` moved the number and every copy of it was a literal, so
+# nothing compared the claim against a run.
+RECEIPT_DIR = Path(_env("RECEIPT_DIR") or (Path.home() / ".cache" / APP / "receipts")).expanduser()
+
+
+def receipt_path(node_id: str) -> Path:
+    """One file per sanctioned test, named by its node ID."""
+    return RECEIPT_DIR / (node_id.replace("/", "_").replace(":", "-") + ".json")
+
+
 # ---------------------------------------------------------------- public gate
 
 # Unset is the failing state, and `none` is how a clean clone declares it has

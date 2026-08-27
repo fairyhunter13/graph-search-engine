@@ -2,8 +2,8 @@
 
 Measured 2026-08-27 on CPython `v3.12.7`, 755 files of `Lib` with the test tree
 excluded, 53853 call sites. Global name matching gives 10.86 candidate files per
-site and 54.5% of sites are ambiguous. Import scoping gives 1.49 and 17.7%, a
-collapse of 7.3 times. `T-07` is that measurement and it asserts the ratio, not
+site and 54.5% of sites are ambiguous. Import scoping gives 1.24 and 8.9%, a
+collapse of 8.7 times. `T-07` is that measurement and it asserts the ratio, not
 the two numbers: a corpus at another tag moves both arms together.
 
 Every survivor is emitted as its own edge with its confidence and the size of

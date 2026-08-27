@@ -17,7 +17,8 @@ and the two-engine gate live in the `ccw` repo, and a live session exercises the
 
 Named exclusions, each with its reason.
 
-- The SCIP overlay ships no code this pass, so `T-18` and `T-19` stay `planned`.
+- The SCIP overlay needs a resolved build per language, so `T-18` and `T-19` grade the reader
+  and the coverage guard against a golden index, and never a live indexer run.
 - Grammar correctness belongs to `tree-sitter-language-pack`, and is not re-tested here.
 - The parser download needs network. It is proven once by hand, and not in the suite.
 - `coderag` itself is not under test. Only the boundary between the two engines is.
@@ -34,7 +35,7 @@ Expected: the symbol counts equal the recorded goldens for that language.
 **S-02 Import scoping collapses the candidate set.**
 Precondition: the CPython standard library at a pinned tag.
 Action: references resolve by global name, and then by import scope.
-Expected: the mean candidate file count falls by at least six times, measured 10.86 to 1.49.
+Expected: the mean candidate file count falls by at least six times, measured 10.86 to 1.24.
 
 **S-03 A gap is reported.**
 Precondition: a language whose grammar emits no call capture.
@@ -98,6 +99,11 @@ Precondition: the tracked source tree.
 Action: the hygiene suite reads every module.
 Expected: no module passes the line ceiling, carries a home path or imports a sibling from
 `config.py`, `scip` is the only subpackage, and the name ban fails closed where it is unset.
+
+**S-16 A push that skipped the hook still meets a gate.**
+Precondition: the workflow file, and a run on `main`.
+Action: the suite, the linter and the bundle checks run.
+Expected: every action is pinned to a commit, no step continues on error, and the token reads only.
 
 **S-11 The bundle carries its own guarantees.**
 Precondition: a concept declaring an attested computation.
@@ -218,6 +224,11 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-108 | The index pass runs the overlay only where the config asks | S-06 | D-08 | done | tests/test_scip_run.py::test_the_index_pass_runs_the_overlay_only_where_the_config_asks |
 | T-109 | An unknown indexer name is an error and never a guessed encoding | S-06 | D-08 | done | tests/test_scip_offsets.py::test_an_unknown_tool_is_an_error_and_never_a_guess |
 | T-110 | A symbol descriptor tail carries the kind of each step | S-06 | D-08 | done | tests/test_scip_symbol.py::test_the_descriptor_tail_carries_the_kind_of_each_step |
+| T-111 | The receipt on disk agrees with the claim | S-02 | D-21 | done | tests/test_attester.py::test_the_receipt_on_disk_agrees_with_the_claim |
+| T-112 | The workflow pins every action to a commit | S-16 | D-20 | done | tests/test_ci.py::test_the_workflow_pins_every_action |
+| T-113 | The workflow token reads and never writes | S-16 | D-20 | done | tests/test_ci.py::test_the_workflow_reads_and_never_writes |
+| T-114 | No step continues on error | S-16 | D-20 | done | tests/test_ci.py::test_no_step_continues_on_error |
+| T-115 | It runs on main and by hand only | S-16 | D-20 | done | tests/test_ci.py::test_it_runs_on_main_and_by_hand_only |
 
 # User journeys
 

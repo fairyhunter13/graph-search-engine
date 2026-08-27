@@ -7,6 +7,7 @@ title: graphrag knowledge history
 
 ## 2026-08-27
 
+- **Creation**: `defects/the-attester-graded-a-literal.md` - the number `D-19` moved, the six copies that kept the old one, and the receipt that now comes off disk.
 - **Verified**: 15 concepts carry `process:okf-verify`. Every `generated.at` read ahead of the clock, a noon or evening placeholder rather than a write time, so no source check ran anywhere in the bundle. Two concepts stay blocked: they cite the `claude-code-workflows` repository, which is private, so an unauthenticated fetch reads 404.
 - **Creation**: `constraints/an-unreachable-daemon-is-not-an-absent-edge.md` - the four reach variants, and why `Type=notify` belongs to the same problem.
 - **Creation**: `decisions/a-member-is-declared-and-never-discovered.md` - why a graph engine declares its members where the semantic engine discovers them.

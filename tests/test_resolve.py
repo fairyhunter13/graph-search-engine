@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+import subprocess
+
 import pytest
 
 from graphrag import config, extract, resolve, symtab
@@ -176,6 +179,9 @@ def _corpus_table():
     return symtab.build(files)
 
 
+NODE_ID = "tests/test_resolve.py::test_import_scoping_collapses_candidates"
+
+
 @pytest.mark.corpus
 @pytest.mark.slow
 def test_import_scoping_collapses_candidates():
@@ -210,6 +216,32 @@ def test_import_scoping_collapses_candidates():
     # them rather than guessing. A share far under this means the rule stopped
     # firing; far over it means it started eating calls it can resolve.
     assert 0.30 <= 1 - scoped_sites / sites <= 0.55
+
+    _write_receipt(unscoped, scoped, len(table.files))
+
+
+def _write_receipt(mean_global: float, mean_scoped: float, n_files: int) -> None:
+    """The artifact the attester grades. A literal in test source grades nothing."""
+    sha = subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=False
+    ).stdout.strip()
+    path = config.receipt_path(NODE_ID)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "test_node_id": NODE_ID,
+                "corpus_ref": config.CORPUS_REF,
+                "commit_sha": sha,
+                "mean_global": round(mean_global, 4),
+                "mean_scoped": round(mean_scoped, 4),
+                "n_files": n_files,
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 @pytest.mark.corpus

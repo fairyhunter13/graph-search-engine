@@ -78,7 +78,7 @@ this concept is amended rather than replaced.
 
 The remaining loss is not a discarded receiver any more. It is a receiver naming a local variable,
 which no syntactic rule places, and which this engine now refuses instead of guessing. Closing the
-rest needs the type of the receiver, and that is the SCIP overlay `D-08` defers.
+rest needs the type of the receiver, and that is what the SCIP overlay in `D-08` reads.
 
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
 [^two-engine-run]: Ten caller questions over this repo, 58 ground-truth caller files, measured 2026-08-27 at commit `0e8ffd6`.

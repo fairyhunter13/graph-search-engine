@@ -12,9 +12,9 @@ DEV="$REPO_ROOT/docs/development-plan.md"
 TST="$REPO_ROOT/docs/test-plan.md"
 
 # The severity ratchet. While the pair is being seeded a row may name a path not yet
-# written, which is a forward reference and not a mistake. Flip to 1 on the day the
-# output is empty; from then on a finding can only be new drift.
-PLAN_GATE_BLOCKING=0
+# written, which is a forward reference and not a mistake. Flipped to 1 on 2026-08-27,
+# the day the output went empty. From here a finding can only be new drift.
+PLAN_GATE_BLOCKING=1
 
 plan_ids() {  # $1 = file, $2 = D or T
   grep -oE "\b$2-[0-9]+" "$1" | sort -u

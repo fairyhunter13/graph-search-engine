@@ -2,7 +2,7 @@
 type: Attested Computation
 resource: src/graphrag/resolve.py
 title: Import scoping collapses the candidate set by roughly seven times
-description: "The measurement the whole resolution design rests on. Global name matching gives 10.86 candidate files per call site on the pinned corpus, and import scoping gives 1.49."
+description: "The measurement the whole resolution design rests on. Global name matching gives 10.86 candidate files per call site on the pinned corpus, and import scoping gives 1.24."
 tags: [resolution, measurement, cpython, attestation]
 status: stable
 runtime: python
@@ -28,7 +28,7 @@ sources:
 
 A call site names a symbol. Matching that name against every definition in the repo gives 10.86
 candidate files, and 54.5% of sites carry more than one.[^cpython-measure] Scoping the match to what
-the file imports gives 1.49 candidates and 17.7%. That is a collapse of 7.3 times, and it is what
+the file imports gives 1.24 candidates and 8.9%. That is a collapse of 8.7 times, and it is what
 makes a ranked answer worth reading.
 
 # Computation
