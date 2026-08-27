@@ -172,7 +172,7 @@ for the callers of a known function and check them by hand.
 | D-12 | The OKF profile record and bundle root | done | knowledge/index.md, knowledge/log.md, knowledge/policies, tests/test_bundle.py | T-28, T-38, T-39, T-40 |
 | D-13 | The first working attester | done | knowledge/attesters, knowledge/computations, knowledge/skills, tests/test_attester.py | T-29, T-30, T-41, T-42, T-43, T-44 |
 | D-14 | Gate lines and the attester contract check | done | .githooks/pre-push, scripts/check_attester_contract.py, knowledge/constraints, knowledge/decisions | T-31, T-32 |
-| D-15 | Source roots, so a dotted import matches a path | planned | src/graphrag/symtab.py | T-59 |
+| D-15 | Source roots, so a dotted import matches a path | done | src/graphrag/symtab.py, tests/test_resolve.py | T-59 |
 | D-16 | Workspace scope, federation and peer identity | planned | src/graphrag/scope.py, src/graphrag/federation.py, src/graphrag/peers.py | T-65 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
@@ -274,3 +274,13 @@ so passing a size here would drop exactly that event.
 `T-16` was corrected in the same commit. The test plan carries the reason: resolution is global, so
 a pass reparses the tree rather than the edited file, and what the watcher guarantees is one pass
 per project rather than one per file.
+
+# What `D-15` settled, 2026-08-27
+
+The strip runs in `module_name` and in `resolve_module`, not in the first alone. A relative import
+resolves against the importing directory, so a stripped module name compared against an unstripped
+directory matches nothing, and scoping goes quiet on the languages the row exists to fix.
+
+The longest prefix wins, or `src` eats the maven layout halfway and leaves `main.java.com.acme`.
+A path that strips to nothing keeps its own parts, because an empty module name is shared by every
+file sitting directly under a source root.

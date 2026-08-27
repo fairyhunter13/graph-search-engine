@@ -153,7 +153,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-56 | Every vendored import query compiles | S-13 | D-05 | done | tests/test_import_queries.py::test_every_vendored_import_query_compiles |
 | T-57 | Every vendored query has a sample | S-13 | D-05 | done | tests/test_import_queries.py::test_every_vendored_query_has_a_sample |
 | T-58 | A language with no import query says so | S-03 | D-05 | done | tests/test_import_queries.py::test_a_language_with_no_import_query_says_so |
-| T-59 | A source root prefix leaves the module name | S-02 | D-15 | planned | tests/test_symtab.py::test_a_source_root_prefix_leaves_the_module_name |
+| T-59 | A source root prefix leaves the module name | S-02 | D-15 | done | tests/test_resolve.py::test_a_source_root_prefix_leaves_the_module_name |
 | T-60 | The capability table reads the manifest, not the cache | S-03 | D-02 | done | tests/test_grammars.py::test_known_languages_does_not_depend_on_the_download_cache |
 | T-61 | The bridge round trips one call | S-08 | D-06 | done | tests/test_server.py::test_the_bridge_round_trips_one_call |
 | T-62 | A dead daemon keeps stdout clean | S-08 | D-06 | done | tests/test_server.py::test_the_bridge_survives_an_unreachable_daemon |

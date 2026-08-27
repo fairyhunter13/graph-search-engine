@@ -104,6 +104,22 @@ def test_a_package_initialiser_names_the_package():
     assert symtab.module_name("pkg/rates.py") == "pkg.rates"
 
 
+def test_a_source_root_prefix_leaves_the_module_name():
+    """`T-59`: a build-tool directory is no part of the name an import writes."""
+    assert symtab.module_name("src/main/java/com/acme/Rates.java") == "com.acme.Rates"
+    assert symtab.module_name("app/src/main/kotlin/com/acme/Rates.kt") == "com.acme.Rates"
+    assert symtab.module_name("src/graphrag/symtab.py") == "graphrag.symtab"
+    # The longest prefix wins, so `src` never eats the java layout halfway.
+    assert symtab.module_name("src/test/scala/com/acme/RatesSpec.scala") == "com.acme.RatesSpec"
+    # A file directly under a source root keeps its own name, because an empty
+    # module would make every such file the same module.
+    assert symtab.module_name("src/rates.py") == "rates"
+    assert symtab.module_name("src.py") == "src"
+    # A relative import agrees with the module name, or scoping compares a
+    # stripped path against an unstripped one and matches nothing.
+    assert symtab.resolve_module("src/pkg/orders.py", ".rates") == "pkg.rates"
+
+
 def _corpus_table():
     root = config.corpus_root() / "Lib"
     files = {}

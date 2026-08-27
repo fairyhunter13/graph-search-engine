@@ -17,6 +17,27 @@ from .extract import FileFacts
 # and no `from . import x` ever resolves.
 _PACKAGE_INIT = ("__init__", "index", "mod")
 
+# Build-tool directories that carry no part of the name an import writes. Maven
+# and Gradle put `com.acme.Foo` at `src/main/java/com/acme/Foo.java`, so the
+# derived name is `src.main.java.com.acme.Foo` and matches no import ever
+# written. Longest first, because `src/main/java` must beat `src`.
+_SOURCE_ROOTS: tuple[tuple[str, ...], ...] = tuple(
+    tuple(prefix.split("/"))
+    for prefix in (
+        "src/main/java",
+        "src/main/kotlin",
+        "src/main/scala",
+        "src/main/resources",
+        "src/test/java",
+        "src/test/kotlin",
+        "src/test/scala",
+        "app/src/main/java",
+        "app/src/main/kotlin",
+        "src",
+        "lib",
+    )
+)
+
 
 @dataclass(slots=True, frozen=True)
 class Symbol:
@@ -46,9 +67,21 @@ class SymbolTable:
         return [_symbol(path, i, d) for i, d in enumerate(facts.definitions)]
 
 
+def strip_source_root(parts: list[str]) -> list[str]:
+    """Drop a build-tool prefix, longest match first."""
+    for root in sorted(_SOURCE_ROOTS, key=len, reverse=True):
+        if tuple(parts[: len(root)]) == root:
+            return parts[len(root) :]
+    return parts
+
+
 def module_name(path: str) -> str:
     """The dotted module a path defines, in the shape an import names it."""
     parts = list(PurePosixPath(path).with_suffix("").parts)
+    # Never strip a path down to nothing. A file sitting directly in `src/` would
+    # otherwise share the empty module name with every other such file.
+    stripped = strip_source_root(parts)
+    parts = stripped or parts
     if parts and parts[-1] in _PACKAGE_INIT:
         parts.pop()
     return ".".join(parts)
@@ -68,7 +101,7 @@ def resolve_module(importer: str, module: str) -> str:
     if not module.startswith("."):
         return module
     depth = len(module) - len(module.lstrip("."))
-    parts = list(PurePosixPath(importer).parent.parts)
+    parts = strip_source_root(list(PurePosixPath(importer).parent.parts))
     base = parts[: max(0, len(parts) - depth + 1)]
     tail = module.lstrip(".")
     return ".".join([p for p in base if p not in (".", "")] + ([tail] if tail else []))
