@@ -6,5 +6,5 @@
   corpus, and import scoping gives 1.19.
 * [The graph answers the caller question, and the retrieval index does
   not](the-graph-answers-the-caller-question.md) - The measurement that decides whether a second
-  engine earns its process. Over ten caller questions the graph scores F1 1.000, against 0.412
-  lexical and 0.312 semantic. The class split it once carried is closed.
+  engine earns its process. Over ten caller questions the graph scores F1 1.000, against 0.535
+  lexical and 0.331 semantic. The class split it once carried is closed.

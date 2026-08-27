@@ -2,7 +2,7 @@
 type: Attested Computation
 resource: scripts/two_engine_measure.py
 title: The graph answers the caller question, and the retrieval index does not
-description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 1.000, against 0.412 lexical and 0.312 semantic. The class split it once carried is closed."
+description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 1.000, against 0.535 lexical and 0.331 semantic. The class split it once carried is closed."
 tags: [routing, measurement, two-engine, attestation]
 status: stable
 runtime: python
@@ -16,6 +16,7 @@ attester:
   resource: ../attesters/two_engine_receipt.py
 verified:
   - { by: process:okf-verify, at: 2026-08-27T11:36:40Z }
+stale_after: 2027-08-27T00:00:00Z
 sources:
   - id: two-engine-run
     resource: scripts/two_engine_measure.py
@@ -29,7 +30,7 @@ sources:
 The routing rule says coderag names the symbol and graphrag walks the edges from it. No record
 measured that, so the rule was argued and never graded.[^two-engine-run] Ten caller questions over
 this repo are scored at file granularity, against a ground truth read by hand. They give the graph
-F1 1.000, against 0.412 for lexical retrieval and 0.312 for semantic. So the second engine earns
+F1 1.000, against 0.535 for lexical retrieval and 0.331 for semantic. So the second engine earns
 its process.
 
 # The finding one number hides
@@ -98,4 +99,4 @@ followed, and the reason is evidence. The class fields at 1.000 are what shows t
 and a receipt without them cannot show it. So this concept is amended and the fields stay.
 
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 69 ground-truth caller files, measured 2026-08-27 at commit `a455467`.
+[^two-engine-run]: Ten caller questions over this repo, 70 ground-truth caller files, measured 2026-08-27 at commit `e2a20c6`.

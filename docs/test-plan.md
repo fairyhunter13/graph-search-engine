@@ -544,6 +544,9 @@ The same receipt carried `f1_graph_distinctive: 0.987` from a run whose `distinc
 == 1.0` assertion had failed, because the receipt is written before the assertions. `T-212` is what
 stops that artifact grading as a measurement.
 
+A serialized run on the committed tree settles it: 0.535 lexical and 0.331 semantic, and neither is
+zero. The concept now carries those figures, and its footnote names the run.
+
 The graph figure moved for a reason the `commit_sha` field hid. The test reindexes the working tree,
 and an uncommitted `extract.py` had gained a call to `grammars.capabilities`. The TRUTH row for that
 symbol named six caller files and the tree held seven, so the seventh priced as a false positive.
