@@ -36,6 +36,7 @@ def cmd_index(args: argparse.Namespace) -> int:
         raise SystemExit(f"{root} is not a directory")
     registry.claim(root, direct=True)
     report = index.index_once(root, force=args.force)
+    index.record(report)
     return _out(
         {
             "root": report.root,

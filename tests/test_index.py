@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from graphrag import config, index, query, store, traverse
+from graphrag import config, index, query, registry, store, traverse
 
 CYCLE = {
     "a.py": ("from b import beta\n\n\ndef alpha():\n    return beta()\n"),
@@ -122,3 +122,28 @@ def test_the_capability_report_names_every_language_in_the_project(cycle):
     report = query.capability_report(conn)
     assert set(report) == {"python"}
     assert "calls" in report["python"]
+
+
+def test_the_registry_row_carries_the_figures_the_reach_hook_reads(cycle):
+    """T-90. The hook reads the row and never the store.
+
+    `graphRegistryRow` in ccw unmarshals `node_count`, `edge_count`,
+    `resolved_edge_count` and `capabilities`. A row without them reports an
+    indexed project as an empty graph, which is the absence this engine
+    refuses to return.
+    """
+    root, report, _ = cycle
+    registry.claim(root, direct=True)
+    index.record(report)
+    row = registry.get(root).to_json()
+    assert row["node_count"] == report.nodes > 0
+    assert row["edge_count"] == report.edges > 0
+    assert row["resolved_edge_count"] == report.resolved > 0
+    assert "calls" in row["capabilities"]["python"]
+
+    # An unchanged pass writes no graph, so the row keeps what the last real
+    # pass left. Zeroing here would report a live graph as empty.
+    index.record(index.index_once(root))
+    kept = registry.get(root).to_json()
+    assert kept["node_count"] == row["node_count"]
+    assert kept["capabilities"] == row["capabilities"]

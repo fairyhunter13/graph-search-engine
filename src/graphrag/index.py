@@ -22,6 +22,7 @@ from . import (
     config,
     discover,
     extract,
+    grammars,
     indexwrite,
     ledger,
     progress,
@@ -130,6 +131,19 @@ def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
     return report
 
 
+def record(report: IndexReport) -> None:
+    """Write the pass into the registry row, counts included.
+
+    The reach hook reads the row and not the store, so a row with no figures
+    reports an indexed project as an empty one."""
+    counts = None
+    caps = None
+    if not report.unchanged:
+        counts = (report.nodes, report.edges, report.resolved)
+        caps = {lang: sorted(grammars.capabilities(lang)) for lang in report.languages}
+    registry.mark_indexed(report.root, counts=counts, capabilities=caps)
+
+
 class Queue:
     """One queue, one worker. The queue is the state, and it is asymmetric."""
 
@@ -186,7 +200,7 @@ def run_worker(queue: Queue = QUEUE, *, stop: threading.Event | None = None) -> 
         with trace.span():
             try:
                 report = index_once(key)
-                registry.mark_indexed(key)
+                record(report)
                 ledger.append(
                     ledger.RUN,
                     {

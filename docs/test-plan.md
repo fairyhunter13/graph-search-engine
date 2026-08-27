@@ -184,6 +184,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-87 | The notice names the languages that answer nothing | S-10 | D-11 | done | tests/test_systemd.py::test_the_notice_names_the_languages_that_answer_nothing |
 | T-88 | An enrolled but unindexed root says so | S-10 | D-11 | done | tests/test_systemd.py::test_an_enrolled_but_unindexed_root_says_so |
 | T-89 | An unreachable daemon refuses rather than reports nothing | S-10 | D-11 | done | tests/test_systemd.py::test_an_unreachable_daemon_refuses_rather_than_reports_nothing |
+| T-90 | The registry row carries the reach figures | S-10 | D-17 | done | tests/test_index.py::test_the_registry_row_carries_the_figures_the_reach_hook_reads |
 
 # User journeys
 

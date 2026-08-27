@@ -174,6 +174,7 @@ for the callers of a known function and check them by hand.
 | D-14 | Gate lines and the attester contract check | done | .githooks/pre-push, scripts/check_attester_contract.py, knowledge/constraints, knowledge/decisions | T-31, T-32 |
 | D-15 | Source roots, so a dotted import matches a path | done | src/graphrag/symtab.py, tests/test_resolve.py | T-59 |
 | D-16 | Workspace scope, federation and peer identity | done | src/graphrag/scope.py, src/graphrag/federation.py, src/graphrag/peers.py, tests/test_federation.py | T-65, T-77..T-84 |
+| D-17 | The registry row carries the reach figures | done | src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/index.py, src/graphrag/cli.py | T-90 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -354,3 +355,18 @@ number the engine never held is the failure it exists to stop, printed by the ga
 The gate accepts either engine and the order is doctrine. Four doctrine lines carry it, and each
 names a capability boundary rather than a second claim to be called first. The recorded contest says
 three escalations of "call this first" all lost to grep.
+
+# What `D-17` settled, 2026-08-27
+
+The reach hook reads the registry row and never the store. `graphRegistryRow` in ccw unmarshals
+`node_count`, `edge_count`, `resolved_edge_count` and `capabilities`, and `ProjectEntry.to_json`
+emitted none of the four. Every indexed project therefore reported an empty graph, in the notice
+built to keep a session from reading silence as an absence.
+
+`ProjectEntry` now carries the four. `index.record(report)` writes them, and both the worker and
+`graphrag index` call it. The CLI path wrote no row at all before, so an operator index left
+`last_indexed` at zero.
+
+An unchanged pass writes no graph, so `record` passes no counts and the row keeps what the last
+real pass left. Zeroing there would report a live graph as empty, which is the same defect one
+layer down.

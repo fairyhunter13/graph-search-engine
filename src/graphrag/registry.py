@@ -159,13 +159,26 @@ def forget(keys: list[str]) -> tuple[list[str], list[str]]:
     return dropped, released
 
 
-def mark_indexed(path: Path | str, *, error: str | None = None) -> None:
+def mark_indexed(
+    path: Path | str,
+    *,
+    error: str | None = None,
+    counts: tuple[int, int, int] | None = None,
+    capabilities: dict[str, list[str]] | None = None,
+) -> None:
+    """`counts` is None for a pass that wrote no graph, and the row then keeps
+    what the last real pass left. Zeroing it would report a live graph as empty."""
     key = str(resolve(path))
     with _mutate() as rows:
         entry = rows.get(key)
-        if entry is not None:
-            entry.last_indexed = time.time()
-            entry.last_error = error
+        if entry is None:
+            return
+        entry.last_indexed = time.time()
+        entry.last_error = error
+        if counts is not None:
+            entry.node_count, entry.edge_count, entry.resolved_edge_count = counts
+        if capabilities is not None:
+            entry.capabilities = capabilities
 
 
 def fleet_digest(rows: Rows) -> str:
