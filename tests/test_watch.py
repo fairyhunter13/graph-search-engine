@@ -16,8 +16,7 @@ TWO = {
 
 
 def _drain() -> None:
-    while index.QUEUE.take(timeout=0.01) is not None:
-        pass
+    index.QUEUE.drain()
 
 
 @pytest.fixture

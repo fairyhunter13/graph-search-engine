@@ -45,6 +45,8 @@ title: graphrag knowledge history
 - **Creation**: `decisions/a-member-is-declared-and-never-discovered.md` - why a graph engine declares its members where the semantic engine discovers them.
 - **Creation**: `constraints/one-bad-node-type-disables-a-whole-query.md` - the silent query compile failure `sourcepawn` shipped, and the check that sees it.
 - **Creation**: `constraints/extraction-runs-at-118-files-per-second.md` - the measured throughput and the floor `T-10` sets from it.
+- **Update**: renamed to [extraction runs at about 306 files per second](constraints/extraction-runs-at-306-files-per-second.md). 117.8 was a build that compiled a fresh `ts.Query` per file, twice, at 3.82 ms against 0.58 ms to parse the file. One compile per language and a skipped parse where the capability set is empty take the same corpus to 306.6, and `T-10`'s floor moves from 80 to 200.
+- **Creation**: [a pass waits 15 seconds for the project to go quiet](constraints/a-pass-waits-for-the-project-to-go-quiet.md). The run ledger recorded 89 passes an hour for this repo and 55 for `largest-enrolled-project`, every batch carrying one event, 5 to 20 s apart. `WATCH_DEBOUNCE_MS` is the Rust batch window and merges nothing at that spacing, so raising it was refused on the ledger rather than argued. The countdown restarts on each event and an explicit `index` call pulls a waiting job forward. `Queue.drain` is new: `take` skips a job whose countdown runs, so the watcher tests could no longer empty the queue by polling it.
 - **Creation**: the bundle root and the profile record.
 - **Creation**: the first Attested Computation, its executor skill and the attester that grades it.
 - **Creation**: the freshness, link and attestation records, and the gate that enforces them.

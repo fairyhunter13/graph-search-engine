@@ -14,6 +14,10 @@
   scored against the whole symbol table. A pass that reparsed only the edited file would price
   every other file as a repo that does not define the name. Per-file facts are not persisted, so
   there is nothing to reuse.
+* [A pass waits 15 seconds for the project to go quiet, and a query may be that far behind the
+  disk](a-pass-waits-for-the-project-to-go-quiet.md) - Watch batches carried one event each, 5 to 20
+  seconds apart, so the debounce merged almost nothing and every save bought a whole-tree pass. The
+  countdown restarts on each event, and an explicit index call pulls the job forward.
 * [A stale date without an explicit UTC offset reads as fresh
   forever](a-stale-date-needs-an-explicit-utc-offset.md) - OKF section 5 wants an absolute instant.
   An offset-free value parses, passes the standard rule set, and turns freshness checking off with
@@ -34,10 +38,11 @@
   none](every-scip-indexer-needs-a-resolved-build.md) - A SCIP index needs the project's
   dependencies resolved and its build working, and a tree-sitter parse needs only the bytes of one
   file.
-* [Extraction runs at about 118 files per second, not
-  334](extraction-runs-at-118-files-per-second.md) - The design quoted 334 files per second for a
-  parse plus a tags query. This engine also normalizes captures, attributes scope and runs the
-  import query, so it measures 117.8 on the same corpus and the floor is set from the measurement.
+* [Extraction runs at about 306 files per second, and the query is compiled once per
+  language](extraction-runs-at-306-files-per-second.md) - The engine measured 117.8 files per second
+  while it compiled a fresh query for every file. Compiling costs 3.82 ms against 0.58 ms to parse
+  the file. One compile per language takes the same corpus to 306, and the floor is set from the
+  measurement.
 * [Links here are relative, because the spec and the reference agent
   disagree](links-are-relative-because-the-bundle-is-browsed-on-github.md) - OKF section 6.1
   recommends a link that begins with a slash, and the upstream authoring prompt forbids one because

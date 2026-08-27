@@ -1,18 +1,19 @@
 """Extraction throughput, so a regression in query complexity is visible.
 
 Measured 2026-08-27 on CPython `v3.12.7`, 755 files of `Lib` with the test tree
-excluded, 12.2 MB, single core, three runs: 117.8, 117.8, 117.9 files per second
-and 1.9 MB per second. The method is this test: read every file into memory
-first, then time `extract.extract` alone, so disk and decoding do not count.
+excluded, 12.2 MB, single core, three runs: 303.7, 307.2 and 306.6 files per
+second and 5.0 MB per second. The method is this test: read every file into
+memory first, then time `extract.extract` alone, so disk and decoding do not
+count. The machine carried a load average of 13 throughout, so the figure is a
+floor on a busy host rather than a best case.
 
-The floor is 80, which is 32 percent under the measurement. It is a regression
+The 117.8 files per second measured earlier the same day is the same code with
+one `ts.Query` compiled per file. Compiling costs 3.82 ms against 0.58 ms to
+parse the file, and the query text is one per language.
+
+The floor is 200, which is 34 percent under the measurement. It is a regression
 detector and not a target: the margin absorbs a loaded machine, and a change
 that costs a third of the throughput is a design change worth seeing.
-
-The plan quoted 334 files per second from an upstream figure that timed a parse
-plus a tags query and nothing else. This repo also runs capture normalization,
-scope attribution and the import query, so the two numbers measure different
-work. The measured one is the one that governs.
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ import pytest
 
 from graphrag import config, extract
 
-FLOOR_FILES_PER_S = 80.0
+FLOOR_FILES_PER_S = 200.0
 MIN_FILES = 200
 
 

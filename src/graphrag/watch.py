@@ -75,7 +75,7 @@ def _submit(batch: set[tuple[int, str]], roots: tuple[Path, ...]) -> dict[str, i
             continue
         touched[str(owner)] = touched.get(str(owner), 0) + 1
     for root in touched:
-        index.QUEUE.submit(root)
+        index.QUEUE.submit(root, delay=config.WATCH_QUIET_MS / 1000)
     return touched
 
 
