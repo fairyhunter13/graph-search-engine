@@ -312,7 +312,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-191 | The unique key is the identifier range | S-07 | D-01 | done | tests/test_store.py::test_the_unique_key_is_the_identifier_range |
 | T-192 | A bare verified mapping reads as a one-element list | S-11 | D-28 | done | tests/test_bundle.py::test_a_bare_verified_mapping_reads_as_a_one_element_list |
 | T-193 | Every index gloss is the description of its concept | S-11 | D-29 | done | tests/test_bundle.py::test_every_index_gloss_is_its_concepts_description |
-| T-194 | The bundle reads as machine-confirmed and never as reviewed | S-11 | D-28 | done | tests/test_bundle.py::test_the_bundle_reads_as_machine_confirmed_and_never_as_reviewed |
+| T-194 | A concept reads as reviewed only where a human stamped it | S-11 | D-28 | done | tests/test_bundle.py::test_a_concept_reads_as_reviewed_only_where_a_human_stamped_it |
 | T-195 | The trust tier reads the three cases section 5.3 names | S-11 | D-28 | done | tests/test_bundle.py::test_the_trust_tier_reads_the_three_cases_section_5_3_names |
 | T-196 | An unset watchdog interval sends no ping | S-09 | D-11 | done | tests/test_systemd.py::test_no_watchdog_means_no_pings |
 | T-197 | The pet reaches the notify socket | S-09 | D-11 | done | tests/test_systemd.py::test_the_pet_reaches_the_notify_socket |

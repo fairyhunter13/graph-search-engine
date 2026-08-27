@@ -196,10 +196,21 @@ def test_a_bare_verified_mapping_reads_as_a_one_element_list():
     assert okf_frontmatter.trust_tier(bare) == "machine-confirmed"
 
 
-def test_the_bundle_reads_as_machine_confirmed_and_never_as_reviewed():
-    """The tier over the concepts on disk, so the reader runs on real files."""
-    tiers = [okf_frontmatter.trust_tier(frontmatter(path)) for path in _concepts()]
-    assert "human-reviewed" not in tiers
+def test_a_concept_reads_as_reviewed_only_where_a_human_stamped_it():
+    """The tier over the concepts on disk, so the reader runs on real files.
+
+    This held `human-reviewed` out of the bundle until `maintainer` stamped the
+    import-scoping computation. That was the state and never the rule, and the
+    rule is that the tier follows a `human:` actor rather than any other.
+    """
+    tiers, stamped = [], []
+    for path in _concepts():
+        front = frontmatter(path)
+        tiers.append(okf_frontmatter.trust_tier(front))
+        stamped.append(
+            any(str(e.get("by", "")).startswith("human:") for e in okf_frontmatter.verifiers(front))
+        )
+    assert [t == "human-reviewed" for t in tiers] == stamped
     assert "machine-confirmed" in tiers
 
 
