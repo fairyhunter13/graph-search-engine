@@ -65,6 +65,27 @@ def test_single_edit_reparses_one_file(watching):
     assert list(rows[0]["projects"]) == [str(watching)]
 
 
+def test_a_further_save_restarts_the_quiet_window(tmp_path):
+    """`T-214`: a pass runs once the person stops typing, never once per save."""
+    queue = index.Queue()
+    queue.submit(tmp_path, delay=0.3)
+    time.sleep(0.2)
+    queue.submit(tmp_path, delay=0.3)
+    # This take runs out past the first countdown, so a job it returned would be
+    # one the second save should have pushed back.
+    assert queue.take(timeout=0.2) is None
+    assert queue.take(timeout=1.0) == str(tmp_path.resolve())
+
+
+def test_an_explicit_call_pulls_a_waiting_job_forward(tmp_path):
+    """`T-215`: a caller wanting the tree now is not held by someone else's countdown."""
+    queue = index.Queue()
+    assert queue.submit(tmp_path, delay=30) == "queued"
+    assert queue.take(timeout=0.05) is None
+    assert queue.submit(tmp_path) == "dropped"
+    assert queue.take(timeout=1.0) == str(tmp_path.resolve())
+
+
 def test_a_file_the_indexer_would_refuse_never_wakes_it(watching):
     """`T-70`: the watcher's filter is the indexer's, so it wakes on nothing else."""
     (watching / "notes.txt").write_text("prose, and no grammar for it")

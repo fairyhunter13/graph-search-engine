@@ -189,7 +189,7 @@ for the callers of a known function and check them by hand.
 | D-29 | Every index gloss is checked against its concept description | done | scripts/check_index_gloss.py, .githooks/pre-push, tests/test_bundle.py | T-193 |
 | D-30 | The bundle records what it cannot cite, and the shrink-gate deviation | done | knowledge/references, knowledge/decisions, tests/test_attester.py | T-209 |
 | D-31 | A corrected citation is not a dropped source, and the private URL goes | done | scripts/check_no_shrink.py, knowledge/decisions, tests/test_bundle.py | T-210 |
-| D-32 | The quiet window, so a burst of saves buys one pass and not one each | done | src/graphrag/config.py, src/graphrag/index.py, src/graphrag/watch.py, src/graphrag/extract.py, tests/test_watch.py | T-16 |
+| D-32 | The quiet window, so a burst of saves buys one pass and not one each | done | src/graphrag/config.py, src/graphrag/index.py, src/graphrag/watch.py, src/graphrag/extract.py, tests/test_watch.py | T-16, T-214, T-215 |
 | D-33 | A receipt carries whether its own run can be read off | done | src/graphrag/config.py, knowledge/attesters, scripts/two_engine_measure.py, tests/test_attester.py, tests/test_two_engine.py, tests/test_resolve.py, scripts/check_attester_contract.py | T-211, T-212, T-213 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
@@ -578,8 +578,10 @@ the content-hash diff, so a live store answers the old rule until the number for
 `constraints/a-pass-waits-for-the-project-to-go-quiet.md` holds the ledger, the window and the cost.
 `constraints/extraction-runs-at-306-files-per-second.md` holds what the pass now costs.
 
-What neither records: the window has no case of its own. `T-16` asserts one pass per debounce
-window, which is the property the delay preserves rather than the delay itself.
+`T-16` asserts one pass per debounce window, which is the property the delay preserves rather than
+the delay itself. `T-214` and `T-215` cover the delay: a further save restarts the countdown, and
+an explicit call pulls the waiting job forward. Both drive `index.Queue` rather than inotify,
+because the restart is a queue rule and the watcher only supplies the delay.
 
 # The receipt that graded a run nothing asserted over, 2026-08-27
 

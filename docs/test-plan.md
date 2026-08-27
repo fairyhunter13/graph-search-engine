@@ -332,6 +332,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-211 | A run on a dirty tree is rejected | S-11 | D-33 | done | tests/test_attester.py::test_a_run_on_a_dirty_tree_is_rejected |
 | T-212 | A run whose assertions never ran is rejected | S-11 | D-33 | done | tests/test_attester.py::test_a_run_whose_assertions_never_ran_is_rejected |
 | T-213 | A second concurrent run refuses rather than clobbers | S-11 | D-33 | done | tests/test_attester.py::test_a_second_concurrent_run_refuses_rather_than_clobbers |
+| T-214 | A further save restarts the quiet window | S-09 | D-32 | done | tests/test_watch.py::test_a_further_save_restarts_the_quiet_window |
+| T-215 | An explicit call pulls a waiting job forward | S-09 | D-32 | done | tests/test_watch.py::test_an_explicit_call_pulls_a_waiting_job_forward |
 
 # User journeys
 
