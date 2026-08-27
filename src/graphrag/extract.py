@@ -1,0 +1,230 @@
+"""Per-file parse to dataclasses. Writes nothing global.
+
+Scope and method-ness are decided by byte containment, not by asking the AST
+what a class node is called. Every grammar spells that differently, and Python's
+`tags.scm` emits `@definition.function` for a method with no `@definition.method`
+at all, so containment is the only rule that holds across 68 grammars.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+import tree_sitter as ts
+from tree_sitter_language_pack import get_language
+
+from . import grammars, queries
+
+# The byte that precedes an identifier in a member call. `expr.method()` is about
+# 43% of call sites, and no syntactic rule resolves the receiver, so the flag
+# rides along and resolution prices it down rather than guessing.
+_MEMBER_BYTES = (b".", b">", b":")
+
+
+@dataclass(slots=True)
+class Definition:
+    kind: str
+    name: str
+    start_byte: int  # the identifier token range, and the SCIP upsert key
+    end_byte: int
+    start_line: int
+    end_line: int
+    body_end_byte: int
+    parent: int | None = None
+    qualified_name: str = ""
+
+
+@dataclass(slots=True)
+class Reference:
+    kind: str
+    name: str
+    call_site_byte: int
+    line: int
+    scope: int | None = None
+    is_member: bool = False
+
+
+@dataclass(slots=True)
+class Import:
+    module: str
+    symbol: str = ""
+    alias: str = ""
+    line: int = 0
+
+
+@dataclass(slots=True)
+class FileFacts:
+    lang: str
+    n_lines: int = 0
+    definitions: list[Definition] = field(default_factory=list)
+    references: list[Reference] = field(default_factory=list)
+    imports: list[Import] = field(default_factory=list)
+    error: str = ""
+
+
+def _run(lang: str, source: str, tree) -> list:
+    """Compile and run a query, returning matches. A broken query is not fatal."""
+    if not source:
+        return []
+    try:
+        cursor = ts.QueryCursor(ts.Query(get_language(lang), source))
+        return cursor.matches(tree.root_node)
+    except Exception:
+        return []
+
+
+def _text(data: bytes, node) -> str:
+    return data[node.start_byte : node.end_byte].decode("utf-8", "replace")
+
+
+def _enclosing(defs: list[Definition], byte: int) -> int | None:
+    """The innermost definition whose body holds this byte."""
+    best, best_span = None, None
+    for i, d in enumerate(defs):
+        if d.start_byte <= byte < d.body_end_byte:
+            span = d.body_end_byte - d.start_byte
+            if best_span is None or span < best_span:
+                best, best_span = i, span
+    return best
+
+
+def _link(defs: list[Definition]) -> None:
+    """Fill `parent`, promote a contained function to a method, and qualify."""
+    for i, d in enumerate(defs):
+        outer, outer_span = None, None
+        for j, other in enumerate(defs):
+            if i == j or not (other.start_byte <= d.start_byte < other.body_end_byte):
+                continue
+            span = other.body_end_byte - other.start_byte
+            if outer_span is None or span < outer_span:
+                outer, outer_span = j, span
+        d.parent = outer
+        if outer is not None and d.kind == "function" and defs[outer].kind == "class":
+            d.kind = "method"
+
+    for d in defs:
+        chain, seen = [d.name], set()
+        cursor = d.parent
+        while cursor is not None and cursor not in seen:
+            seen.add(cursor)
+            chain.append(defs[cursor].name)
+            cursor = defs[cursor].parent
+        d.qualified_name = ".".join(reversed(chain))
+
+
+def _is_member(data: bytes, node) -> bool:
+    i = node.start_byte - 1
+    while i >= 0 and data[i : i + 1].isspace():
+        i -= 1
+    return i >= 0 and data[i : i + 1] in _MEMBER_BYTES
+
+
+def extract(path_lang: str, text: str) -> FileFacts:
+    """Parse one file and return its definitions, references and imports."""
+    facts = FileFacts(lang=path_lang, n_lines=text.count("\n") + 1)
+    parser = grammars.parser_for(path_lang)
+    if parser is None:
+        facts.error = f"no parser for {path_lang}"
+        return facts
+
+    data = text.encode("utf-8")
+    tree = parser.parse(data)
+
+    for _, caps in _run(path_lang, queries.tags_source(path_lang), tree):
+        names = caps.get("name") or []
+        if not names:
+            continue
+        ident = names[0]
+        for capture, nodes in caps.items():
+            kind = queries.DEFINITION_KINDS.get(capture)
+            if kind:
+                whole = nodes[0]
+                facts.definitions.append(
+                    Definition(
+                        kind=kind,
+                        name=_text(data, ident),
+                        start_byte=ident.start_byte,
+                        end_byte=ident.end_byte,
+                        start_line=whole.start_point[0] + 1,
+                        end_line=whole.end_point[0] + 1,
+                        body_end_byte=whole.end_byte,
+                    )
+                )
+                continue
+            edge = queries.REFERENCE_KINDS.get(capture)
+            if edge:
+                facts.references.append(
+                    Reference(
+                        kind=edge,
+                        name=_text(data, ident),
+                        call_site_byte=ident.start_byte,
+                        line=ident.start_point[0] + 1,
+                        is_member=_is_member(data, ident),
+                    )
+                )
+
+    _link(facts.definitions)
+    for ref in facts.references:
+        ref.scope = _enclosing(facts.definitions, ref.call_site_byte)
+
+    facts.references = _dedup(facts.references, lambda r: (r.kind, r.name, r.call_site_byte))
+    rows = _dedup(_imports(path_lang, data, tree), lambda i: (i.module, i.symbol, i.alias))
+    facts.imports = _narrow(rows)
+    return facts
+
+
+def _narrow(rows: list[Import]) -> list[Import]:
+    """Drop a bare module row that a specific row from the same statement covers.
+
+    A general import pattern matches every statement the specific ones match, so
+    `import { Money } from "./money"` yields the module alone as well as the
+    symbol. Two rows for one statement double-count the module edge.
+    """
+    named = {r.module for r in rows if r.symbol or r.alias}
+    return [r for r in rows if r.symbol or r.alias or r.module not in named]
+
+
+def _dedup(rows: list, key) -> list:
+    """A concatenated query matches the same site twice, and it is one site.
+
+    TypeScript runs JavaScript's patterns as well as its own, and a bare import
+    pattern matches everything the specific ones match. Both produce a duplicate
+    that would otherwise be counted as a second edge.
+    """
+    seen, out = set(), []
+    for row in rows:
+        k = key(row)
+        if k in seen:
+            continue
+        seen.add(k)
+        out.append(row)
+    return out
+
+
+def _imports(lang: str, data: bytes, tree) -> list[Import]:
+    """From the vendored query. No `tags.scm` supplies a usable import capture."""
+    out: list[Import] = []
+    for _, caps in _run(lang, queries.import_source(lang), tree):
+        mods = caps.get("module") or []
+        syms = caps.get("symbol") or []
+        aliases = caps.get("alias") or []
+        if not mods and not syms:
+            continue
+        module = _text(data, mods[0]).strip("\"'") if mods else ""
+        line = (mods or syms)[0].start_point[0] + 1
+        if not syms:
+            out.append(Import(module, alias=_text(data, aliases[0]) if aliases else "", line=line))
+            continue
+        # One record per symbol. `from a import x, y` is one match with two of
+        # them, and taking only the first loses an import the scoping needs.
+        paired = len(aliases) == len(syms)
+        for i, sym in enumerate(syms):
+            out.append(
+                Import(
+                    module,
+                    symbol=_text(data, sym),
+                    alias=_text(data, aliases[i]) if paired else "",
+                    line=line,
+                )
+            )
+    return out

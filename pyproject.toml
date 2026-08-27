@@ -8,6 +8,14 @@ dependencies = [
     # loader is subclassed later to stop YAML 1.1 rewriting a timestamp on a
     # round trip -- the trap that silently disables an OKF freshness check.
     "pyyaml>=6.0.2",
+    # Pinned exactly, not to a range. Measured 2026-08-27: 371 grammars, 68 with
+    # a tags.scm, 50 of those with a call capture, 67 with a definition capture,
+    # 17 with an implementation capture, 58 distinct capture names. `T-06` holds
+    # both that census and the effective table. The maintainer curates the
+    # vocabulary
+    # and moves it per release, so a range turns the capability table into a
+    # guess. Bumping the pin re-runs T-05 and T-06 and edits the numbers there.
+    "tree-sitter-language-pack==1.15.8",
 ]
 
 [project.scripts]

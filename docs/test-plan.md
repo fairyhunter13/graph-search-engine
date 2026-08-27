@@ -87,10 +87,10 @@ Expected: a missing attester or an unread receipt field fails the push.
 |---|---|---|---|---|---|
 | T-01 | An incompatible meta stamp forces a rebuild | S-07 | D-01 | done | tests/test_store.py::test_incompatible_meta_rebuilds |
 | T-02 | Registry mutation loads inside the lock | S-07 | D-01 | done | tests/test_registry.py::test_mutate_loads_inside_the_lock |
-| T-03 | Python golden symbol counts hold | S-01 | D-02 | planned | tests/test_extract.py::test_python_golden_symbol_counts |
-| T-04 | TypeScript needs the JavaScript query too | S-01 | D-02 | planned | tests/test_queries.py::test_typescript_concatenates_javascript |
-| T-05 | Every capture name is mapped or ignored | S-01 | D-02 | planned | tests/test_queries.py::test_every_capture_name_is_known |
-| T-06 | The capability counts hold under the pin | S-03 | D-02 | planned | tests/test_grammars.py::test_capability_counts_under_the_pin |
+| T-03 | Python golden symbol counts hold | S-01 | D-02 | done | tests/test_extract.py::test_python_golden_symbol_counts |
+| T-04 | TypeScript needs the JavaScript query too | S-01 | D-02 | done | tests/test_queries.py::test_typescript_concatenates_javascript |
+| T-05 | Every capture name is mapped or ignored | S-01 | D-02 | done | tests/test_queries.py::test_every_capture_name_is_known |
+| T-06 | The capability counts hold under the pin | S-03 | D-02 | done | tests/test_grammars.py::test_capability_counts_under_the_pin |
 | T-07 | Import scoping beats global matching | S-02 | D-03 | planned | tests/test_resolve.py::test_import_scoping_collapses_candidates |
 | T-08 | An unknown name becomes an external node | S-02 | D-03 | planned | tests/test_resolve.py::test_unknown_name_is_external |
 | T-09 | Blast radius terminates on a cycle | S-04 | D-04 | planned | tests/test_traverse.py::test_cycle_terminates_without_duplicates |
@@ -117,6 +117,9 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-30 | The attester rejects a changed number | S-11 | D-13 | planned | tests/test_attester.py::test_changed_number_is_rejected |
 | T-31 | An offset-free stale date is rejected | S-11 | D-14 | planned | tests/test_bundle.py::test_offset_free_stale_after_is_rejected |
 | T-32 | A dropped receipt field fails the check | S-11 | D-14 | planned | tests/test_bundle.py::test_dropped_receipt_field_fails |
+| T-33 | TypeScript and PHP golden counts hold | S-01 | D-02 | done | tests/test_extract.py::test_typescript_golden_symbol_counts |
+| T-34 | A PHP static call needs the repair layer | S-01 | D-02 | done | tests/test_extract.py::test_a_php_static_call_needs_the_repair_layer |
+| T-35 | One import row per import statement | S-01 | D-02 | done | tests/test_extract.py::test_one_import_row_per_statement |
 
 # User journeys
 

@@ -62,7 +62,10 @@ if [[ -f "$DEV" && -f "$TST" ]]; then
 
   # Arm 4c: uncollected tests.
   COLLECTED="$(mktemp)"
-  if uv run pytest --collect-only -q >"$COLLECTED" 2>/dev/null; then
+  # `-o addopts=` is load-bearing. The repo sets `-q` there, and a second `-q`
+  # collapses collection to a per-file count with no node ID in it, so every
+  # anchored row then reads as uncollected and the arm reports nothing true.
+  if uv run pytest --collect-only -q -o addopts= >"$COLLECTED" 2>/dev/null; then
     sort -o "$COLLECTED" "$COLLECTED"
     while IFS= read -r node; do
       [ -n "$node" ] || continue

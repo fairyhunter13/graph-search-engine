@@ -83,6 +83,7 @@ a signature change means a grammar pin moved, and `meta.incompatible(conn)` alre
 | `discover.py` | enumeration, `FileMeta`, hash diff | paths resolve before ownership |
 | `grammars.py` | pack access, capability set | capability is per capture |
 | `queries.py` | tags cache, import queries | every capture name is mapped or ignored |
+| `queries/tags_extra/` | a repair query per measured gap | the pin stays exact and the pack unforked |
 | `extract.py` | per-file parse to dataclasses | writes nothing global |
 | `symtab.py` | phase-two global symbol table | built after every file is in |
 | `resolve.py` | candidate scoring, confidence | never forces a single edge |
@@ -158,10 +159,10 @@ for the callers of a known function and check them by hand.
 | ID | Title | Status | Paths it owns | T-nn covering it |
 |---|---|---|---|---|
 | D-01 | The floor: config, store, discovery | done | src/graphrag/config.py, src/graphrag/filters.py, src/graphrag/store.py, src/graphrag/discover.py, src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/projcfg.py | T-01, T-02 |
-| D-02 | Grammars, queries, extraction, Python and TS | planned | src/graphrag/grammars.py, src/graphrag/queries.py, src/graphrag/extract.py | T-03, T-04, T-05, T-06 |
+| D-02 | Grammars, queries, extraction, wave one | done | src/graphrag/grammars.py, src/graphrag/queries.py, src/graphrag/extract.py, src/graphrag/queries/imports, src/graphrag/queries/tags_extra, tests/fixtures/wave1 | T-03, T-04, T-05, T-06, T-33, T-34, T-35 |
 | D-03 | Symbol table and ranked resolution | planned | src/graphrag/symtab.py, src/graphrag/resolve.py | T-07, T-08 |
 | D-04 | Index loop, traversal, query surface | planned | src/graphrag/index.py, src/graphrag/indexwrite.py, src/graphrag/traverse.py, src/graphrag/query.py | T-09, T-10 |
-| D-05 | Import queries, 66 remaining languages | planned | src/graphrag/queries/imports | T-11 |
+| D-05 | Import queries, the remaining waves | planned | src/graphrag/queries/imports | T-11 |
 | D-06 | MCP tools, daemon, CLI, stdio bridge | planned | src/graphrag/tools.py, src/graphrag/server.py, src/graphrag/cli.py, src/graphrag/bridge.py | T-12, T-13, T-14, T-15 |
 | D-07 | Watcher, health, progress, ledgers | planned | src/graphrag/watch.py, src/graphrag/health.py, src/graphrag/progress.py, src/graphrag/ledger.py, src/graphrag/trace.py | T-16, T-17 |
 | D-08 | SCIP overlay behind the coverage guard | planned | (deferred, no code this pass) | T-18, T-19 |
@@ -182,3 +183,28 @@ stops passing, the design premise is gone. `D-03` then goes `blocked` with the o
 and the design is not quietly relaxed.
 
 `D-08` is deferred by decision. The row stays `planned` and no code lands this pass.
+
+## The language waves
+
+Answered 2026-08-27, against a census of the operator's own repositories rather than a guess. The
+counts are tracked files by extension across every clone under `~/git`.
+
+```
+wave 1  php, javascript, typescript, tsx, python      D-02
+wave 2  java, go, rust, swift                         D-05
+wave 3  kotlin, scala, ruby, c, cpp, csharp           D-05
+wave 4  the remaining tags.scm languages              D-05
+```
+
+`php` leads on 35657 files, ahead of `js` at 31024 and `ts` at 21816. It also carries a full
+capability set: calls, implementations and four definition kinds. `python` holds 843 files and rides
+in wave 1 for one reason only, that `T-07` measures against a Python corpus.
+
+Two of the operator's languages have no `tags.scm` at all. `groovy` holds 2222 files and `vue` holds
+1163, and both answer no symbol question from tree-sitter. That is reported as a gap, per the
+experience bar, and it is not a defect to fix.
+
+`T-07` measures against a CPython clone pinned to a tag, fetched once into a cache directory. The
+case is marked `corpus` and skips when the clone is absent. The local `/usr/lib/python3.12` was
+rejected as the corpus: a distro update moves the number, and no other machine reproduces it. The
+receipt carries the corpus tag, so the attester compares like with like.
