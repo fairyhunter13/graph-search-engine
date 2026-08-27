@@ -190,6 +190,7 @@ for the callers of a known function and check them by hand.
 | D-30 | The bundle records what it cannot cite, and the shrink-gate deviation | done | knowledge/references, knowledge/decisions, tests/test_attester.py | T-209 |
 | D-31 | A corrected citation is not a dropped source, and the private URL goes | done | scripts/check_no_shrink.py, knowledge/decisions, tests/test_bundle.py | T-210 |
 | D-32 | The quiet window, so a burst of saves buys one pass and not one each | done | src/graphrag/config.py, src/graphrag/index.py, src/graphrag/watch.py, src/graphrag/extract.py, tests/test_watch.py | T-16 |
+| D-33 | A receipt carries whether its own run can be read off | done | src/graphrag/config.py, knowledge/attesters, scripts/two_engine_measure.py, tests/test_attester.py, tests/test_two_engine.py, tests/test_resolve.py, scripts/check_attester_contract.py | T-211, T-212, T-213 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -579,3 +580,27 @@ the content-hash diff, so a live store answers the old rule until the number for
 
 What neither records: the window has no case of its own. `T-16` asserts one pass per debounce
 window, which is the property the delay preserves rather than the delay itself.
+
+# The receipt that graded a run nothing asserted over, 2026-08-27
+
+A receipt is written before the assertions on purpose, so a run that moves a number leaves the
+artifact rather than only a red test. Nothing then said which kind of run had written it. A failed
+run left numbers on disk that read exactly like a measurement.
+
+Three holes fed one bad artifact. `coderag_files` returned an empty set on a failed search, and an
+empty set scores F1 0.0, so an unreachable daemon read as an arm that found nothing. The skip guard
+proved the CLI was on PATH and never that the daemon answered. And the case reindexes the working
+tree while the receipt stamped `commit_sha` alone, so a dirty tree measured code the SHA did not
+name.
+
+`provenance` now stamps `tree_dirty` beside `commit_sha`, and `outcome` says `unverified` until the
+assertions have run over the numbers. The attester reads the receipt and never the tree, which is
+the separation `decisions/a-measurement-is-an-attested-computation.md` argues for, so the tree state
+has to travel inside the artifact to reach it.
+
+`receipt_lock` gives one writer per node ID, and `write_receipt` replaces the file in one step. The
+name is a pure function of the node ID, so two runs share one path, and a second run now refuses
+rather than clobbers.
+
+`check_attester_contract.py` gained the reverse direction. It checked that every receipt field was
+declared. A concept that under-declares ships a run whose artifact its own attester rejects.
