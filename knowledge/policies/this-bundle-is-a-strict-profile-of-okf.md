@@ -14,6 +14,8 @@ sources:
     digest: sha256:26aa5da029278939f914e578107242d9607d4f2dc5fe153272b82f9ed1030101
   - id: okfrules
     resource: https://github.com/fairyhunter13/okf
+  - id: fleet-hook
+    resource: knowledge/references/the-fleet-mechanisms-are-recorded-here-not-linked.md
 ---
 
 # The spec is permissive on purpose, and it says so three times
@@ -49,6 +51,21 @@ reader that rejects a bundle for the reasons this gate rejects a write.
 
 A type outside the 17 that this repo genuinely needs, and that upstream declines to add. The answer
 then is to widen the vocabulary in the checker, not to drop the check.
+
+# The stamp rule and the spec agree, and neither knew about the other
+
+Section 5.3 derives the trust tier from `verified` alone. A `human:<id>` actor is the thing that
+raises a concept to human-reviewed. A non-`human:` actor raises it only to machine-confirmed.
+
+The fleet hook reaches the same rule from the other side. `EvaluateVerifiedStamp` refuses an edit
+that adds a `human:` stamp, and it refuses no other actor.[^fleet-hook]
+
+The hook was written against the forgery risk. Its author did not read the spec section, and the
+spec authors did not read the hook.
+
+So one mechanism says a `human:` stamp is what raises trust. The other says a `human:` stamp is the
+one thing an agent may never write. Two independent designs landed on the same actor, and that
+agreement is the strongest argument the stamp rule is right.
 
 [^okf-spec]: Read 2026-08-27. `SPEC.md` is byte-identical between the canonical repo and the frozen
     snapshot under `GoogleCloudPlatform/knowledge-catalog`.

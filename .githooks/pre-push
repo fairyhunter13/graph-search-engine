@@ -69,6 +69,20 @@ if [[ -f "$DEV" && -f "$TST" ]]; then
     done < <(grep -E '^\| T-[0-9]' "$1")
   }
 
+  unrecorded_tests() {  # $1 = a test plan. Prints every collected test no row names.
+    # The other direction of the anchor check. Part B rule 5 makes a test no row
+    # names a finding, and 63 of 181 functions were unnamed while only this
+    # direction was checked.
+    rows="$(mktemp)"
+    awk -F'|' '/^\| T-[0-9]/ { gsub(/[ \t]/, "", $7); if ($7 != "") print $7 }' "$1" \
+      | sort -u > "$rows"
+    # A parametrised case collects as `node[case]` and the row names the function,
+    # so the suffix goes before the compare. Otherwise every such test reads as
+    # unrecorded and the arm reports a wall of noise.
+    grep '::' "$COLLECTED" | sed 's/\[.*\]//' | sort -u | comm -23 - "$rows"
+    rm -f "$rows"
+  }
+
   orphan_ids() {  # $1 = source doc, $2 = D or T, $3 = the doc that must hold the row
     for id in $(plan_ids "$1" "$2"); do
       grep -qE "^\| $id \|" "$3" || echo "$id"
@@ -105,11 +119,16 @@ if [[ -f "$DEV" && -f "$TST" ]]; then
   # here is the function the arm below calls, so a probe that passes proves the shipped
   # check refuses. Re-implementing the pipeline here would only prove awk still works.
   PROBE="$(mktemp -d)"
+  # Every row here carries a test node ID, so the only thing that can make this
+  # document fail is the node comparison itself. One document holding a blank
+  # column too would fail on that arm alone, and the comparison would go unproven.
   {
     printf '| T-99 | probe | S-99 | D-99 | planned | tests/test_nothing.py::test_absent |\n'
-    printf '| T-98 | probe | S-99 | none | planned |  |\n'
-    printf '| T-97 | probe | S-99 | D-97 | done |  |\n'
+    printf '| T-98 | probe | S-99 | none | planned | tests/test_nothing.py::test_absent |\n'
+    printf '| T-95 | probe | S-99 | D-97 | planned | tests/test_nothing.py::test_absent |\n'
   } > "$PROBE/test-plan.md"
+  # The other arm, alone: a blank column on a row that is not planned.
+  printf '| T-97 | probe | S-99 | D-99 | done |  |\n' > "$PROBE/blank-column.md"
   {
     # The path is one the tree does not carry, beside a `(ccw)` token in the same
     # column. Naming a tracked path here would pass a dead-path check that never ran.
@@ -125,6 +144,16 @@ if [[ -f "$DEV" && -f "$TST" ]]; then
   # Skipped where collection failed, and arm 4c below reports that as a finding.
   if [ "$COLLECTED_OK" -eq 1 ] && [ -z "$(uncollected_rows "$PROBE/test-plan.md")" ]; then
     probe_failed "the anchor check found nothing wrong with a deliberately broken row"
+  fi
+  # The blank-column arm, proven on its own document. Collection is irrelevant to
+  # it, because a row with no node ID never reaches the comparison.
+  if [ -z "$(uncollected_rows "$PROBE/blank-column.md")" ]; then
+    probe_failed "the anchor check accepted a done row carrying no test node ID"
+  fi
+  # The probe plan names three tests this tree does not carry, so every collected
+  # test is unrecorded against it. Skipped where collection failed, as above.
+  if [ "$COLLECTED_OK" -eq 1 ] && [ -z "$(unrecorded_tests "$PROBE/test-plan.md")" ]; then
+    probe_failed "the under-record check found no unnamed test in a plan that names none"
   fi
   if [ -z "$(uncovered_dev_rows "$PROBE/development-plan.md")" ]; then
     probe_failed "the coverage check accepted a D row that names no case"
@@ -165,8 +194,15 @@ if [[ -f "$DEV" && -f "$TST" ]]; then
       echo "[pre-push] uncollected test: $node"
       findings=1
     done < <(uncollected_rows "$TST")
+    # Arm 4e: under-recorded tests. The other direction of 4c. A test the runner
+    # collects and no row names is a finding a reconciliation pass fixes.
+    while IFS= read -r node; do
+      echo "[pre-push] test named by no row: $node"
+      findings=1
+    done < <(unrecorded_tests "$TST")
   else
     echo "[pre-push] pytest collected nothing - every anchored test reads as uncollected"
+    echo "[pre-push]   and no test can be checked against the rows that name it"
     findings=1
   fi
   rm -f "$COLLECTED"
@@ -275,6 +311,24 @@ if [[ -d "$REPO_ROOT/knowledge" ]]; then
   rm -rf "$ATTEST_PROBE"
   if ! uv run --project "$REPO_ROOT" python "$CONTRACT" "$REPO_ROOT/knowledge"; then
     echo "[pre-push] x an Attested Computation names an attester that does not read its receipt"
+    exit 1
+  fi
+
+  # The gloss and the description it is copied from are one string in two places. A probe first,
+  # for the same reason the contract check has one.
+  GLOSS="$REPO_ROOT/scripts/check_index_gloss.py"
+  GLOSS_PROBE="$(mktemp -d)"
+  printf -- '---\ntype: Decision\ntitle: t\ndescription: "the real one"\n---\n\nbody\n' \
+    > "$GLOSS_PROBE/one.md"
+  printf -- '# Decision\n\n* [t](one.md) - a gloss that drifted\n' > "$GLOSS_PROBE/index.md"
+  if uv run --project "$REPO_ROOT" python "$GLOSS" "$GLOSS_PROBE" >/dev/null 2>&1; then
+    rm -rf "$GLOSS_PROBE"
+    echo "[pre-push] x the index gloss check accepted a gloss that does not match its description"
+    exit 1
+  fi
+  rm -rf "$GLOSS_PROBE"
+  if ! uv run --project "$REPO_ROOT" python "$GLOSS" "$REPO_ROOT/knowledge"; then
+    echo "[pre-push] x an index gloss is not the description of the concept it names"
     exit 1
   fi
 fi

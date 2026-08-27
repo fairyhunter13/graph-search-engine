@@ -2,8 +2,8 @@
 
 Measured 2026-08-27 on CPython `v3.12.7`, 755 files of `Lib` with the test tree
 excluded, 53853 call sites. Global name matching gives 10.86 candidate files per
-site and 54.5% of sites are ambiguous. Import scoping gives 1.24 and 8.9%, a
-collapse of 8.7 times. `T-07` is that measurement and it asserts the ratio, not
+site and 54.5% of sites are ambiguous. Import scoping gives 1.19 and 7.2%, a
+collapse of 9.1 times. `T-07` is that measurement and it asserts the ratio, not
 the two numbers: a corpus at another tag moves both arms together.
 
 Every survivor is emitted as its own edge with its confidence and the size of
@@ -111,8 +111,12 @@ def _receiver_modules(ref: Reference, names: dict[str, str], modules: set[str]) 
     `from . import registry` maps the name to the package, and the receiver then
     names the submodule under it, so both spellings are candidates.
     """
-    if not ref.is_member or not ref.receiver or ref.receiver in _SELF:
+    if not ref.is_member or ref.receiver in _SELF:
         return None
+    if not ref.receiver:
+        # `Path(x).resolve()`. The receiver is an expression, so it names no
+        # module, and reading it as a bare call hands the edge to a homonym.
+        return set()
     out = {module for module in modules if module.rsplit(".", 1)[-1] == ref.receiver}
     base = names.get(ref.receiver)
     if base is not None:

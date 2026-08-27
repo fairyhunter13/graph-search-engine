@@ -8,9 +8,13 @@ reason naming what disagreed.
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
+
+from graphrag import config
+from test_resolve import NODE_ID
 
 ROOT = Path(__file__).resolve().parent.parent
 ATTESTER = ROOT / "knowledge" / "attesters" / "measurement_equality.py"
@@ -96,6 +100,37 @@ def test_an_empty_claim_attests_nothing_and_a_partial_one_attests_itself(claim):
     assert got["ok"] is bool(claim)
 
 
-# The receipt on disk is graded in `tests/test_resolve.py`, beside the run that
-# writes it. Here it skipped on every CI run, because pytest collects files in
-# name order and this one is read before the measurement has written anything.
+def test_the_receipt_on_disk_is_attested():
+    """`T-07`'s own receipt, graded. The dicts above are a shape, not a run.
+
+    `D-21` ruled out grading a literal and the fix landed on the sibling
+    computation only. `RECEIPT` here still carries `9e4212f`, five commits behind
+    HEAD, so the attester compared a claim against a copy of itself.
+
+    Skipped where the receipt is absent, the way the two-engine case is. A
+    literal standing in for a run grades itself.
+    """
+    path = config.receipt_path(NODE_ID)
+    if not path.is_file():
+        pytest.skip(f"no receipt at {path}: run the `corpus` case first")
+    receipt = json.loads(path.read_text(encoding="utf-8"))
+
+    sanctioned = {"test_node_id": NODE_ID, "corpus_ref": config.CORPUS_REF}
+    claim = {name: receipt[name] for name in ("mean_global", "mean_scoped", "n_files")}
+
+    got = attester.attest(sanctioned_computation=sanctioned, receipt=receipt, claimed_value=claim)
+    assert got["ok"] is True
+    assert got["details"]["commit_sha"] == receipt["commit_sha"]
+
+    moved = attester.attest(
+        sanctioned_computation=sanctioned,
+        receipt=receipt,
+        claimed_value={**claim, "mean_scoped": receipt["mean_scoped"] + 0.5},
+    )
+    assert moved["ok"] is False
+    assert "mean_scoped" in moved["reason"]
+
+    thin = {k: v for k, v in receipt.items() if k != "n_files"}
+    dropped = attester.attest(sanctioned_computation=sanctioned, receipt=thin, claimed_value=claim)
+    assert dropped["ok"] is False
+    assert dropped["details"]["missing"] == ["n_files"]

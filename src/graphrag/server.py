@@ -14,6 +14,7 @@ connections open, so uvicorn otherwise waits on clients that never disconnect.
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import logging
 import os
@@ -46,6 +47,21 @@ def _notify(state: str) -> None:
         sock.sendall(state.encode())
 
 
+async def _pet_watchdog() -> None:
+    """Pings from the event loop, so a wedged loop stops the pings.
+
+    A timer thread would keep petting while the loop that answers tool calls is
+    blocked, which is the state the watchdog exists to catch.
+    """
+    usec = os.environ.get("WATCHDOG_USEC")
+    if not usec or not usec.isdigit():
+        return
+    interval = int(usec) / 2_000_000
+    while True:
+        await asyncio.sleep(interval)
+        _notify("WATCHDOG=1")
+
+
 def _start_worker() -> None:
     global _worker
     if _worker is not None and _worker.is_alive():
@@ -73,10 +89,12 @@ async def lifespan(_app) -> AsyncIterator[None]:
     )
     log.info("ready: %d projects queued", queued)
     _notify("READY=1")
+    pet = asyncio.ensure_future(_pet_watchdog())
     try:
         yield
     finally:
         _notify("STOPPING=1")
+        pet.cancel()
         watch.stop()
         _stop.set()
 
@@ -157,17 +175,37 @@ def port_free(host: str, port: int) -> bool:
     return True
 
 
+def listen(host: str, port: int) -> socket.socket:
+    """The socket is listening before the lifespan runs, and that is the point.
+
+    uvicorn runs lifespan startup before it binds, so `READY=1` sent from there
+    reaches systemd while nothing answers. Measured: two of four starts reported
+    active with `/healthz` refused, once for 2.6 seconds. Binding here puts the
+    listen ahead of the notify, and it drops the check-then-bind race as well.
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        sock.bind((host, port))
+    except OSError:
+        sock.close()
+        # The port is fixed and documented. A silent rebind leaves every registered
+        # client pointing at nothing and looking correct while it does so, and the
+        # first URL the installer seeds into the five profiles is permanent.
+        raise SystemExit(
+            f"port {port} on {host} is already in use, so the daemon will not start"
+        ) from None
+    sock.listen(2048)
+    return sock
+
+
 def serve(host: str = "", port: int = 0) -> None:
     logging.basicConfig(
         level=getattr(logging, config.LOG_LEVEL, logging.INFO),
         format="%(asctime)s %(levelname)s %(message)s",
     )
     host, port = host or config.HOST, port or config.PORT
-    # The port is fixed and documented. A silent rebind leaves every registered
-    # client pointing at nothing and looking correct while it does so, and the
-    # first URL the installer seeds into the five profiles is permanent.
-    if not port_free(host, port):
-        raise SystemExit(f"port {port} on {host} is already in use, so the daemon will not start")
+    listener = listen(host, port)
     # `Terminating session: None` once per request, with no session id to name
     # under stateless HTTP. A level rather than a filter: a filter keyed on the
     # message breaks in silence at the next SDK release.
@@ -175,14 +213,14 @@ def serve(host: str = "", port: int = 0) -> None:
     # uvicorn restores the handler it replaced and re-raises the signal it
     # caught, so the exit below is unreachable unless ours is what it restores.
     signal.signal(signal.SIGTERM, lambda *_: _exit())
-    uvicorn.run(
-        build_app(),
-        host=host,
-        port=port,
-        log_level="info",
-        access_log=False,
-        timeout_graceful_shutdown=5,
-    )
+    uvicorn.Server(
+        uvicorn.Config(
+            build_app(),
+            log_level="info",
+            access_log=False,
+            timeout_graceful_shutdown=5,
+        )
+    ).run(sockets=[listener])
     _exit()
 
 

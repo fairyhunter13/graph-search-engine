@@ -10,8 +10,10 @@
   it](a-member-call-is-about-43-percent-of-call-sites.md) - About 43% of call sites are member
   calls, and no syntactic rule places the receiver, so the engine refuses those sites rather than
   guessing.
-* [A pass reparses the tree, because resolution is global](a-pass-reparses-the-tree-because-resolution-is-global.md) - why one edit does
-  not mean one file, and what the watcher guarantees instead.
+* [A pass reparses the tree, because resolution is global](a-pass-reparses-the-tree-because-resolution-is-global.md) - Every reference is
+  scored against the whole symbol table. A pass that reparsed only the edited file would price
+  every other file as a repo that does not define the name. Per-file facts are not persisted, so
+  there is nothing to reuse.
 * [A stale date without an explicit UTC offset reads as fresh
   forever](a-stale-date-needs-an-explicit-utc-offset.md) - OKF section 5 wants an absolute instant.
   An offset-free value parses, passes the standard rule set, and turns freshness checking off with

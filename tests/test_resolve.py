@@ -112,11 +112,68 @@ def test_the_receiver_picks_the_module():
     assert stranger.candidates == []
 
 
+EXPRESSION_RECEIVER = """\
+from .rates import convert
+
+
+def go(raw):
+    return Path(raw).convert()
+"""
+
+
+def test_an_expression_receiver_leaves_the_repo_rather_than_picking_a_homonym():
+    """`T-208`. `Path(x).convert()` names no module, so it names no target.
+
+    `extract._member` reports the call as a member with an empty receiver,
+    because the byte before the dot closes a call. Reading that empty string as
+    `the receiver decides nothing` scored the whole pool, and the two-engine
+    measurement carried twenty false positives of exactly this shape.
+    """
+    table = _table(
+        {"pkg/orders.py": EXPRESSION_RECEIVER, "pkg/rates.py": RATES, "other/rates.py": DECOY}
+    )
+    site = next(r for r in table.files["pkg/orders.py"].references if r.name == "convert")
+    assert site.is_member is True
+    assert site.receiver == ""
+
+    got = resolve.resolve_reference(table, "pkg/orders.py", site)
+    assert got.external is True
+    assert got.candidates == []
+
+
 def test_a_self_receiver_still_reaches_the_enclosing_class():
     """`self` names no module, so the class tier keeps pricing it."""
     table = _table({"pkg/orders.py": CALLER, "pkg/rates.py": RATES})
     got = _one(table, "pkg/orders.py", "subtotal")
     assert got.candidates[0].evidence == "same_class"
+
+
+def test_a_constructor_resolves_through_the_class_and_never_through_init():
+    """`T-199`: `__init__` matched 232 files in the CPython measurement.
+
+    The rule held incidentally until this case: the call site captures the class
+    name, so `__init__` is a definition and never a reference. A grammar bump that
+    starts capturing the method name would collapse every constructor call onto
+    one homonym, and only this direction of the assertion catches it.
+    """
+    sources = {
+        f"pkg/m{i}.py": f"class C{i}:\n    def __init__(self):\n        self.x = {i}\n"
+        for i in range(8)
+    }
+    sources["pkg/use.py"] = "from .m0 import C0\n\n\ndef make():\n    return C0()\n"
+    table = _table(sources)
+
+    got = _one(table, "pkg/use.py", "C0")
+    assert got.resolved
+    assert got.candidates[0].symbol.kind == "class"
+    assert got.candidates[0].symbol.qualified_name == "C0"
+    assert len(got.candidates) == 1
+
+    # The other half. Eight files define `__init__`, and no call site names it.
+    names = {r.name for facts in table.files.values() for r in facts.references}
+    assert "__init__" not in names
+    inits = [d for facts in table.files.values() for d in facts.definitions if d.name == "__init__"]
+    assert len(inits) == 8
 
 
 def test_an_out_of_scope_name_falls_to_a_ranked_global_set():

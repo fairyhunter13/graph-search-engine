@@ -2,7 +2,7 @@
 type: Constraint
 resource: src/graphrag/index.py
 title: A pass reparses the tree, because resolution is global
-description: "Every reference is scored against the whole symbol table, so a pass that reparsed only the edited file would price every other file as a repo that does not define the name. Per-file facts are not persisted, so there is nothing to reuse."
+description: "Every reference is scored against the whole symbol table. A pass that reparsed only the edited file would price every other file as a repo that does not define the name. Per-file facts are not persisted, so there is nothing to reuse."
 tags: [indexing, resolution, watcher, progress]
 status: stable
 generated: { by: claude/opus-5, at: 2026-08-27T06:54:11Z }

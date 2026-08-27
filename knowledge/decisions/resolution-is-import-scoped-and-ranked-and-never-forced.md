@@ -2,7 +2,7 @@
 type: Decision
 resource: src/graphrag/resolve.py
 title: Resolution is import-scoped and ranked, and a single edge is never forced
-description: "The resolver matches a call site against what the file imports, and emits every survivor with its own confidence."
+description: "The resolver matches a call site against what the file imports, and emits every survivor of the best tier with its own confidence."
 tags: [resolution, ranking, confidence, tree-sitter]
 status: stable
 generated: { by: claude/opus-5, at: 2026-08-27T10:15:05Z }
@@ -19,11 +19,16 @@ sources:
 
 A call site names a symbol, and the repo may define that name many times. Two designs were open.
 Match the name globally and pick a winner. Or scope the match to what the file imports, score each
-survivor, and emit every one of them.
+survivor, and emit every survivor of the best tier.
 
 This engine takes the second. Six tiers carry a confidence, from a same-class call at 0.95 down to a
 unique global match at 0.30[^resolve-module]. Each surviving candidate becomes its own edge, and the
 edge carries the size of the set it came from. A name defined nowhere becomes an external node.
+
+`_rank` keeps the best tier and drops the rest. A candidate reached through an import and a worse
+candidate reached only because the repo holds the name are not two answers to rank. Keeping the
+second inflates every count, so the emitted set is every survivor of one tier and never a merge of
+two.
 
 # Why the alternative was rejected
 

@@ -18,7 +18,8 @@
   date with no owner and no runbook is a scheduled outage.
 * [Resolution is import-scoped and ranked, and a single edge is never
   forced](resolution-is-import-scoped-and-ranked-and-never-forced.md) - The resolver matches a call
-  site against what the file imports, and emits every survivor with its own confidence.
+  site against what the file imports, and emits every survivor of the best tier with its own
+  confidence.
 * [SCIP is an overlay and never the extractor, because a symbol role carries no call
   role](scip-is-an-overlay-and-never-the-extractor.md) - SCIP names an occurrence and its roles, and
   no role is a call, so SCIP upgrades a call site rather than finding one.
@@ -36,6 +37,11 @@
   Generated code would add a runtime pin that has to move with it, for a tier that is off by
   default and reads eight messages. The wire format is frozen, so the decoder is the smaller
   liability.
+* [The shrink gate grades warnings, because okf check exits 0 on a
+  shrink](the-shrink-gate-grades-warnings-and-not-the-exit-code.md) - The plan named `okf check
+  -against HEAD` as a gate. It reports a shrink as a warning and exits 0, and HEAD at push time is
+  the tree it would compare. So the gate runs the same command against the upstream tip and grades
+  what it prints.
 * [tree-sitter is declined for chunking and adopted for graphs, because those are two
   questions](tree-sitter-is-declined-for-chunking-and-adopted-for-graphs.md) - The semantic engine
   rejected tree-sitter for chunking and dropped a graph tool with it, and that drop stands because

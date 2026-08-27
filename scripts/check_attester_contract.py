@@ -6,6 +6,9 @@ and both live Attested Computations in the fleet point at attesters that were
 deleted. A contract naming a missing attester is worse than no contract,
 because it reads as attested.
 
+Frontmatter is read through `okf_frontmatter`, because plain `yaml.safe_load`
+rewrites a timestamp on a round trip.
+
 The attester is read with `ast`, never imported. A gate that executes the code
 it is grading has graded nothing, and this script runs on whatever the push
 carries.
@@ -19,17 +22,11 @@ import ast
 import sys
 from pathlib import Path
 
-import yaml
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from okf_frontmatter import frontmatter
 
 FIELDS_NAME = "RECEIPT_FIELDS"
-
-
-def _frontmatter(path: Path) -> dict:
-    text = path.read_text(encoding="utf-8")
-    if not text.startswith("---\n"):
-        return {}
-    _, block, _ = text.split("---\n", 2)
-    return yaml.safe_load(block) or {}
 
 
 def _receipt_fields(path: Path) -> list[str] | None:
@@ -59,7 +56,7 @@ def _receipt_fields(path: Path) -> list[str] | None:
 def check(bundle: Path) -> list[str]:
     findings: list[str] = []
     for path in sorted(bundle.rglob("*.md")):
-        front = _frontmatter(path)
+        front = frontmatter(path)
         if front.get("type") != "Attested Computation":
             continue
         here = path.parent

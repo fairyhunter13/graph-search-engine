@@ -2,10 +2,10 @@
 type: Defect
 resource: src/graphrag/scip/ingest.py
 title: The overlay doubled its own implements edges on the second run
-description: "A call edge is keyed by its call site byte and replaces itself. An implements edge was keyed by nothing, so a second ingest of one index inserted every one of them again and the graph reported one interface twice."
+description: "A call edge is keyed by its call site byte and replaces itself. An implements edge was keyed by nothing. A second ingest of one index inserted every one of them again, and the graph reported one interface twice."
 tags: [scip, idempotence, edges]
 status: stable
-generated: { by: claude/opus-5, at: 2026-08-27T13:10:00Z }
+generated: { by: claude/opus-5, at: 2026-08-27T12:05:00Z }
 sources:
   - id: ingest
     resource: src/graphrag/scip/ingest.py

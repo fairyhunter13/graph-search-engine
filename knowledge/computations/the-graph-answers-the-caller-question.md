@@ -1,8 +1,8 @@
 ---
 type: Attested Computation
 resource: scripts/two_engine_measure.py
-title: The graph answers the caller question, and only exactly where the name is distinctive
-description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 0.879, against 0.470 lexical and 0.346 semantic. The graph is exact only where the name is distinctive."
+title: The graph answers the caller question, and the retrieval index does not
+description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 1.000, against 0.412 lexical and 0.312 semantic. The class split it once carried is closed."
 tags: [routing, measurement, two-engine, attestation]
 status: stable
 runtime: python
@@ -29,19 +29,20 @@ sources:
 The routing rule says coderag names the symbol and graphrag walks the edges from it. No record
 measured that, so the rule was argued and never graded.[^two-engine-run] Ten caller questions over
 this repo are scored at file granularity, against a ground truth read by hand. They give the graph
-F1 0.879, against 0.470 for lexical retrieval and 0.346 for semantic. So the second engine earns
+F1 1.000, against 0.412 for lexical retrieval and 0.312 for semantic. So the second engine earns
 its process.
 
 # The finding one number hides
 
-Every question carries a class, and the classes still disagree. Where a name is called only through
-the module that defines it, the graph scores 1.000 on precision and 1.000 on recall. Where the tree
-also carries the name as an attribute of something else, precision is 0.620 and F1 is 0.765.
+Every question carries a class, and the classes agreed only after two fixes. Where a name is called
+only through the module that defines it, the graph scores 1.000 on precision and 1.000 on recall.
+Where the tree also carries the name as an attribute of something else, precision is 1.000 and
+F1 is 1.000.
 
 The first run of this measurement put that second figure at 0.412. The cause was in `extract.py`:
 a reference kept the attribute name and discarded the receiver, so `registry.load()` and
-`yaml.load()` were one name in the graph. `D-19` captured the receiver.[^extractor] What remains is
-the receiver this engine cannot place at all, which is a local variable rather than a module.
+`yaml.load()` were one name in the graph. `D-19` captured the receiver.[^extractor] `D-27` then
+refused the receiver that is an expression, which is what closed the rest.
 
 # Computation
 
@@ -81,5 +82,20 @@ The remaining loss is not a discarded receiver any more. It is a receiver naming
 which no syntactic rule places, and which this engine now refuses instead of guessing. Closing the
 rest needs the type of the receiver, and that is what the SCIP overlay in `D-08` reads.
 
+# What `D-27` closed, 2026-08-27
+
+The other half. `Path(x).resolve()` has a receiver that is an expression, so `extract._member`
+returned an empty receiver string. `resolve._receiver_modules` read empty as `decides nothing` and
+scored the whole pool, which handed the edge to every homonym in the repo. Twenty false positives
+in the `collides` class came from that one shape.
+
+An empty receiver now empties the candidate pool, so the reference leaves the repo as external. The
+`collides` class then scored 1.000 on precision, and the split this concept was written around is
+closed.
+
+The falsifier above says a closed split shrinks the receipt into a new concept. That is not
+followed, and the reason is evidence. The class fields at 1.000 are what shows the split closed,
+and a receipt without them cannot show it. So this concept is amended and the fields stay.
+
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 69 ground-truth caller files, measured 2026-08-27 at commit `e76487a`.
+[^two-engine-run]: Ten caller questions over this repo, 69 ground-truth caller files, measured 2026-08-27 at commit `a455467`.

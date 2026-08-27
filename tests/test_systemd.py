@@ -7,14 +7,16 @@ cases below, against a real HTTP server.
 
 from __future__ import annotations
 
+import asyncio
 import json
+import socket
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import ClassVar
 
 import pytest
 
-from graphrag import reach, registry, systemd
+from graphrag import reach, registry, server, systemd
 
 SRC = {"a.py": "def alpha():\n    return 1\n"}
 
@@ -137,3 +139,48 @@ def test_an_unreachable_daemon_refuses_rather_than_reports_nothing(repo):
     assert "did not answer" in said
     assert "unavailable" in said
     assert "nothing calling the symbol" in said
+
+
+def test_the_watchdog_directive_has_a_keepalive(tmp_path):
+    """`T-27`: a `WatchdogSec` with nothing petting it kills a healthy daemon.
+
+    So the unit line and the ping are one change, and this grades both halves.
+    """
+    systemd.write(tmp_path, binary="/opt/graphrag/bin/graphrag")
+    service = (tmp_path / systemd.SERVICE).read_text()
+    assert "WatchdogSec=180" in service
+    # `main` drops a datagram sent from the indexer thread, in silence.
+    assert "NotifyAccess=all" in service
+    # One open file per watch, and a fleet pass arms about 120,000 of them.
+    assert "LimitNOFILE=65536" in service
+    assert "After=graphical-session.target" in service
+
+
+def test_the_pet_reaches_the_notify_socket(tmp_path, monkeypatch):
+    """`T-27`: a real datagram on a real socket, because the send is the claim."""
+    path = tmp_path / "notify.sock"
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    sock.bind(str(path))
+    sock.settimeout(5)
+    monkeypatch.setenv("NOTIFY_SOCKET", str(path))
+    # 200 ms, so the first ping lands at 100 ms rather than at 90 seconds.
+    monkeypatch.setenv("WATCHDOG_USEC", "200000")
+
+    async def one_ping() -> bytes:
+        pet = asyncio.ensure_future(server._pet_watchdog())
+        try:
+            return await asyncio.get_running_loop().sock_recv(sock, 64)
+        finally:
+            pet.cancel()
+
+    sock.setblocking(False)
+    try:
+        assert asyncio.run(asyncio.wait_for(one_ping(), 5)) == b"WATCHDOG=1"
+    finally:
+        sock.close()
+
+
+def test_no_watchdog_means_no_pings(monkeypatch):
+    """An unset `WATCHDOG_USEC` returns rather than spinning at zero seconds."""
+    monkeypatch.delenv("WATCHDOG_USEC", raising=False)
+    asyncio.run(asyncio.wait_for(server._pet_watchdog(), timeout=1))

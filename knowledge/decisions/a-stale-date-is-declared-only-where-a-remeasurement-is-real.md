@@ -9,6 +9,8 @@ generated: { by: claude/opus-5, at: 2026-08-27T06:15:16Z }
 sources:
   - id: nightly
     resource: https://github.com/fairyhunter13/claude-code-workflows
+  - id: fleet-record
+    resource: ../references/the-fleet-mechanisms-are-recorded-here-not-linked.md
 ---
 
 # The fleet already solved freshness a different way
@@ -53,4 +55,7 @@ caller. It is still correct on a day the tree did not move. The real trigger is 
 receipt plus the commit SHA is what reads it. So that concept keeps no `stale_after`, and the
 nightly stays its freshness mechanism.
 
-[^nightly]: `okf-verify-nightly.sh`, which runs the verifiers and never passes the stamp flag.
+[^nightly]: `okf-verify-nightly.sh`, which runs the verifiers and never passes the stamp flag. It
+    lives in a private repository, so
+    [the fleet record](../references/the-fleet-mechanisms-are-recorded-here-not-linked.md) carries
+    what it does and this concept cites that.

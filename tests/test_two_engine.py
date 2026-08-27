@@ -75,18 +75,23 @@ def test_the_graph_wins_the_caller_question():
     measure.write_receipt(report)
 
     summary = report["summary"]
+    # The rule claims the graph beats both arms, and it claims nothing about
+    # which arm places second. The two retrieval arms reindex under this test,
+    # so an ordering between them reds on a run that moved neither engine.
     assert summary["graphrag"]["f1"] > summary["coderag-lexical"]["f1"]
-    assert summary["coderag-lexical"]["f1"] > summary["coderag-semantic"]["f1"]
+    assert summary["graphrag"]["f1"] > summary["coderag-semantic"]["f1"]
 
-    # The finding, after `D-19`. A distinctive name still resolves exactly, and
-    # a colliding one no longer collapses, because the receiver now names the
-    # module. The split survives and is smaller, so both bounds are asserted.
+    # The finding, after `D-19` and then `D-27`. A distinctive name resolves
+    # exactly. A colliding one did too once the expression receiver stopped
+    # scoring the whole pool, so the split the earlier run measured is closed.
+    # The floor and the ceiling are asserted, never the equality: a corpus that
+    # holds a receiver the rule cannot place reopens the split honestly.
     distinctive = report["by_class"][measure.DISTINCTIVE]["graphrag"]
     collides = report["by_class"][measure.COLLIDES]["graphrag"]
     assert distinctive["precision"] == 1.0
     assert distinctive["recall"] == 1.0
     assert collides["precision"] > 0.6
-    assert collides["precision"] < distinctive["precision"]
+    assert collides["precision"] <= distinctive["precision"]
 
     # The rule refuses a receiver it cannot place, so recall is what proves it
     # refuses no real call. A drop here is the rule eating edges it should keep.

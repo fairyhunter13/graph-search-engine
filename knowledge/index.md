@@ -12,6 +12,8 @@ okf_version: "0.2"
   that would reverse them.
 * [computations](computations/index.md) - The load-bearing numbers, each one a contract naming its
   executor, its receipt and its attester.
+* [references](references/index.md) - Facts from outside this repo that no citation can reach,
+  written down so a reader who cannot fetch them still has them.
 * [policies](policies/index.md) - The rules this repo holds itself to, including the OKF profile
   it runs and why that profile is stricter than the spec.
 * [skills](skills/index.md) - The run procedures an Attested Computation names in its executor.

@@ -45,15 +45,27 @@ def units(binary: str = "") -> dict[str, str]:
         SERVICE: f"""\
 [Unit]
 Description=graphrag code graph daemon
+After=graphical-session.target
+# [Unit], not [Service]: systemd logs "Unknown key name" and carries on, so a
+# misplaced one is an alert that never fires and never says it did not.
 OnFailure=graphrag-alert@%n.service
 
 [Service]
 Type=notify
+# all, not main: the notify contract then survives a send from the indexer
+# thread, which reads as a stray datagram under main and is dropped in silence.
+NotifyAccess=all
+# server.py pets this from the event loop, so a wedged loop stops the pings.
+WatchdogSec=180
 ExecStart={exe} serve
 Restart=on-failure
 RestartSec=5
+# One open file per watch, and a fleet pass arms about 120,000 of them.
+LimitNOFILE=65536
 TimeoutStopSec=20
 Environment=GRAPHRAG_PORT={config.PORT}
+# Lower shares than coderag on every axis: this indexer runs beside that one,
+# and the person using the laptop outranks both.
 Nice=12
 CPUWeight=15
 IOWeight=15

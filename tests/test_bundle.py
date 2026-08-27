@@ -1,9 +1,14 @@
 """The knowledge bundle, checked from the repo rather than from the checker.
 
 `okfrules` runs in the gate and grades the bundle against its own rules. These
-cases hold the two things the gate cannot see: that the root declares a version
-this repo actually targets, and that the timestamp trap upstream documents is
-not reachable through this repo's own reader.
+cases hold what the gate cannot see: that the root declares a version this repo
+actually targets, that the timestamp trap upstream documents is not reachable
+through this repo's own reader, and that the trust tier reads both shapes of a
+verification stamp.
+
+The reader under test is the one the gate runs. It used to live here, and the
+shipped check called `yaml.safe_load` instead, so the fix and the trap were in
+different files.
 """
 
 from __future__ import annotations
@@ -12,6 +17,7 @@ import importlib.util
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -20,29 +26,11 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 BUNDLE = ROOT / "knowledge"
 
+sys.path.insert(0, str(ROOT / "scripts"))
 
-class FrontmatterLoader(yaml.SafeLoader):
-    """The timestamp resolver removed, because YAML 1.1 rewrites one silently.
-
-    `2026-06-30T14:00:00Z` loads as a `datetime` and dumps back as
-    `2026-06-30 14:00:00+00:00`, which carries no offset marker any more. A
-    reader that round-trips frontmatter therefore disables freshness on the
-    first pass and cannot see that it did.
-    """
-
-
-FrontmatterLoader.yaml_implicit_resolvers = {
-    key: [(tag, regexp) for tag, regexp in resolvers if tag != "tag:yaml.org,2002:timestamp"]
-    for key, resolvers in FrontmatterLoader.yaml_implicit_resolvers.items()
-}
-
-
-def frontmatter(path: Path) -> dict:
-    text = path.read_text(encoding="utf-8")
-    if not text.startswith("---\n"):
-        return {}
-    _, block, _ = text.split("---\n", 2)
-    return yaml.load(block, Loader=FrontmatterLoader) or {}
+import check_index_gloss  # noqa: E402
+import okf_frontmatter  # noqa: E402
+from okf_frontmatter import FrontmatterLoader, frontmatter  # noqa: E402
 
 
 def _concepts() -> list[Path]:
@@ -177,3 +165,60 @@ def test_dropped_receipt_field_fails(tmp_path):
     findings = module.check(bundle)
     assert len(findings) == 1
     assert "wall_clock_s" in findings[0]
+
+
+def test_the_trust_tier_reads_the_three_cases_section_5_3_names():
+    """No key, a machine actor, and a person, lowest to highest."""
+    assert okf_frontmatter.trust_tier({}) == "unverified"
+    assert okf_frontmatter.trust_tier({"verified": []}) == "unverified"
+
+    machine = {"verified": [{"by": "process:okf-verify", "at": "2026-08-27T11:36:40Z"}]}
+    assert okf_frontmatter.trust_tier(machine) == "machine-confirmed"
+
+    # Never written by this repo. The fleet hook refuses one, so the tier it
+    # produces is graded on a literal here and against no concept on disk.
+    reviewed = {"verified": [{"by": "human:maintainer", "at": "2026-08-27T11:36:40Z"}]}
+    assert okf_frontmatter.trust_tier(reviewed) == "human-reviewed"
+
+    both = {"verified": [machine["verified"][0], reviewed["verified"][0]]}
+    assert okf_frontmatter.trust_tier(both) == "human-reviewed"
+
+
+def test_a_bare_verified_mapping_reads_as_a_one_element_list():
+    """Section 11 makes this a MUST, and it is one line of code to get wrong."""
+    stamp = "{ by: process:okf-verify, at: 2026-08-27T11:36:40Z }"
+    bare = okf_frontmatter.loads(f"verified: {stamp}\n")
+    listed = okf_frontmatter.loads(f"verified:\n  - {stamp}\n")
+
+    assert okf_frontmatter.verifiers(bare) == okf_frontmatter.verifiers(listed)
+    assert okf_frontmatter.trust_tier(bare) == okf_frontmatter.trust_tier(listed)
+    assert okf_frontmatter.trust_tier(bare) == "machine-confirmed"
+
+
+def test_the_bundle_reads_as_machine_confirmed_and_never_as_reviewed():
+    """The tier over the concepts on disk, so the reader runs on real files."""
+    tiers = [okf_frontmatter.trust_tier(frontmatter(path)) for path in _concepts()]
+    assert "human-reviewed" not in tiers
+    assert "machine-confirmed" in tiers
+
+
+def test_every_index_gloss_is_its_concepts_description(tmp_path):
+    """The generator is refused and the check is adopted, so the check is graded.
+
+    The break lands on a copy, the way the sibling case does. An edit to a
+    tracked concept leaves the tree dirty where the run is killed between the
+    two writes.
+    """
+    assert check_index_gloss.check(BUNDLE) == []
+
+    bundle = tmp_path / "knowledge"
+    shutil.copytree(BUNDLE, bundle)
+    concept = bundle / "defects" / "the-overlay-doubled-its-own-edges.md"
+    text = concept.read_text(encoding="utf-8")
+    moved = text.replace("A call edge is keyed", "A call edge is now keyed", 1)
+    assert moved != text
+    concept.write_text(moved, encoding="utf-8")
+
+    findings = check_index_gloss.check(bundle)
+    assert len(findings) == 1
+    assert "the-overlay-doubled-its-own-edges.md" in findings[0]

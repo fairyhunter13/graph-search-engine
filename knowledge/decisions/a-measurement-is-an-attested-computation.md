@@ -11,6 +11,8 @@ sources:
     resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md
   - id: stamp-rule
     resource: https://github.com/fairyhunter13/claude-code-workflows
+  - id: fleet-record
+    resource: ../references/the-fleet-mechanisms-are-recorded-here-not-linked.md
 ---
 
 # The problem the plan could not close
@@ -42,4 +44,7 @@ The attester stops being deterministic, or it needs a model call to reach a verd
 an attester any more, and this decision is replaced rather than loosened.
 
 [^okf-spec]: OKF v0.2 section 10.6, on verification against attestation.
-[^stamp-rule]: `EvaluateVerifiedStamp` in the fleet hook chain, arrived at independently of the spec.
+[^stamp-rule]: `EvaluateVerifiedStamp` in the fleet hook chain, arrived at independently of the
+    spec. It lives in a private repository, so
+    [the fleet record](../references/the-fleet-mechanisms-are-recorded-here-not-linked.md) carries
+    what it does and this concept cites that.

@@ -184,6 +184,10 @@ for the callers of a known function and check them by hand.
 | D-24 | The overlay replaces its own edges, so a re-ingest is idempotent | done | src/graphrag/scip/ingest.py, tests/test_scip_ingest.py | T-125 |
 | D-25 | An import query for each of the 36 remaining `tags.scm` languages | dropped | src/graphrag/queries/imports | T-11 |
 | D-26 | The headless probe, so a selection claim is an artifact of the run | done | scripts/headless_probe.py, tests/test_probe.py | T-127, T-128 |
+| D-27 | An expression receiver names no module, so the call leaves the repo | done | src/graphrag/resolve.py, src/graphrag/config.py, tests/test_resolve.py, tests/test_two_engine.py | T-208 |
+| D-28 | One frontmatter reader, and the trust tier section 5.3 names | done | scripts/okf_frontmatter.py, tests/test_bundle.py | T-192, T-194, T-195 |
+| D-29 | Every index gloss is checked against its concept description | done | scripts/check_index_gloss.py, .githooks/pre-push, tests/test_bundle.py | T-193 |
+| D-30 | The bundle records what it cannot cite, and the shrink-gate deviation | done | knowledge/references, knowledge/decisions, tests/test_attester.py | T-209 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -191,8 +195,8 @@ gate, and it is written down rather than worked around.
 
 `D-03` carries the load-bearing claim of the whole project. `T-07` measures it on CPython
 `v3.12.7`, 755 files of `Lib` with the test tree excluded, 53853 call sites. Global name matching
-gives 10.86 candidate files per site and 54.5% of sites are ambiguous. Import scoping gives 1.24
-and 8.9%. That is a collapse of 8.7 times.
+gives 10.86 candidate files per site and 54.5% of sites are ambiguous. Import scoping gives 1.19
+and 7.2%. That is a collapse of 9.1 times.
 
 The case asserts the ratio and a wide band, not the two numbers. A corpus at another tag moves both
 arms together, so an exact equality would fail on a bump that changed nothing. What is not allowed
@@ -485,7 +489,8 @@ Two resolution rules were promised, and one of the two ships.
 
 Constructor-call resolution ships. A constructor capture records the class name, so `Foo()` scores
 against the class definition and never against `__init__`. On a two-file probe the call resolves to
-the `class Foo` symbol at the imported-symbol tier.
+the `class Foo` symbol at the imported-symbol tier. `T-199` grades it since 2026-08-27, in both
+directions: the call resolves to the class, and no call site anywhere names `__init__`.
 
 The re-export transitive pass does not ship. `imported_names` maps a name to the module the import
 statement names literally. A `Foo` re-exported by `pkg/__init__.py` from `pkg.internal` misses both
@@ -519,3 +524,48 @@ One arm alone reads either way, and that is why there are two. A session that sk
 one-file service obeyed it rather than missed it. So the second arm is the whole evidence that the
 skill can earn a dispatch at all. `scripts/headless_probe.py` wrote the receipt out of the
 session's own tool stream, and `T-128` grades it.
+
+# The four stop-and-ask decisions, settled 2026-08-27
+
+The design named nine decisions an agent may not take alone. Four of them arrived in this pass.
+
+Decision 9, the fleet enrollment, was put to the user and answered. Six projects are enrolled and
+no others: `graph-search-engine`, `largest-enrolled-project`, `claude-code-workflows`, `rag-search-engine`,
+`device-sync` and `smart-app`. That is 6 of the fleet's 149, so the second indexer carries a
+named set rather than the whole disk. `~/.local/share/graphrag/projects.json` holds those six plus
+the two probe fixtures the tests enroll.
+
+Decisions 1 and 4 were resolved without the question being put, and the record says so rather than
+reading as though each was asked. Decision 1, port 8766, was verified free before the first apply
+and the daemon answers on it. Decision 4, amending the ccw naming policy, was taken in that repo
+and the amended record is the evidence. Both are reversible in one commit, which is why neither
+was worth stopping the pass for. Decision 5, the language order, was asked and answered as PHP,
+then TS and JS, then Python.
+
+# The edge kind that was named and never built, 2026-08-27
+
+The design named seven edge kinds. `store.py` ships six, and `INHERITS` is the missing one.
+
+One capture carries both questions. The pack emits `@reference.implementation` for a base class and
+for an interface alike, so `queries.py` maps it to `IMPLEMENTS` and nothing else. A second kind over
+one capture splits nothing, and it claims a distinction the grammar does not make. So `INHERITS` is
+dropped rather than left open, and this is the record of the drop.
+
+A grammar that emits a separate inheritance capture reverses this. The kind set in `store.py` is
+where that reversal lands.
+
+# The receiver that is an expression, 2026-08-27
+
+`D-19` captured the receiver of a member call. It did not settle what an empty receiver means.
+
+`extract._member` returns a member call with an empty receiver where the byte before the dot closes
+a call. `Path(raw).resolve()` is that shape. `resolve._receiver_modules` read the empty string as
+`the receiver decides nothing` and scored the whole pool, so every homonym in the repo became a
+candidate. The two-engine measurement carried twenty false positives, and each one was this shape.
+
+An empty receiver now empties the candidate pool, so the reference is external. That is the same
+rule the design already states for a receiver naming a module the file never imported. Precision on
+the colliding class rose from 0.596 to 1.000, and recall did not move.
+
+`config.EXTRACTION_ALGORITHM` went from 2 to 3 in the same commit. A resolution rule is invisible to
+the content-hash diff, so a live store answers the old rule until the number forces the wipe.

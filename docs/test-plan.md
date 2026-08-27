@@ -35,7 +35,7 @@ Expected: the symbol counts equal the recorded goldens for that language.
 **S-02 Import scoping collapses the candidate set.**
 Precondition: the CPython standard library at a pinned tag.
 Action: references resolve by global name, and then by import scope.
-Expected: the mean candidate file count falls by at least six times, measured 10.86 to 1.24.
+Expected: the mean candidate file count falls by at least six times, measured 10.86 to 1.19.
 
 **S-03 A gap is reported.**
 Precondition: a language whose grammar emits no call capture.
@@ -247,6 +247,87 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-126 | Every relative link in the bundle resolves | S-11 | D-12 | done | tests/test_bundle.py::test_every_relative_link_in_the_bundle_resolves |
 | T-127 | The two questions reach the engines in order | S-10 | D-26 | done | tests/test_probe.py::test_the_two_questions_reach_the_engines_in_order |
 | T-128 | The plan skill is selected where it is earned | S-17 | D-26 | done | tests/test_probe.py::test_the_plan_skill_is_selected_where_it_is_earned |
+| T-129 | A file over the byte ceiling is not indexable | S-12 | D-01 | done | tests/test_discover.py::test_a_file_over_the_ceiling_is_not_indexable |
+| T-130 | A file with no grammar is never enumerated as source | S-12 | D-01 | done | tests/test_discover.py::test_a_file_with_no_grammar_is_not_enumerated_as_source |
+| T-131 | A tree that is not a repo is walked | S-12 | D-01 | done | tests/test_discover.py::test_a_tree_that_is_not_a_repo_is_walked |
+| T-132 | A call is scoped to the definition that encloses it | S-01 | D-02 | done | tests/test_extract.py::test_a_call_scope_is_the_enclosing_definition |
+| T-133 | A method is recovered from containment | S-01 | D-02 | done | tests/test_extract.py::test_a_method_is_recovered_from_containment |
+| T-134 | An unknown language is reported and never raised | S-03 | D-02 | done | tests/test_extract.py::test_an_unknown_language_is_reported_and_not_raised |
+| T-135 | Every definition carries a line range | S-01 | D-02 | done | tests/test_extract.py::test_every_definition_carries_a_line_range |
+| T-136 | PHP golden symbol counts hold | S-01 | D-02 | done | tests/test_extract.py::test_php_golden_symbol_counts |
+| T-137 | A language with no grammar has no capability | S-03 | D-02 | done | tests/test_grammars.py::test_a_language_with_no_grammar_has_no_capability |
+| T-138 | A missing capability is a sentence, and a present one is empty | S-03 | D-02 | done | tests/test_grammars.py::test_a_missing_capability_is_a_sentence_and_a_present_one_is_empty |
+| T-139 | The capability table answers for every language asked of it | S-03 | D-02 | done | tests/test_grammars.py::test_the_capability_table_covers_what_it_is_asked_for |
+| T-140 | TypeScript gains calls and C never does | S-03 | D-02 | done | tests/test_grammars.py::test_typescript_gains_calls_and_c_never_does |
+| T-141 | A banned name in a module is caught | S-15 | D-01 | done | tests/test_hygiene.py::test_a_banned_name_in_a_module_is_caught |
+| T-142 | The config module imports no sibling | S-15 | D-01 | done | tests/test_hygiene.py::test_config_imports_no_sibling |
+| T-143 | No module carries a home path | S-15 | D-01 | done | tests/test_hygiene.py::test_no_module_carries_a_home_path |
+| T-144 | The scip package is the only subpackage | S-15 | D-01 | done | tests/test_hygiene.py::test_scip_is_the_only_subpackage |
+| T-145 | An empty config document is not an error | S-07 | D-01 | done | tests/test_projcfg.py::test_an_empty_document_is_not_an_error |
+| T-146 | A valid config round trips every field | S-07 | D-01 | done | tests/test_projcfg.py::test_a_valid_config_round_trips_every_field |
+| T-147 | A wrong type is rejected before it reaches the indexer | S-07 | D-01 | done | tests/test_projcfg.py::test_a_wrong_type_is_rejected_before_it_reaches_the_indexer |
+| T-148 | The retired config filename is refused, not ignored | S-07 | D-01 | done | tests/test_projcfg.py::test_the_retired_filename_is_refused_and_not_ignored |
+| T-149 | A capture name in a comment is not a capture | S-01 | D-02 | done | tests/test_queries.py::test_a_capture_name_in_a_comment_is_not_a_capture |
+| T-150 | An import query follows the base language | S-13 | D-02 | done | tests/test_queries.py::test_an_import_query_follows_the_base_language |
+| T-151 | An unmapped capture name is reported rather than dropped | S-01 | D-02 | done | tests/test_queries.py::test_an_unmapped_name_is_reported_rather_than_dropped |
+| T-152 | The repair layer is appended and the pack query is untouched | S-01 | D-02 | done | tests/test_queries.py::test_the_repair_layer_is_appended_and_the_pack_query_is_untouched |
+| T-153 | A symlinked path claims the row it points at | S-07 | D-01 | done | tests/test_registry.py::test_a_symlinked_path_claims_the_row_it_points_at |
+| T-154 | Forget releases a member no surviving root claims | S-07 | D-01 | done | tests/test_registry.py::test_forget_releases_a_member_no_surviving_root_claims |
+| T-155 | Forget writes one backup holding every row it removed | S-07 | D-01 | done | tests/test_registry.py::test_forget_writes_one_backup_holding_every_row_it_removed |
+| T-156 | A missing path never prunes its registry row | S-07 | D-01 | done | tests/test_registry.py::test_nothing_prunes_a_row_because_its_path_is_missing |
+| T-157 | The digest moves when a root is dropped, and the count does not | S-07 | D-01 | done | tests/test_registry.py::test_the_digest_moves_when_a_root_is_dropped_and_the_count_does_not |
+| T-158 | An imported symbol beats a repo-wide homonym | S-02 | D-03 | done | tests/test_resolve.py::test_an_imported_symbol_beats_a_repo_wide_homonym |
+| T-159 | An out-of-scope name falls to a ranked global set | S-02 | D-03 | done | tests/test_resolve.py::test_an_out_of_scope_name_falls_to_a_ranked_global_set |
+| T-160 | A package initialiser names the package | S-02 | D-15 | done | tests/test_resolve.py::test_a_package_initialiser_names_the_package |
+| T-161 | A relative import resolves against the importing directory | S-02 | D-15 | done | tests/test_resolve.py::test_a_relative_import_resolves_against_the_importing_directory |
+| T-162 | A self receiver still reaches the enclosing class | S-02 | D-19 | done | tests/test_resolve.py::test_a_self_receiver_still_reaches_the_enclosing_class |
+| T-163 | The definition unit counts higher than the file unit | S-02 | D-03 | done | tests/test_resolve.py::test_the_definition_unit_is_higher_than_the_file_unit |
+| T-164 | A full index with no definitions is refused too | S-06 | D-08 | done | tests/test_scip_guard.py::test_a_full_index_with_no_definitions_is_refused_too |
+| T-165 | A language this project does not hold is refused by name | S-06 | D-08 | done | tests/test_scip_guard.py::test_a_language_this_project_does_not_hold_is_refused_by_name |
+| T-166 | The coverage guard reads and never writes | S-06 | D-08 | done | tests/test_scip_guard.py::test_the_guard_reads_and_never_writes |
+| T-167 | A definition at a byte no node holds is dropped | S-06 | D-08 | done | tests/test_scip_ingest.py::test_a_definition_at_a_byte_no_node_holds_is_dropped |
+| T-168 | A relationship that is not an implementation is ignored | S-06 | D-08 | done | tests/test_scip_ingest.py::test_a_relationship_that_is_not_an_implementation_is_ignored |
+| T-169 | A declared encoding beats the table | S-06 | D-08 | done | tests/test_scip_offsets.py::test_a_declared_encoding_beats_the_table |
+| T-170 | A line splits on the newline alone | S-06 | D-08 | done | tests/test_scip_offsets.py::test_a_line_splits_on_newline_alone |
+| T-171 | An astral character counts as two UTF-16 units | S-06 | D-08 | done | tests/test_scip_offsets.py::test_an_astral_character_counts_as_two_utf16_units |
+| T-172 | An end before its start collapses rather than inverting | S-06 | D-08 | done | tests/test_scip_offsets.py::test_an_end_before_its_start_collapses_rather_than_inverting |
+| T-173 | A multi-line deprecated range keeps its end line | S-06 | D-08 | done | tests/test_scip_read.py::test_a_multi_line_deprecated_range_keeps_its_end_line |
+| T-174 | An occurrence with no range survives as no span | S-06 | D-08 | done | tests/test_scip_read.py::test_an_occurrence_with_no_range_survives_as_no_span |
+| T-175 | A two-element range is not a range | S-06 | D-08 | done | tests/test_scip_read.py::test_a_two_element_range_is_not_a_range |
+| T-176 | The definition role is one bit of many | S-06 | D-08 | done | tests/test_scip_read.py::test_the_definition_role_is_one_bit_of_many |
+| T-177 | The typed range wins where both are set | S-06 | D-08 | done | tests/test_scip_read.py::test_the_typed_range_wins_where_both_are_set |
+| T-178 | An empty index is not a SCIP index | S-06 | D-08 | done | tests/test_scip_run.py::test_an_empty_index_is_not_a_scip_index |
+| T-179 | A missing index is refused rather than invented | S-06 | D-08 | done | tests/test_scip_run.py::test_an_index_that_is_not_there_is_refused_rather_than_invented |
+| T-180 | An unknown indexer names the indexers this project knows | S-06 | D-08 | done | tests/test_scip_run.py::test_an_unknown_indexer_is_an_error_that_names_the_known_ones |
+| T-181 | The SCIP capability table is per indexer and never per language | S-06 | D-08 | done | tests/test_scip_run.py::test_the_capability_table_is_per_indexer_and_never_per_language |
+| T-182 | The overlay stays off unless the project asks | S-06 | D-08 | done | tests/test_scip_run.py::test_the_overlay_is_off_unless_the_project_asks |
+| T-183 | A backtick-quoted name keeps its separators | S-06 | D-08 | done | tests/test_scip_symbol.py::test_a_backtick_quoted_name_keeps_its_separators |
+| T-184 | A local symbol names nothing outside its document | S-06 | D-08 | done | tests/test_scip_symbol.py::test_a_local_symbol_names_nothing_outside_its_document |
+| T-185 | An unset kind keeps whatever tree-sitter found | S-06 | D-08 | done | tests/test_scip_symbol.py::test_an_unset_kind_keeps_whatever_tree_sitter_found |
+| T-186 | A parameter group is no part of the name | S-06 | D-08 | done | tests/test_scip_symbol.py::test_a_parameter_group_is_no_part_of_the_name |
+| T-187 | A group wire type is refused rather than skipped | S-06 | D-08 | done | tests/test_scip_wire.py::test_a_group_wire_type_is_refused_rather_than_skipped |
+| T-188 | A varint round trips through both halves | S-06 | D-08 | done | tests/test_scip_wire.py::test_a_varint_round_trips_through_both_halves |
+| T-189 | The counts report the resolved share | S-07 | D-01 | done | tests/test_store.py::test_counts_report_the_resolved_share |
+| T-190 | Deleting a file takes its FTS rows with it | S-07 | D-01 | done | tests/test_store.py::test_deleting_a_file_takes_its_fts_rows_with_it |
+| T-191 | The unique key is the identifier range | S-07 | D-01 | done | tests/test_store.py::test_the_unique_key_is_the_identifier_range |
+| T-192 | A bare verified mapping reads as a one-element list | S-11 | D-28 | done | tests/test_bundle.py::test_a_bare_verified_mapping_reads_as_a_one_element_list |
+| T-193 | Every index gloss is the description of its concept | S-11 | D-29 | done | tests/test_bundle.py::test_every_index_gloss_is_its_concepts_description |
+| T-194 | The bundle reads as machine-confirmed and never as reviewed | S-11 | D-28 | done | tests/test_bundle.py::test_the_bundle_reads_as_machine_confirmed_and_never_as_reviewed |
+| T-195 | The trust tier reads the three cases section 5.3 names | S-11 | D-28 | done | tests/test_bundle.py::test_the_trust_tier_reads_the_three_cases_section_5_3_names |
+| T-196 | An unset watchdog interval sends no ping | S-09 | D-11 | done | tests/test_systemd.py::test_no_watchdog_means_no_pings |
+| T-197 | The pet reaches the notify socket | S-09 | D-11 | done | tests/test_systemd.py::test_the_pet_reaches_the_notify_socket |
+| T-198 | The watchdog directive has a keepalive | S-09 | D-11 | done | tests/test_systemd.py::test_the_watchdog_directive_has_a_keepalive |
+| T-199 | A constructor resolves through the class, never through `__init__` | S-02 | D-03 | done | tests/test_resolve.py::test_a_constructor_resolves_through_the_class_and_never_through_init |
+| T-200 | Both reach notices appear together | S-10 | D-11 | done | tests/test_partc.py::test_both_reach_notices_appear_together |
+| T-201 | The graph notice reports what the graphrag CLI reports | S-10 | D-11 | done | tests/test_partc.py::test_the_graph_notice_reports_what_the_graphrag_cli_reports |
+| T-202 | The code notice reports what the coderag CLI reports | S-10 | D-11 | done | tests/test_partc.py::test_the_code_notice_reports_what_the_coderag_cli_reports |
+| T-203 | A clean stop precedes the start that is timed | S-09 | D-11 | done | tests/test_partc.py::test_a_clean_stop_precedes_the_start_that_is_timed |
+| T-204 | The unit reports active only once healthz answers | S-09 | D-11 | done | tests/test_partc.py::test_the_unit_reports_active_only_once_healthz_answers |
+| T-205 | The five real profiles carry one graphrag entry | S-10 | D-09 | done | tests/test_partc.py::test_the_five_real_profiles_carry_one_graphrag_entry |
+| T-206 | The URL the profiles name answers | S-10 | D-09 | done | tests/test_partc.py::test_the_url_the_profiles_name_answers |
+| T-207 | A taken port is refused by name | S-10 | D-06, D-09 | done | tests/test_partc.py::test_a_taken_port_is_refused_by_name |
+| T-208 | An expression receiver leaves the repo rather than picking a homonym | S-14 | D-27 | done | tests/test_resolve.py::test_an_expression_receiver_leaves_the_repo_rather_than_picking_a_homonym |
+| T-209 | The receipt on disk is attested | S-11 | D-30 | done | tests/test_attester.py::test_the_receipt_on_disk_is_attested |
 
 # User journeys
 
@@ -342,7 +423,7 @@ Real, named, and built by `git init` in a temporary directory. No mocks, and no 
 Every `T-nn` names exactly one `S-nn` and at least one `D-nn`. Every `D-nn` names at least one
 `T-nn`. An ID is never reused and never deleted.
 
-Four checks, run by the pre-push gate. Silence is the pass. The hook is the copy that runs, and
+Five checks, run by the pre-push gate. Silence is the pass. The hook is the copy that runs, and
 this is its shape.
 
 ```sh
@@ -377,6 +458,12 @@ done
 # Coverage. A row that names no ID at all resolves nothing, so the arm above never sees it.
 grep -E '^\| D-[0-9]' docs/development-plan.md | grep -vE 'T-[0-9]'
 grep -E '^\| T-[0-9]' docs/test-plan.md | cut -d'|' -f5 | grep -vE 'D-[0-9]'
+
+# A collected test no row names. The `[case]` suffix goes first, or every
+# parametrised test reads as unrecorded.
+awk -F'|' '/^\| T-[0-9]/ { gsub(/[ \t]/, "", $7); if ($7 != "") print $7 }' \
+  docs/test-plan.md | sort -u > /tmp/rows
+grep '::' /tmp/collected | sed 's/\[.*\]//' | sort -u | comm -23 - /tmp/rows
 ```
 
 `-o addopts=` is load-bearing. This repo sets `-q` there, and a second `-q` collapses collection to
@@ -402,6 +489,10 @@ a token grep recovers only the two ends of one. The six interior IDs went unchec
 The fourth check is coverage rather than a dangling reference. A row naming nothing at all passes
 an orphan check, because it has no ID to resolve. It runs in both directions.
 
+The fifth check runs the anchor check backwards. Part B rule 5 makes a test no row names a finding.
+Only the row-to-test direction was gated, so 63 of 181 collected functions were named by no row.
+The reconciliation pass wrote `T-129` to `T-191` for them.
+
 The pattern is `T-[0-9]`, never a bare `T-`, so the vocabulary block above is not read as a row.
 The tree side is `git ls-files` rather than a walk, because the gate is about what a clone gets.
 
@@ -423,3 +514,16 @@ debounce window raises **one** index pass for the one project, never one per fil
 `T-68` records a defect the case found. `ledger.append` stamped `ts` rounded to a millisecond, and
 `read` sorted `reverse=True`. A stable sort hands back the older of a tied pair first, so the newest
 row was not first. The stamp now carries full precision and the sort reverses an ascending result.
+
+# What `T-204` found, 2026-08-27
+
+`T-26` reads the unit text and finds `Type=notify`. It starts nothing, so it graded the directive
+and never the ordering the directive is bought for.
+
+`T-204` starts the unit and asks `/healthz` once, on the first `active` sample. Two of four starts
+were refused, and one of the two stayed refused for 2.6 seconds. uvicorn runs the ASGI lifespan
+before it binds the listening socket, and `READY=1` is sent from inside that lifespan.
+
+`server.listen` binds and listens before uvicorn runs, so the socket exists before systemd is told
+anything. Four of four starts then answered on the first sample. The same bind retires the
+check-then-bind race that `port_free` left open in the collision guard.
