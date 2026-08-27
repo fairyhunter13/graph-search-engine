@@ -4,6 +4,16 @@ version = "0.1.0"
 description = "A code graph search engine on tree-sitter: who calls this, what breaks if I change it"
 requires-python = ">=3.12"
 dependencies = [
+    # The stdio bridge posts one line and writes one line back. httpx because
+    # the sibling engine already runs it, not because the bridge needs a client
+    # library: it is a pipe, and a bridge that interprets the protocol is a
+    # second implementation of it.
+    "httpx>=0.28",
+    # Pinned to the 2.0 line, the way the sibling engine pins it and for the
+    # reason recorded there: `>=1.27` resolves to 2.0.0, where FastMCP is
+    # renamed MCPServer and the old import path is gone. A range moves the tool
+    # decorator under the daemon.
+    "mcp==2.0.*",
     # Strict project config parsing. There is no safe_load in the stdlib, and the
     # loader is subclassed later to stop YAML 1.1 rewriting a timestamp on a
     # round trip -- the trap that silently disables an OKF freshness check.
@@ -16,6 +26,11 @@ dependencies = [
     # and moves it per release, so a range turns the capability table into a
     # guess. Bumping the pin re-runs T-05 and T-06 and edits the numbers there.
     "tree-sitter-language-pack==1.15.8",
+    # The ASGI server the MCP app runs under. `timeout_graceful_shutdown` is the
+    # setting that matters: streamable HTTP holds its connections open, so
+    # without it a stop waits for clients that never disconnect and systemd
+    # kills the unit on a timeout instead.
+    "uvicorn>=0.34",
 ]
 
 [project.scripts]

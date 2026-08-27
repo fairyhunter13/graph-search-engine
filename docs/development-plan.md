@@ -163,7 +163,7 @@ for the callers of a known function and check them by hand.
 | D-03 | Symbol table and ranked resolution | done | src/graphrag/symtab.py, src/graphrag/resolve.py | T-07, T-08, T-36, T-37 |
 | D-04 | Index loop, traversal, query surface | done | src/graphrag/index.py, src/graphrag/indexwrite.py, src/graphrag/traverse.py, src/graphrag/query.py, tests/test_index.py, tests/test_perf.py | T-09, T-10, T-45..T-55 |
 | D-05 | Import queries, the remaining waves | done | src/graphrag/queries/imports, tests/test_import_queries.py | T-11, T-56, T-57, T-58 |
-| D-06 | MCP tools, daemon, CLI, stdio bridge | planned | src/graphrag/tools.py, src/graphrag/server.py, src/graphrag/cli.py, src/graphrag/bridge.py | T-12, T-13, T-14, T-15 |
+| D-06 | MCP tools, daemon, CLI, stdio bridge | done | src/graphrag/tools.py, src/graphrag/server.py, src/graphrag/cli.py, src/graphrag/bridge.py, tests/test_tools.py, tests/test_server.py | T-12, T-13, T-14, T-15, T-21, T-61, T-62, T-63, T-64 |
 | D-07 | Watcher, health, progress, ledgers | planned | src/graphrag/watch.py, src/graphrag/health.py, src/graphrag/progress.py, src/graphrag/ledger.py, src/graphrag/trace.py | T-16, T-17 |
 | D-08 | SCIP overlay behind the coverage guard | planned | (deferred, no code this pass) | T-18, T-19 |
 | D-09 | Fleet registration across five profiles | planned | (ccw) internal/policy/shared.go | T-20, T-21 |
@@ -173,6 +173,7 @@ for the callers of a known function and check them by hand.
 | D-13 | The first working attester | done | knowledge/attesters, knowledge/computations, knowledge/skills, tests/test_attester.py | T-29, T-30, T-41, T-42, T-43, T-44 |
 | D-14 | Gate lines and the attester contract check | done | .githooks/pre-push, scripts/check_attester_contract.py, knowledge/constraints, knowledge/decisions | T-31, T-32 |
 | D-15 | Source roots, so a dotted import matches a path | planned | src/graphrag/symtab.py | T-59 |
+| D-16 | Workspace scope, federation and peer identity | planned | src/graphrag/scope.py, src/graphrag/federation.py, src/graphrag/peers.py | T-65 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -239,3 +240,17 @@ experience bar, and it is not a defect to fix.
 case is marked `corpus` and skips when the clone is absent. The local `/usr/lib/python3.12` was
 rejected as the corpus: a distro update moves the number, and no other machine reproduces it. The
 receipt carries the corpus tag, so the attester compares like with like.
+
+`D-06` moved the port case forward. `T-21` names the collision error and the plan filed it under
+`D-09`, the fleet registration row. The code that raises it is `server.py`, which is this row, so
+the case is written and passing now and `T-21` names both rows. `D-09` still owns the five profile
+files, and none of them is written yet.
+
+`D-06` also revealed four cases the plan had no row for, so they are added rather than absorbed.
+`T-61` and `T-62` are the stdio bridge, round trip and dead daemon. `T-63` is a project with no
+graph, which is not an empty graph. `T-64` is `graphrag doctor`, the command the Integration
+section names and no case covered.
+
+`D-16` is an under-record the Components table carried from the start. It names `scope.py`,
+`federation.py` and `peers.py`, and no task row owned them. They are the workspace half of the
+engine, so they get their own row rather than being folded into a surface row that is finished.

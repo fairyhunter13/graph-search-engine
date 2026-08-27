@@ -106,16 +106,16 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-09 | Blast radius terminates on a cycle | S-04 | D-04 | done | tests/test_index.py::test_blast_radius_terminates_over_the_cycle |
 | T-10 | Parse and query stay above the floor | S-05 | D-04 | done | tests/test_perf.py::test_extraction_throughput_floor |
 | T-11 | Every import query compiles and extracts | S-01 | D-05 | done | tests/test_import_queries.py::test_each_language_extracts_an_import |
-| T-12 | The four tool schemas are conformant | S-08 | D-06 | planned | tests/test_tools.py::test_tool_schemas_are_conformant |
-| T-13 | Neighbors carries confidence and evidence | S-08 | D-06 | planned | tests/test_tools.py::test_neighbors_carries_confidence |
-| T-14 | A missing capability is named, not empty | S-03 | D-06 | planned | tests/test_tools.py::test_missing_capability_is_reported |
-| T-15 | An unknown argument names the valid set | S-08 | D-06 | planned | tests/test_tools.py::test_unknown_argument_names_valid_set |
+| T-12 | The four tool schemas are conformant | S-08 | D-06 | done | tests/test_tools.py::test_tool_schemas_are_conformant |
+| T-13 | Neighbors carries confidence and evidence | S-08 | D-06 | done | tests/test_tools.py::test_neighbors_carries_confidence |
+| T-14 | A missing capability is named, not empty | S-03 | D-06 | done | tests/test_tools.py::test_missing_capability_is_reported |
+| T-15 | An unknown argument names the valid set | S-08 | D-06 | done | tests/test_tools.py::test_unknown_argument_names_valid_set |
 | T-16 | One edit reparses one file | S-09 | D-07 | planned | tests/test_watch.py::test_single_edit_reparses_one_file |
 | T-17 | Health pages on the second failure only | S-09 | D-07 | planned | tests/test_health.py::test_two_sample_rule |
 | T-18 | Two indexers agree on a non-ASCII range | S-06 | D-08 | planned | tests/test_scip_offsets.py::test_non_ascii_ranges_agree |
 | T-19 | A collapsed SCIP index is refused | S-06 | D-08 | planned | tests/test_scip_guard.py::test_collapsed_index_is_refused |
 | T-20 | Five profiles carry the graphrag entry | S-10 | D-09 | planned | tests/test_fleet.py::test_five_profiles_carry_the_entry |
-| T-21 | The port is fixed and a collision errors | S-10 | D-09 | planned | tests/test_server.py::test_port_collision_names_the_port |
+| T-21 | The port is fixed and a collision errors | S-10 | D-06, D-09 | done | tests/test_server.py::test_port_collision_names_the_port |
 | T-22 | Either engine lifts the walk denial | S-10 | D-10 | planned | tests/test_gate.py::test_either_engine_lifts_the_denial |
 | T-23 | An empty graph answer buys no marker | S-10 | D-10 | planned | tests/test_gate.py::test_empty_answer_buys_no_marker |
 | T-24 | A graph-only project is still gated | S-10 | D-10 | planned | tests/test_gate.py::test_graph_only_project_is_gated |
@@ -155,6 +155,11 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-58 | A language with no import query says so | S-03 | D-05 | done | tests/test_import_queries.py::test_a_language_with_no_import_query_says_so |
 | T-59 | A source root prefix leaves the module name | S-02 | D-15 | planned | tests/test_symtab.py::test_a_source_root_prefix_leaves_the_module_name |
 | T-60 | The capability table reads the manifest, not the cache | S-03 | D-02 | done | tests/test_grammars.py::test_known_languages_does_not_depend_on_the_download_cache |
+| T-61 | The bridge round trips one call | S-08 | D-06 | done | tests/test_server.py::test_the_bridge_round_trips_one_call |
+| T-62 | A dead daemon keeps stdout clean | S-08 | D-06 | done | tests/test_server.py::test_the_bridge_survives_an_unreachable_daemon |
+| T-63 | An unindexed root names the index tool | S-08 | D-06 | done | tests/test_tools.py::test_an_unindexed_root_names_the_index_tool |
+| T-64 | Doctor prints the capability table | S-03 | D-06 | done | tests/test_tools.py::test_doctor_prints_the_capability_table |
+| T-65 | Federation expands one level, not transitively | S-10 | D-16 | planned | tests/test_federation.py::test_federation_expands_one_level |
 
 # User journeys
 

@@ -17,3 +17,7 @@
   silently](one-bad-node-type-disables-a-whole-query.md) - A tree-sitter query compiles whole or not
   at all, and the extractor returns no matches rather than raising. A single wrong node type makes
   every pattern in the file dead, and the language then reads as one with no import syntax.
+* [mcp 2.0 renames the server class and the schema
+  attributes](mcp-2-0-renames-the-schema-attributes.md) - The 2.0 line renames FastMCP to MCPServer
+  and spells the tool schema attributes in snake_case. A conformance check written against
+  inputSchema raises rather than failing, so it never reports the schema it was written to grade.
