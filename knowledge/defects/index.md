@@ -18,3 +18,7 @@
   carried f1_lexical 0.0 against a claim of 0.412. Neither arm regressed: the coderag daemon was
   down, an empty result set scores zero, and the run wrote its receipt before the assertion that
   would have failed on it.
+* [Prune wiped the graph but kept the directory](prune-wiped-the-graph-but-kept-the-directory.md) -
+  `prune --apply` called `store.wipe`, which unlinks graph.db and its WAL sidecars but leaves the
+  directory. `unclaimed_stores` counts a directory, so the count never reached zero and every run
+  listed the same orphans.

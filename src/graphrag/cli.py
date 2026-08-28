@@ -101,14 +101,11 @@ def cmd_forget(args: argparse.Namespace) -> int:
 
 def cmd_prune(args: argparse.Namespace) -> int:
     """Delete graph directories no registry row names."""
-    stale = registry.unclaimed_stores()
     if not args.apply:
+        stale = registry.unclaimed_stores()
         return _out({"would_delete": [str(p) for p in stale], "applied": False})
-    deleted = []
-    for path in stale:
-        store.wipe(path / "graph.db")
-        deleted.append(str(path))
-    return _out({"deleted": deleted, "applied": True})
+    deleted = registry.prune_unclaimed()
+    return _out({"deleted": [str(p) for p in deleted], "applied": True})
 
 
 def cmd_serve(args: argparse.Namespace) -> int:

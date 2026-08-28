@@ -98,6 +98,30 @@ def test_forget_releases_a_member_no_surviving_root_claims(tmp_path):
     assert registry.load()[str(registry.resolve(shared))].roots == []
 
 
+def test_prune_removes_the_directory_so_the_count_reaches_zero(tmp_path):
+    """`wipe` unlinks the graph but leaves the directory, and a directory is
+    what `unclaimed_stores` counts. A prune that only wiped listed the same
+    orphan on every run. `prune_unclaimed` rmtrees, and leaves a claimed store."""
+    live = tmp_path / "live"
+    live.mkdir()
+    registry.claim(live, direct=True)
+    kept = config.index_path(live).parent
+    kept.mkdir(parents=True)
+    (kept / "graph.db").write_bytes(b"claimed")
+
+    orphan = config.INDEX_DIR / "svc-deadbeef"
+    orphan.mkdir(parents=True)
+    (orphan / "graph.db").write_bytes(b"orphan")
+
+    assert registry.unclaimed_stores() == [orphan]
+
+    assert registry.prune_unclaimed() == [orphan]
+
+    assert not orphan.exists()
+    assert kept.exists()
+    assert registry.unclaimed_stores() == []
+
+
 def test_a_symlinked_path_claims_the_row_it_points_at(tmp_path):
     """Resolving before ownership is decided. A path that skips it claims a
     second row, and every later answer files under the wrong root."""

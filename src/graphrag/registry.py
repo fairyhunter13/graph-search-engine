@@ -207,3 +207,20 @@ def unclaimed_stores() -> list[Path]:
         if not config.INDEX_DIR.is_dir():
             return []
         return sorted(p for p in config.INDEX_DIR.iterdir() if p.is_dir() and p not in claimed)
+
+
+def prune_unclaimed() -> list[Path]:
+    """Delete every graph directory no row names, and return what went.
+
+    The walk and the rmtree run under one exclusive lock: a claim that lands
+    between them would build the graph this deletes. `wipe` leaves the empty
+    directory, which `unclaimed_stores` still counts, so a prune must rmtree.
+    """
+    with _held(fcntl.LOCK_EX) as rows:
+        claimed = {config.index_path(e.path).parent for e in rows.values()}
+        if not config.INDEX_DIR.is_dir():
+            return []
+        stale = sorted(p for p in config.INDEX_DIR.iterdir() if p.is_dir() and p not in claimed)
+        for path in stale:
+            shutil.rmtree(path)
+        return stale
