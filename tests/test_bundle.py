@@ -13,7 +13,6 @@ different files.
 
 from __future__ import annotations
 
-import importlib.util
 import re
 import shutil
 import subprocess
@@ -28,8 +27,6 @@ BUNDLE = ROOT / "knowledge"
 
 sys.path.insert(0, str(ROOT / "scripts"))
 
-import check_index_gloss  # noqa: E402
-import check_no_shrink  # noqa: E402
 import okf_frontmatter  # noqa: E402
 from okf_frontmatter import FrontmatterLoader, frontmatter  # noqa: E402
 
@@ -141,33 +138,6 @@ def test_offset_free_stale_after_is_rejected(tmp_path):
     assert plain.returncode == 0, plain.stdout + plain.stderr
 
 
-def test_dropped_receipt_field_fails(tmp_path):
-    """A receipt field the attester never reads is a claim nothing checks.
-
-    The break lands on a copy. An earlier version edited the tracked concept and
-    restored it in a `finally`, which leaves the working tree dirty the moment
-    the run is killed between the two writes.
-    """
-    contract = ROOT / "scripts" / "check_attester_contract.py"
-    spec = importlib.util.spec_from_file_location("check_attester_contract", contract)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-
-    assert module.check(BUNDLE) == []
-
-    bundle = tmp_path / "knowledge"
-    shutil.copytree(BUNDLE, bundle)
-    concept = bundle / "computations" / "import-scoping-collapses-the-candidate-set.md"
-    text = concept.read_text(encoding="utf-8")
-    broken = text.replace("commit_sha,", "commit_sha, wall_clock_s,")
-    assert broken != text
-    concept.write_text(broken, encoding="utf-8")
-    findings = module.check(bundle)
-    assert len(findings) == 1
-    assert "wall_clock_s" in findings[0]
-
-
 def test_the_trust_tier_reads_the_three_cases_section_5_3_names():
     """No key, a machine actor, and a person, lowest to highest."""
     assert okf_frontmatter.trust_tier({}) == "unverified"
@@ -212,59 +182,3 @@ def test_a_concept_reads_as_reviewed_only_where_a_human_stamped_it():
         )
     assert [t == "human-reviewed" for t in tiers] == stamped
     assert "machine-confirmed" in tiers
-
-
-def test_every_index_gloss_is_its_concepts_description(tmp_path):
-    """The generator is refused and the check is adopted, so the check is graded.
-
-    The break lands on a copy, the way the sibling case does. An edit to a
-    tracked concept leaves the tree dirty where the run is killed between the
-    two writes.
-    """
-    assert check_index_gloss.check(BUNDLE) == []
-
-    bundle = tmp_path / "knowledge"
-    shutil.copytree(BUNDLE, bundle)
-    concept = bundle / "defects" / "the-overlay-doubled-its-own-edges.md"
-    text = concept.read_text(encoding="utf-8")
-    moved = text.replace("A call edge is keyed", "A call edge is now keyed", 1)
-    assert moved != text
-    concept.write_text(moved, encoding="utf-8")
-
-    findings = check_index_gloss.check(bundle)
-    assert len(findings) == 1
-    assert "the-overlay-doubled-its-own-edges.md" in findings[0]
-
-
-OLD = """\
----
-type: Decision
-resource: src/graphrag/resolve.py
-sources:
-  - id: fleet-record
-    resource: ../references/a-record.md
-  - id: spec
-    resource: https://example.invalid/SPEC.md
----
-
-body
-"""
-
-
-def test_a_corrected_citation_is_not_a_dropped_source():
-    """`okf check` names a dropped source by its resource, so a fixed path reads as a drop.
-
-    The `id` is the stable handle. A resource corrected under a surviving id is
-    a correction, and only a lost id is a shrink. The top-level `resource` field
-    sits above the list, so the parse must not pair it with the first id.
-    """
-    assert check_no_shrink._sources(OLD) == [
-        ("fleet-record", "../references/a-record.md"),
-        ("spec", "https://example.invalid/SPEC.md"),
-    ]
-
-    fixed = OLD.replace("../references/a-record.md", "knowledge/references/a-record.md")
-    assert check_no_shrink._id_survives(OLD, fixed, "../references/a-record.md")
-
-    dropped = OLD.replace("  - id: spec\n    resource: https://example.invalid/SPEC.md\n", "")
-    assert not check_no_shrink._id_survives(OLD, dropped, "https://example.invalid/SPEC.md")

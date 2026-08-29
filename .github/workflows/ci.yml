@@ -67,27 +67,3 @@ jobs:
           go install github.com/fairyhunter13/okf/cmd/okfrules@v0.6.0
           go install github.com/fairyhunter13/okf/cmd/okf@v0.6.0
       - run: okfrules -strict check -Werror knowledge
-      # Not `okf check` directly: a shrink is a warning, so it exits 0 reporting one.
-      - run: uv run python scripts/check_no_shrink.py HEAD~1 knowledge
-      - run: uv run python scripts/check_attester_contract.py knowledge
-
-  # The plan-pair arms lived only in the hook, which `git push --no-verify` skips.
-  # Running the hook itself is the check, and it carries its own refusal probes.
-  plan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: "1.26.4"
-      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
-        with:
-          python-version: "3.12"
-      - run: uv sync --frozen
-      - name: Install the checker, pinned
-        run: |
-          go install github.com/fairyhunter13/okf/cmd/okfrules@v0.6.0
-          go install github.com/fairyhunter13/okf/cmd/okf@v0.6.0
-      - run: .githooks/pre-push

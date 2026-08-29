@@ -1,14 +1,11 @@
 ---
 type: Decision
-resource: scripts/check_no_shrink.py
 title: The shrink gate grades warnings, because okf check exits 0 on a shrink
-description: "The plan named `okf check -against HEAD` as a gate. It reports a shrink as a warning and exits 0, and HEAD at push time is the tree it would compare. So the gate runs the same command against the upstream tip and grades what it prints."
+description: "Deprecated on 2026-08-29 with the script. `okf check -against HEAD` reports a shrink as a warning and exits 0, so a gate had to grade the printed output. The reasoning still holds, and augment-never-shrink is instruction now."
 tags: [okf, gate, provenance, deviation]
-status: stable
+status: deprecated
 generated: { by: claude/opus-5, at: 2026-08-27T13:07:26Z }
 sources:
-  - id: shrink-check
-    resource: scripts/check_no_shrink.py
   - id: okf
     resource: https://github.com/fairyhunter13/okf
 ---
@@ -35,14 +32,16 @@ dropped, and this bundle is stamped on every sweep.
 So `-Werror` would block the next push in every repo that stamps, and the rule would be turned off
 within a week. That is the honest reason this deviates.
 
-# What the gate does instead
+# What the gate did instead, until 2026-08-29
 
-`scripts/check_no_shrink.py` runs the same command and grades its output.[^shrink-check] A dropped
-heading and a lost source are findings. A dropped verification event is a finding only where its
-actor is gone from the file as well.
+`scripts/check_no_shrink.py` ran the same command and graded its output. A dropped heading and a
+lost source were findings. A dropped verification event was a finding only where its actor was gone
+from the file as well. The hook built a two-commit repository whose second commit deleted a
+heading, and it refused the push where the check accepted that.
 
-The hook proves the check refuses before it trusts it. It builds a two-commit repository whose
-second commit deletes a heading, and it fails the push where the check accepts that.
+The six-rule ruling deleted the script, the hook arm, the CI step and the refusal probe. Six rules
+keep a mechanism in this fleet, and augment-never-shrink is not one of them. The rule stays, in the
+bundle skill, as instruction.
 
 # What would have to be true to revisit this
 
@@ -50,4 +49,3 @@ second commit deletes a heading, and it fails the push where the check accepts t
 moving one. Either one removes the reason for this script.
 
 [^okf]: v0.6.0, the version the gate pins.
-[^shrink-check]: The script's own docstring carries this reason, and no concept did until now.

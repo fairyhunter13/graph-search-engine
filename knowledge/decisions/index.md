@@ -38,7 +38,7 @@
   default and reads eight messages. The wire format is frozen, so the decoder is the smaller
   liability.
 * [The shrink gate grades warnings, because okf check exits 0 on a
-  shrink](the-shrink-gate-grades-warnings-and-not-the-exit-code.md) - The plan named `okf check
+  shrink](the-shrink-gate-grades-warnings-and-not-the-exit-code.md) - Deprecated on 2026-08-29 with the script. `okf check -against HEAD` reports a shrink as a warning and exits 0, so a gate had to grade the printed output. The reasoning still holds, and augment-never-shrink is instruction now.
   -against HEAD` as a gate. It reports a shrink as a warning and exits 0, and HEAD at push time is
   the tree it would compare. So the gate runs the same command against the upstream tip and grades
   what it prints.
