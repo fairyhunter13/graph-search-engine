@@ -70,6 +70,11 @@ Measured over the 22 worktrees that hold a populated submodule:
 | PHP files indexed | 5,189 | 7,773 |
 | of them inside a gitlink | **0** | **2,584** |
 
+coderag carries the same defect and took the same fix, and its stores now hold the same 2,584 files
+inside a gitlink. Its PHP total is 7,795 rather than 7,773, because it maps the extensionless
+`artisan` as PHP and this engine does not. That is one file per Laravel worktree, and it predates
+both fixes.
+
 One worktree in detail, `gen3-app-a/submodule-pin_2.1`:
 
 | | before | after |
