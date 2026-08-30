@@ -72,6 +72,9 @@ def test_the_probe_covers_every_mode_the_run_uses(monkeypatch):
             raise RuntimeError("CUBLAS failure 3: the resource allocation failed")
         return {"src/graphrag/index.py"}
 
+    # The probe short-circuits on `shutil.which` before it reaches a mode, so a
+    # runner without the CLI answers `no coderag CLI on PATH` and grades nothing.
+    monkeypatch.setattr(measure_mod.shutil, "which", lambda name: f"/usr/bin/{name}")
     monkeypatch.setattr(measure_mod, "coderag_files", only_semantic_reds)
     assert "CUBLAS" in measure_mod.arm_unreachable()
 
