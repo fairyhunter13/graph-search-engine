@@ -41,6 +41,9 @@ class Indexer:
     # Argv, with the output path appended. Empty means the operator runs the
     # build themselves, because no flag set makes a Gradle project index itself.
     command: tuple[str, ...] = ()
+    # The filename that declares an independent build root, where a repository
+    # can hold several. Empty means one invocation covers the whole project.
+    unit: str = ""
 
 
 INDEXERS: dict[str, Indexer] = {
@@ -53,8 +56,9 @@ INDEXERS: dict[str, Indexer] = {
             False,
             True,
             ("scip-typescript", "index", "--output"),
+            "tsconfig.json",
         ),
-        Indexer("scip-go", ("go",), True, True, ("scip-go", "--output")),
+        Indexer("scip-go", ("go",), True, True, ("scip-go", "index", "--output"), "go.mod"),
         Indexer("scip-java", ("java", "scala", "kotlin"), True, True),
         Indexer("scip-clang", ("c", "cpp"), False, True),
         Indexer("scip-ruby", ("ruby",), False, True),
@@ -63,6 +67,12 @@ INDEXERS: dict[str, Indexer] = {
         Indexer("rust-analyzer", ("rust",), True, False),
     )
 }
+
+
+# A build unit never lives under one of these. `vendor` and `node_modules` hold
+# another project's modules, and indexing them attributes their files to this
+# repository.
+SKIP = frozenset({"vendor", "node_modules", "testdata"})
 
 
 class RunError(RuntimeError):
@@ -77,6 +87,30 @@ def indexer(name: str) -> Indexer:
             f"{name!r} is not a known SCIP indexer. Known: {', '.join(sorted(INDEXERS))}"
         )
     return got
+
+
+def units(name: str, root: Path | str) -> list[str]:
+    """Every build root under a project, as posix prefixes relative to it.
+
+    An indexer resolves the build it stands in and no other, so a repository
+    holding several is several invocations. `go-monorepo` carries eight `go.mod`
+    files and 2,010 of its 2,012 Go files sit outside the root one, which is
+    why one pass at the top covered 0% and was correctly refused.
+
+    The root itself is always a prefix, so an indexer with no unit marker, and
+    a project with no marker in it, both return the single empty prefix.
+    """
+    got = indexer(name)
+    root = Path(root).resolve()
+    if not got.unit:
+        return [""]
+    found = []
+    for path in root.rglob(got.unit):
+        rel = path.parent.relative_to(root)
+        if any(part in SKIP or part.startswith(".") for part in rel.parts):
+            continue
+        found.append(rel.as_posix() if rel.parts else "")
+    return sorted(found) or [""]
 
 
 def for_language(lang: str) -> list[Indexer]:

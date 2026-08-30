@@ -54,14 +54,35 @@ class IngestReport:
     calls: int = 0
 
 
+def _key(prefix: str, rel: str) -> str:
+    """A document path, re-based from its build unit onto the project root."""
+    return f"{prefix}/{rel}" if prefix else rel
+
+
+def _owns(path: str, prefix: str, deeper: tuple[str, ...]) -> bool:
+    """Whether this build unit is the nearest one above a file.
+
+    A unit prefix contains every deeper unit's files as well, so the root
+    module of a multi-module repository would otherwise be graded against the
+    whole tree and refused for covering 0% of it.
+    """
+    if prefix and not path.startswith(f"{prefix}/"):
+        return False
+    return not any(path.startswith(f"{d}/") for d in deeper)
+
+
 def _census(
-    conn: sqlite3.Connection, languages: tuple[str, ...]
+    conn: sqlite3.Connection,
+    languages: tuple[str, ...],
+    prefix: str = "",
+    deeper: tuple[str, ...] = (),
 ) -> tuple[int, int, dict[str, int]]:
     """Tree-sitter's own count for the languages this indexer claims."""
     marks = ",".join("?" * len(languages))
     files = {
         row["path"]: row["id"]
         for row in conn.execute(f"SELECT id, path FROM files WHERE lang IN ({marks})", languages)
+        if _owns(row["path"], prefix, deeper)
     }
     if not files:
         return 0, 0, {}
@@ -73,13 +94,20 @@ def _census(
     return len(files), definitions, files
 
 
-def coverage(conn: sqlite3.Connection, path: Path | str, tool: str, languages) -> Coverage:
+def coverage(
+    conn: sqlite3.Connection,
+    path: Path | str,
+    tool: str,
+    languages,
+    prefix: str = "",
+    deeper: tuple[str, ...] = (),
+) -> Coverage:
     """Count the index against the census. Reading only, so it never half-writes."""
-    census_files, census_definitions, known = _census(conn, tuple(languages))
+    census_files, census_definitions, known = _census(conn, tuple(languages), prefix, deeper)
     got = Coverage(tool=tool, census_files=census_files, census_definitions=census_definitions)
     for document in read.documents(path):
         got.documents += 1
-        if document.relative_path not in known:
+        if _key(prefix, document.relative_path) not in known:
             continue
         got.matched += 1
         got.definitions += sum(1 for o in document.occurrences if o.is_definition and o.span)
@@ -167,12 +195,26 @@ def _rewrite_call(conn: sqlite3.Connection, file_id: int, site: int, dst: int, t
     return True
 
 
-def ingest(conn: sqlite3.Connection, path: Path | str, root: Path | str) -> IngestReport:
-    """One index, guarded then applied. A refusal raises and writes nothing."""
+def ingest(
+    conn: sqlite3.Connection,
+    path: Path | str,
+    root: Path | str,
+    prefix: str = "",
+    deeper: tuple[str, ...] = (),
+) -> IngestReport:
+    """One index, guarded then applied. A refusal raises and writes nothing.
+
+    `root` is the project, never the build unit. An index written inside a
+    sub-module names its documents relative to that module, so `prefix`
+    re-bases them onto the paths the store holds, and `deeper` keeps the
+    grading to the files this unit is the nearest one above.
+    """
     root = Path(root)
     meta = read.metadata(path)
     got = run.indexer(meta.tool_name)
-    report = IngestReport(coverage=coverage(conn, path, meta.tool_name, got.languages))
+    report = IngestReport(
+        coverage=coverage(conn, path, meta.tool_name, got.languages, prefix, deeper)
+    )
     reason = check(report.coverage)
     if reason:
         raise CoverageError(reason)
@@ -183,10 +225,11 @@ def ingest(conn: sqlite3.Connection, path: Path | str, root: Path | str) -> Inge
     implements: list[tuple[str, str]] = []
 
     for document in read.documents(path):
-        file_id = files.get(document.relative_path)
+        key = _key(prefix, document.relative_path)
+        file_id = files.get(key)
         if file_id is None:
             continue
-        text = _text(root, document.relative_path, document)
+        text = _text(root, key, document)
         if not text:
             continue
         table = offsets.Offsets.build(text)

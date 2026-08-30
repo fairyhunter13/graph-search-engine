@@ -1,5 +1,12 @@
 # Defects
 
+* [A project is not one build](a-project-is-not-one-build.md) - `overlay` invoked each indexer
+  once, at the project root. `go-monorepo` holds eight `go.mod` files, so scip-go saw 2 of 2012 files,
+  covered 0% and was correctly refused. The tier was unreachable for every monorepo.
+* [A submodule is invisible to discovery](a-submodule-is-invisible-to-discovery.md) - `ls-files`
+  lists a gitlink as one entry and never descends. 9 submodules were checked out at their pins and
+  979 PHP files landed on disk. The node count, the edge count and the `external` share all moved
+  by zero.
 * [The newest ledger row was not first](the-newest-ledger-row-was-not-first.md) - append stamped
   ts rounded to a millisecond and read sorted with reverse=True. A stable sort keeps the original
   order inside a tie, so the older row of a tied pair came back first.

@@ -72,6 +72,34 @@ One root cause, two symptoms:
 The second symptom is the quiet one. An external row is not an error and carries `confidence: 1`,
 so a `callers` answer that resolved nothing looks the same as a symbol nothing calls.
 
+# One literal, two meanings, and the split is measurable
+
+`resolve_reference` writes `external=True` at two sites, and both produce the same literal.
+
+| Site | Condition | Meaning |
+|---|---|---|
+| `resolve.py:131-132` | `table.defines(name)` is empty | the name is defined nowhere here. Honest. |
+| `resolve.py:144-145` | the pool was non-empty, then `_receiver_modules` narrowing emptied it | the name **is** defined here and the resolver missed it. |
+
+A reader cannot tell them apart from the answer, but the store can. An external edge whose callee
+name also exists as a non-external node is the second site. Measured 2026-08-30:
+
+| Repository | CALLS | external | site 1, honest | site 2, miss |
+|---|---|---|---|---|
+| `go-monorepo` (go) | 137,205 | 123,520 (90.0%) | 77,342 (62.6%) | 46,178 (37.4%) |
+| `ts-app` (typescript) | 31,109 | 25,705 (82.6%) | 21,205 (82.5%) | 4,500 (17.5%) |
+
+So 62.6% is the floor `go-monorepo` can reach on this resolver, and the 37.4% above it is the prize. The
+Go prize is more than double the TypeScript one, because TypeScript's own `import` rows already
+carry a relative path that sometimes matches.
+
+# `same_class` never fires for Go
+
+The `go-monorepo` histogram carries no `same_class` row at all: `external` 123,520, `same_file` 7,439,
+`package` 5,858, `global` 388, and no `import` row either. `_enclosing_class` finds the class a
+call sits lexically inside, and a Go method sits beside its type rather than inside it. So the
+0.95 tier is unreachable in Go by construction, and not by a missing query.
+
 # What the capability table says, and what it is worth
 
 `grammars.py` advertises `imports` for php, go and javascript, and the report is honest at the level
@@ -95,6 +123,23 @@ The fix is a per-language module identity: a Go module named for its directory a
 `module` line's prefix, and a PHP module named by its namespace rather than its path. That is
 resolver work over four languages, and it was not in the scope that indexed the fleet. It is
 recorded and not bought.
+
+For Go and TypeScript the SCIP overlay closes part of the same slice without that work, because a
+real compiler resolves what a syntactic receiver cannot. It was turned on and measured on
+2026-08-30, and every figure in this concept above is the reading before it:
+
+| Repository | `external` before | `external` after | `evidence: scip` |
+|---|---|---|---|
+| `go-monorepo` (go) | 123,520 (90.0%) | 109,065 (79.5%) | 26,747 (19.5%) |
+| `ts-app` (typescript) | 25,705 (82.6%) | 24,387 (79.0%) | 4,397 (14.2%) |
+
+Neither crossed its honest floor, which is the check that SCIP invented no edge. Go took about a
+third of its own 37.4% miss and TypeScript about 29% of its 17.5%, so the defect is reduced and not
+gone. Reaching the tier at all needed a second fix, in
+[a project is not one build](a-project-is-not-one-build.md). `projcfg.effective` now inherits `scip` and
+`scip_indexers` to a federated member, which is the only way the tier can reach a repository
+nobody here owns. PHP keeps the defect whole: `scip-php` has no invocable command, so Gen-1,
+Gen-2 and Gen-3 stay at the measured shares above.
 
 Related: [prune wiped the graph but kept the directory](prune-wiped-the-graph-but-kept-the-directory.md),
 [the daemon never saw a row another process wrote](the-daemon-never-saw-a-row-another-process-wrote.md).

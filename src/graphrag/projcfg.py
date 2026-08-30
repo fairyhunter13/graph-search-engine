@@ -111,10 +111,15 @@ def effective(root: Path | str) -> ProjectConfig:
     """The project's own config, or the excludes it inherits from its roots.
 
     A member is a repository somebody else owns. Writing a `.graphrag.yaml` into
-    it is not on offer, so a member with no config of its own takes `exclude`
-    and `languages` from every root that claims it. That is the only way a rule
-    like "never index CodeIgniter's `system/`" reaches the 360 repositories a
-    workspace federates.
+    it is not on offer, so a member with no config of its own takes `exclude`,
+    `languages`, `scip` and `scip_indexers` from every root that claims it. That
+    is the only way a rule like "never index CodeIgniter's `system/`", or an
+    opt-in to the SCIP overlay, reaches the 360 repositories a workspace
+    federates.
+
+    `scip` is true where any claiming root asks for it, and `scip_indexers` is
+    the union over those roots. A root turns the overlay on for its members and
+    for nobody else's.
 
     A member carrying its own config keeps it whole. Nothing is merged into a
     file somebody wrote, because a half-obeyed config is what `projcfg` refuses.
@@ -133,6 +138,8 @@ def effective(root: Path | str) -> ProjectConfig:
     entry = registry.get(root)
     exclude: list[str] = []
     languages: list[str] = []
+    scip = False
+    scip_indexers: list[str] = []
     for parent in entry.roots if entry else []:
         try:
             inherited = load(Path(parent))
@@ -140,6 +147,12 @@ def effective(root: Path | str) -> ProjectConfig:
             continue
         exclude.extend(pat for pat in inherited.exclude if pat not in exclude)
         languages.extend(name for name in inherited.languages if name not in languages)
+        scip = scip or inherited.scip
+        scip_indexers.extend(
+            name for name in inherited.scip_indexers if name not in scip_indexers
+        )
     own.exclude = exclude
     own.languages = languages
+    own.scip = scip
+    own.scip_indexers = scip_indexers
     return own
