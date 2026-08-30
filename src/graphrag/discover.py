@@ -6,6 +6,10 @@ downtime, and it needs no journal to be correct after any of them.
 
 `git ls-files` first, because it already knows what a clone gets and it already
 honours `.gitignore`. The walk is the fallback for a tree that is not a repo.
+
+`ls-files` lists a gitlink as one entry and never descends into it, so a
+populated submodule contributed nothing. `--recurse-submodules` is not the fix:
+git refuses it beside `--others`. So the command runs once per gitlink instead.
 """
 
 from __future__ import annotations
@@ -53,8 +57,42 @@ def sha256_of(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _git_files(root: Path) -> list[Path] | None:
-    """Tracked and untracked-but-not-ignored paths, or None if this is no repo."""
+GITLINK_MODE = "160000"
+MAX_SUBMODULE_DEPTH = 4
+
+
+def _gitlinks(root: Path) -> list[str]:
+    """Relative paths of the submodule entries in `root`'s index.
+
+    Read from the index and not from `.gitmodules`, because `.gitmodules`
+    declares a submodule the tree may never have checked out.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "-z", "--stage"],
+            capture_output=True,
+            check=True,
+            timeout=120,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    names: list[str] = []
+    for entry in out.stdout.decode().split("\0"):
+        if not entry.startswith(GITLINK_MODE):
+            continue
+        _, _, name = entry.partition("\t")
+        if name:
+            names.append(name)
+    return names
+
+
+def _git_files(root: Path, *, depth: int = 0, seen: set[str] | None = None) -> list[Path] | None:
+    """Tracked and untracked-but-not-ignored paths, or None if this is no repo.
+
+    A populated submodule is enumerated by the same command run inside it. The
+    paths come back absolute, so `enumerate_files` still derives one relative
+    path against the outer root and still applies the outer excludes to it.
+    """
     try:
         out = subprocess.run(
             [
@@ -73,7 +111,29 @@ def _git_files(root: Path) -> list[Path] | None:
         )
     except (OSError, subprocess.SubprocessError):
         return None
-    return [root / name for name in out.stdout.decode().split("\0") if name]
+    found = [root / name for name in out.stdout.decode().split("\0") if name]
+    if depth >= MAX_SUBMODULE_DEPTH:
+        return found
+    # A visited-realpath set, shared across the whole recursion: a link back to
+    # an ancestor and two links to one target are both enumerated once.
+    if seen is None:
+        seen = set()
+    seen.add(str(root.resolve()))
+    for name in _gitlinks(root):
+        sub = root / name
+        if sub.is_symlink() or not sub.is_dir():
+            continue
+        real = str(sub.resolve())
+        if real in seen:
+            continue
+        try:
+            if not any(sub.iterdir()):
+                continue
+        except OSError:
+            continue
+        inner = _git_files(sub, depth=depth + 1, seen=seen)
+        found.extend(inner if inner is not None else _walked_files(sub))
+    return found
 
 
 def _walked_files(root: Path, exclude=()) -> list[Path]:

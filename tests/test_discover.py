@@ -2,7 +2,58 @@
 
 from __future__ import annotations
 
+import subprocess
+
 from graphrag import discover, filters
+
+
+def test_a_populated_submodule_is_enumerated(repo, submodule):
+    """`ls-files` lists a gitlink and never descends, so this was empty."""
+    root = repo(files={"app/a.py": "x = 1\n"})
+    submodule(root, "Domain", {"b.py": "y = 2\n", "deep/c.py": "z = 3\n"})
+
+    found = {m.rel_path for m in discover.enumerate_files(root)}
+    assert found == {"app/a.py", "Domain/b.py", "Domain/deep/c.py"}
+
+
+def test_an_exclude_still_drops_a_submodule_file(repo, submodule):
+    """The path is relative to the outer root, so the outer list still bites."""
+    root = repo(files={"app/a.py": "x = 1\n"})
+    submodule(root, "Domain", {"b.py": "y = 2\n"})
+
+    found = {m.rel_path for m in discover.enumerate_files(root, exclude=["Domain/*"])}
+    assert found == {"app/a.py"}
+
+
+def test_an_empty_submodule_directory_adds_nothing(repo, submodule):
+    """47 of 69 worktrees in this workspace hold exactly this."""
+    root = repo(files={"app/a.py": "x = 1\n"})
+    submodule(root, "Domain", {"b.py": "y = 2\n"})
+    subprocess.run(["git", "submodule", "deinit", "-f", "Domain"], cwd=root, check=True,
+                   capture_output=True)
+
+    assert (root / "Domain").is_dir()
+    assert {m.rel_path for m in discover.enumerate_files(root)} == {"app/a.py"}
+
+
+def test_a_nested_submodule_is_reached(repo, submodule):
+    """The recursion, and the bound on it. `Domain` holds its own gitlink."""
+    inner = repo("mid", {"b.py": "y = 2\n"})
+    submodule(inner, "Shared", {"c.py": "z = 3\n"}, name="leaf")
+    root = repo(files={"a.py": "x = 1\n"})
+    subprocess.run(
+        ["git", "-c", "protocol.file.allow=always", "submodule", "add", "-q",
+         "--", str(inner), "Domain"],
+        cwd=root, check=True, capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-c", "protocol.file.allow=always", "submodule", "update",
+         "--init", "--recursive"],
+        cwd=root, check=True, capture_output=True,
+    )
+
+    found = {m.rel_path for m in discover.enumerate_files(root)}
+    assert found == {"a.py", "Domain/b.py", "Domain/Shared/c.py"}
 
 
 def test_git_ignored_files_are_never_enumerated(repo):
