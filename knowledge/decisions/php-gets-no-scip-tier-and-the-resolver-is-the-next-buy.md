@@ -102,7 +102,8 @@ is cheaper than either indexer.
 
 `gen1-php-app` was re-measured on 2026-08-30, read-only against store
 `gen1-php-app-1d64d72e801ee75b`. It holds 649 PHP files and 333 JavaScript files, and 61,613 `CALLS`
-edges of which 43,115 read `external`. The four-way split of the 16,878 with a PHP caller, with
+edges of which 43,115 read `external`. The rest are `same_file` 8,640, `global` 7,324,
+`package` 1,608 and `same_class` 926. The four-way split of the 16,878 with a PHP caller, with
 the builtin list taken from `get_defined_functions()` on PHP 8.3.6 rather than from a hand list:
 
 | Slice of the 16,878 PHP `external` CALLS | Share |
@@ -133,7 +134,14 @@ is charged to the first row that matches.
 The prediction held. `$this->load->model('yard_model')` then `$this->yard_model->GetAll()` is the
 leading shape, and 89 loaded names plus 250 project classes cover 71.9% of the 5,947
 `$this-><prop>-><name>(` sites in the indexed corpus. `mongo_db`, `tpl`, `item_model` and `auth_model`
-lead the receivers, and `where`, `GetAll`, `GetContract` and `Save` lead the callees.
+lead the receivers. The 20 heaviest callees in the 7,383 are `where` 518, `model` 368,
+`GetAll` 307, `render` 303, `post` 298, `item` 249, `GetContract` 228, `format_date_mongo` 197,
+`get` 181, `Save` 174, `view` 155, `mongo_date` 147, `update` 139, `GetById` 128, `set` 119,
+`getStyle` 118, `insert` 117, `GetData` 110, `aggregate` 97 and `GetId` 96. The head of that
+list is the CI3 model and query-builder vocabulary. Two rows are not, and they bound the buy.
+`format_date_mongo` and `mongo_date` are CI3 helpers in `application/helpers/`, which a
+receiver rule never reaches. `getStyle` is defined only in `js/cufon/cufon.js`, so those 118
+are the name collision the ceiling was warned to be generous about.
 
 So the Gen-1 buy is narrower than "fix the resolver". A CI3 receiver rule that reads
 `$this->load->model()` and `$this->load->library()` into a property-to-class map reaches about half
