@@ -92,6 +92,7 @@ TRUTH: list[dict] = [
             "tests/test_scip_ingest.py",
             "tests/test_scip_run.py",
             "tests/test_tools.py",
+            "src/graphrag/scip/__init__.py",
         ],
     },
     {
@@ -102,9 +103,11 @@ TRUTH: list[dict] = [
             "src/graphrag/registry.py",
             "src/graphrag/cli.py",
             "src/graphrag/federation.py",
+            "src/graphrag/prune.py",
             "src/graphrag/scope.py",
             "src/graphrag/server.py",
             "src/graphrag/watch.py",
+            "tests/test_discovery.py",
             "tests/test_registry.py",
         ],
     },
@@ -197,6 +200,7 @@ TRUTH: list[dict] = [
             "tests/test_scip_guard.py",
             "tests/test_scip_ingest.py",
             "tests/test_scip_run.py",
+            "tests/test_discovery.py",
         ],
     },
 ]
