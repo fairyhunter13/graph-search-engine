@@ -2,9 +2,9 @@
 type: Defect
 resource: src/graphrag/discover.py
 title: A submodule is invisible to discovery, so initializing one buys no edge
-description: "`_git_files` runs `git ls-files --cached --others --exclude-standard`, and `ls-files` lists a gitlink as one entry rather than descending into it. So a materialized submodule contributes nothing to the graph. Measured on a Gen-3 worktree: 9 submodules checked out at their pins, 979 PHP files on disk, and the node count, edge count and `external` share all moved by zero."
+description: "`_git_files` ran `git ls-files --cached --others --exclude-standard`, and `ls-files` lists a gitlink as one entry rather than descending into it. So a materialized submodule contributed nothing to the graph. Fixed 2026-08-30 by running the command once per gitlink. 2,584 PHP files across 23 worktrees entered the graph, and the resolver then failed to join most of them, which is a second defect this one was hiding."
 tags: [discovery, submodules, php, gen-3, measurement]
-status: stable
+status: superseded
 generated: { by: claude/opus-5, at: 2026-08-30T00:00:00Z }
 ---
 
@@ -53,19 +53,60 @@ fatal: ls-files --recurse-submodules unsupported mode
 ```
 
 So adopting it trades every untracked-but-not-ignored file for the submodule content, which is a
-different loss and not a fix. A real fix runs `ls-files` once per submodule and joins the results,
-or falls back to the walker inside a submodule. Neither is bought here, because nothing yet needs
-it: see below.
+different loss and not a fix.
+
+# The fix, 2026-08-30
+
+`_git_files` now runs the same command once per gitlink and joins the results. `_gitlinks` reads
+the gitlink paths from `ls-files --stage` rather than from `.gitmodules`, because `.gitmodules`
+declares a submodule the tree may never have checked out. An empty submodule directory is skipped.
+A depth cap and a visited-realpath set bound the recursion. The paths come back under the outer
+root, so `enumerate_files` still derives one relative path and still applies the outer excludes.
+
+Measured over the 23 worktrees that hold a populated submodule:
+
+| | before | after |
+|---|---|---|
+| PHP files indexed | 5,427 | 8,011 |
+| of them inside a gitlink | **0** | **2,584** |
+
+One worktree in detail, `gen3-app-a/submodule-pin_2.1`:
+
+| | before | after |
+|---|---|---|
+| PHP files | 402 | 530 |
+| under `Domain/` | 0 | 128 |
+| nodes | 3,136 | 4,583 |
+| edges | 13,278 | 16,890 |
+| CALLS `external` | 9,614 (94.5%) | 11,363 (93.7%) |
+
+# What the fix uncovered
+
+The `external` share barely moved, and that is the finding. The submodule code is now in the graph
+and the resolver does not join it. 2,645 calls name a symbol that is now defined under `Domain/`
+and still read `evidence: "external"`. Only 203 resolved.
+
+So this defect was hiding a second one. Before the fix, a call into `Domain/` was honestly external:
+the callee was absent. After it, the same call is a resolver miss. Read that as a change of cause
+and not as a failure of the fix — an unresolvable call became a resolvable one, and
+[module identity is Python-shaped](module-identity-is-python-shaped.md) is now the whole of what
+stands between it and an edge.
+
+The share of `external` calls whose callee is defined in the same project rose from 11.3% to 30.2%
+on that worktree. That is the ceiling any better resolver competes for, and the fix nearly tripled
+it.
 
 # What this settles
 
-The Gen-3 `external` share has exactly one remedy short of a per-language module identity, and this
-was it. It does not work today, and making it work is engine work in `discover.py` that must land
-**before** any submodule is initialized rather than after.
+Discovery is no longer the reason a Gen-3 caller finds no callee. The resolver is. Anyone reading
+the Gen-3 `external` share should now go to
+[module identity is Python-shaped](module-identity-is-python-shaped.md) first, and never back here.
 
-The disk price is separately unattractive. 71 worktrees declare 1,127 gitlinks over 666 distinct
-pins, and the content is already indexed as its own project wherever it is present, so an init
-duplicates it. The one worktree grew 82% for nine of twenty.
+The disk price stands, and it is the reason not to initialize more submodules than a question
+needs. 71 worktrees declare 1,127 gitlinks over 666 distinct pins, and the content is already
+indexed as its own project wherever it is present, so an init duplicates it. The one worktree grew
+82% for nine of twenty. The fix changes what an already-checked-out submodule buys. It is not a
+reason to check one out.
 
 The pins are also less reachable than a commit-presence test suggests. `ddd-shared`,
 `domain-ledger` and `domain-production` are `blob:none` partial clones with a promisor remote: the

@@ -20,6 +20,11 @@
   real](a-stale-date-is-declared-only-where-a-remeasurement-is-real.md) - Reachability beats a
   calendar. The nightly sweep catches a moved page, a rewritten commit and a deleted path, and a
   date with no owner and no runbook is a scheduled outage.
+* [PHP gets no SCIP tier, PHPStan is deferred, and the resolver is the next
+  buy](php-gets-no-scip-tier-and-the-resolver-is-the-next-buy.md) - `scip-php` is registered with no
+  command, and it stays that way. It needs a Composer install no PHP tree in this estate has, and
+  the generations where the miss is recoverable are CodeIgniter, which it cannot read. The measured
+  corpus says fix the resolver instead.
 * [Resolution is import-scoped and ranked, and a single edge is never
   forced](resolution-is-import-scoped-and-ranked-and-never-forced.md) - The resolver matches a call
   site against what the file imports, and emits every survivor of the best tier with its own

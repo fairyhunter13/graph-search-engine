@@ -20,9 +20,12 @@ def test_an_exclude_still_drops_a_submodule_file(repo, submodule):
     """The path is relative to the outer root, so the outer list still bites."""
     root = repo(files={"app/a.py": "x = 1\n"})
     submodule(root, "Domain", {"b.py": "y = 2\n"})
+    submodule(root, "Other", {"c.py": "z = 3\n"}, name="other")
 
     found = {m.rel_path for m in discover.enumerate_files(root, exclude=["Domain/*"])}
-    assert found == {"app/a.py"}
+    # The kept sibling is what reds this arm on the pre-fix code, where the
+    # absence of `Domain/b.py` holds for the wrong reason.
+    assert found == {"app/a.py", "Other/c.py"}
 
 
 def test_an_empty_submodule_directory_adds_nothing(repo, submodule):
