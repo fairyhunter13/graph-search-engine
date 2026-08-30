@@ -86,6 +86,11 @@ The `external` share barely moved, and that is the finding. The submodule code i
 and the resolver does not join it. 2,645 calls name a symbol that is now defined under `Domain/`
 and still read `evidence: "external"`. Only 203 resolved.
 
+All 203 have a caller inside `Domain/` too. **Not one edge crosses from the outer project into the
+submodule**, which was the whole point of checking it out. The submodule now resolves against
+itself, exactly as it already did in its own `domain-*` store. So the cross-boundary edge a reader
+wants is still unbought, and no re-index delivers it.
+
 So this defect was hiding a second one. Before the fix, a call into `Domain/` was honestly external:
 the callee was absent. After it, the same call is a resolver miss. Read that as a change of cause
 and not as a failure of the fix — an unresolvable call became a resolvable one, and
