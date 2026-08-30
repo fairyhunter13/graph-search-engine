@@ -197,6 +197,7 @@ for the callers of a known function and check them by hand.
 | D-37 | A deleted project loses its row on the filesystem event, behind a parent test and a grace period | done | src/graphrag/prune.py, src/graphrag/watch.py, tests/test_prune.py | T-232..T-238 |
 | D-38 | `find_symbol` spans the federation and names the project holding each hit | done | src/graphrag/tools.py, tests/test_discovery.py | T-239, T-240 |
 | D-39 | Every writer of the registry re-arms the watcher, including one in another process | done | src/graphrag/watch.py, src/graphrag/tools.py, tests/test_watch.py | T-241, T-242 |
+| D-40 | A module identity per language, so a Go or PHP import names the file it imports | planned | src/graphrag/symtab.py, src/graphrag/resolve.py, src/graphrag/indexwrite.py | |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -380,6 +381,32 @@ answers stale and a person notices. A project whose deletion is never seen answe
 
 `doctor --prune` still owns what neither reaches. inotify has no replay, so a project deleted while
 the daemon was down leaves a row for a path `_roots` filters out, and no event can ever remove it.
+
+# What the fleet pass measured, and what `D-40` owes, 2026-08-30
+
+The first pass over 367 projects is also the first measurement of resolution at this scale. Two
+numbers came back, and both are worse than the capability table reads.
+
+An IMPORTS edge exists in 7 stores of 367, and every one of the 7 is Python or Java. The fleet holds
+2,435 of them against 3.76 million edges. 67.2% of all 2,784,438 CALLS edges carry
+`evidence: external`, which means the target resolved to nothing. Per generation the external share
+runs 70.0% on Gen-1 `gen1-php-app`, 75.2% on Gen-2 `gen2-php-app`, 90.0% on Gen-4 `go-monorepo` and above 94% on
+both Gen-3 samples.
+
+One cause carries both. `module_name` spells a module by dotting a file path. An import row keeps
+whatever the language wrote, which is a slash path with a repository prefix in Go and a backslash
+namespace in PHP. The two agree in Python and in Java, and nowhere else. So `import_edges` finds no
+target, and `_receiver_modules` narrows the pool to an empty set, which `resolve_reference` reports
+as external.
+
+The capability report is honest about the half it measures. An import **query** does exist for php,
+go and javascript, and it does extract rows. Nothing then measures whether a row matched, so no
+`gaps` entry names the difference.
+
+`D-40` is the fix, and it is not bought here. It is recorded in
+[module identity is Python-shaped](../knowledge/defects/module-identity-is-python-shaped.md) so the
+workflow's limit is written down rather than discovered by a reader who takes an empty `callers`
+list as proof that nothing calls a symbol.
 
 # What `D-15` settled, 2026-08-27
 

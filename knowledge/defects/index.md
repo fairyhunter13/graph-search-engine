@@ -19,6 +19,9 @@
   down, an empty result set scores zero, and the run wrote its receipt before the assertion that
   would have failed on it.
 * [The daemon never saw a row another process wrote](the-daemon-never-saw-a-row-another-process-wrote.md) - `rearm_if_changed` had one caller, and it was not an enrolment. A row written by `graphrag index` was watched only after a restart, so its changes went unindexed and its deletion was never seen.
+* [Module identity is Python-shaped](module-identity-is-python-shaped.md) - `module_name` dots a
+  file path and an import row keeps the language's own spelling. They agree in Python and Java only,
+  so 7 of 367 stores hold an IMPORTS edge and 67.2% of the fleet's CALLS edges land on external.
 * [Prune wiped the graph but kept the directory](prune-wiped-the-graph-but-kept-the-directory.md) -
   `prune --apply` called `store.wipe`, which unlinks graph.db and its WAL sidecars but leaves the
   directory. `unclaimed_stores` counts a directory, so the count never reached zero and every run
