@@ -4,7 +4,7 @@ resource: src/graphrag/discover.py
 title: A submodule is invisible to discovery, so initializing one buys no edge
 description: "`_git_files` ran `git ls-files --cached --others --exclude-standard`, and `ls-files` lists a gitlink as one entry rather than descending into it. So a materialized submodule contributed nothing to the graph. Fixed 2026-08-30 by running the command once per gitlink. 2,584 PHP files across 22 worktrees entered the graph, and the resolver then failed to join most of them, which is a second defect this one was hiding."
 tags: [discovery, submodules, php, gen-3, measurement]
-status: superseded
+status: stable
 generated: { by: claude/opus-5, at: 2026-08-30T00:00:00Z }
 ---
 

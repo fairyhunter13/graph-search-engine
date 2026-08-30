@@ -33,12 +33,17 @@ its own dependency set, and the cost recurs on every new pin.
 The upside is in the wrong place. The share of `external` calls whose callee name matches a
 definition in the same project — a generous ceiling, because a name collision counts:
 
-| Project | `external` CALLS | Ceiling |
-|---|---:|---:|
-| Gen-1 `gen1-php-app` | 43,115 | **62.0%** |
-| Gen-2 `gen2-php-app` | 48,966 | **30.8%** |
-| Gen-3 `gen3-app-a` | 11,363 | 30.2% |
-| Gen-3 `gen3-app-b` | 6,152 | 4.5% |
+| Project | `external` CALLS | Ceiling | PHP callers only |
+|---|---:|---:|---:|
+| Gen-1 `gen1-php-app` | 43,115 | 62.0% | 16,878 calls, **43.7%** |
+| Gen-2 `gen2-php-app` | 48,966 | 30.8% | 48,326 calls, 31.0% |
+| Gen-3 `gen3-app-a` | 11,363 | 30.2% | 11,074 calls, 30.1% |
+| Gen-3 `gen3-app-b` | 6,152 | 4.5% | 5,816 calls, 4.5% |
+
+Read the last column, and never the third one, for a PHP ruling. A store holds every language in
+the tree. `gen1-php-app` is two thirds JavaScript by call count, and its JavaScript ceiling is 73.7%, so
+the store-wide 62.0% is mostly not a PHP number. The other three rows hold within one point either
+way, measured 2026-08-30.
 
 The two generations holding the recoverable miss are CodeIgniter 3. They have no autoload map, and
 the CI3 idiom `$this->load->model('Foo_model')` then `$this->Foo_model->bar()` runs through
@@ -93,5 +98,49 @@ those calls name a symbol defined under `Domain/` in the same store and still re
 is [module identity is Python-shaped](../defects/module-identity-is-python-shaped.md), and closing it
 is cheaper than either indexer.
 
-Related: [scip is an overlay and never the extractor](scip-is-an-overlay-and-never-the-extractor.md),
+# What the Gen-1 miss is actually made of
+
+`gen1-php-app` was re-measured on 2026-08-30, read-only against store
+`gen1-php-app-1d64d72e801ee75b`. It holds 649 PHP files and 333 JavaScript files, and 61,613 `CALLS`
+edges of which 43,115 read `external`. The four-way split of the 16,878 with a PHP caller, with
+the builtin list taken from `get_defined_functions()` on PHP 8.3.6 rather than from a hand list:
+
+| Slice of the 16,878 PHP `external` CALLS | Share |
+|---|---:|
+| Callee defined in the indexed project | **43.7%** |
+| PHP builtin or language construct | 30.9% |
+| Vendor, or first-party code in another store | 25.3% |
+
+Every one of those 7,383 in-project calls is the second `external` write site in `resolve.py`, not
+the first. The first site fires when `table.defines(name)` returns nothing, and a name defined in
+the project makes that pool non-empty. So receiver narrowing at `resolve.py:145` emptied the pool,
+and each of the 7,383 is a resolver miss by construction.
+
+Attributing each one to the call shape its own file carries:
+
+| Shape in the caller file | Share |
+|---|---:|
+| `$this-><loaded-name>-><callee>()` | **52.8%** |
+| Property receiver that names no loaded class | 15.9% |
+| No receiver shape found in the file | 15.3% |
+| `Class::<callee>()` | 8.2% |
+| `$var-><callee>()` | 7.8% |
+
+This is an attribution and not an exact count. `call_site_byte` does not land on the callee token
+in this store, so the join is by file and callee name, and a file carrying two shapes for one name
+is charged to the first row that matches.
+
+The prediction held. `$this->load->model('yard_model')` then `$this->yard_model->GetAll()` is the
+leading shape, and 89 loaded names plus 250 project classes cover 71.9% of the 5,947
+`$this-><prop>-><name>(` sites in the indexed corpus. `mongo_db`, `tpl`, `item_model` and `auth_model`
+lead the receivers, and `where`, `GetAll`, `GetContract` and `Save` lead the callees.
+
+So the Gen-1 buy is narrower than "fix the resolver". A CI3 receiver rule that reads
+`$this->load->model()` and `$this->load->library()` into a property-to-class map reaches about half
+of the largest in-project miss in the estate, and it needs no import work and no external tool.
+That does not move the ruling above. It names which half of it to buy first.
+
+Related: [which languages get a SCIP tier](which-languages-get-a-scip-tier.md), which places this
+refusal beside the other eight,
+[scip is an overlay and never the extractor](scip-is-an-overlay-and-never-the-extractor.md),
 [a submodule is invisible to discovery](../defects/a-submodule-is-invisible-to-discovery.md).
