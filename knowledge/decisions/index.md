@@ -20,6 +20,11 @@
   real](a-stale-date-is-declared-only-where-a-remeasurement-is-real.md) - Reachability beats a
   calendar. The nightly sweep catches a moved page, a rewritten commit and a deleted path, and a
   date with no owner and no runbook is a scheduled outage.
+* [Go and TypeScript get a SCIP tier, and every other language in this estate gets
+  none](which-languages-get-a-scip-tier.md) - Nine indexers are registered and three carry a
+  command, but an operator can feed any of the nine by hand, so this is a decision and not a code
+  limit. Measured over 372 stores: Go and TypeScript are kept, PHP and Python are refused, Java is
+  deferred with one bounded experiment, and Vue is the wrong instrument entirely.
 * [PHP gets no SCIP tier, PHPStan is deferred, and the resolver is the next
   buy](php-gets-no-scip-tier-and-the-resolver-is-the-next-buy.md) - `scip-php` is registered with no
   command, and it stays that way. It needs a Composer install no PHP tree in this estate has, and

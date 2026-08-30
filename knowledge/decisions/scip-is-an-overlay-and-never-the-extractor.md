@@ -69,3 +69,5 @@ rather than upgrade, and the base tier becomes a real choice again.
 a kind of 0 must not overwrite anything.
 [The range constraint](../constraints/an-occurrence-range-comes-in-three-shapes.md) says why a
 one-shape reader gets nothing from scip-java.
+
+The per-language ruling that follows from this is [which languages get a SCIP tier](which-languages-get-a-scip-tier.md).
