@@ -2,7 +2,7 @@
 type: Defect
 resource: src/graphrag/discover.py
 title: A submodule is invisible to discovery, so initializing one buys no edge
-description: "`_git_files` ran `git ls-files --cached --others --exclude-standard`, and `ls-files` lists a gitlink as one entry rather than descending into it. So a materialized submodule contributed nothing to the graph. Fixed 2026-08-30 by running the command once per gitlink. 2,584 PHP files across 23 worktrees entered the graph, and the resolver then failed to join most of them, which is a second defect this one was hiding."
+description: "`_git_files` ran `git ls-files --cached --others --exclude-standard`, and `ls-files` lists a gitlink as one entry rather than descending into it. So a materialized submodule contributed nothing to the graph. Fixed 2026-08-30 by running the command once per gitlink. 2,584 PHP files across 22 worktrees entered the graph, and the resolver then failed to join most of them, which is a second defect this one was hiding."
 tags: [discovery, submodules, php, gen-3, measurement]
 status: superseded
 generated: { by: claude/opus-5, at: 2026-08-30T00:00:00Z }
@@ -63,11 +63,11 @@ declares a submodule the tree may never have checked out. An empty submodule dir
 A depth cap and a visited-realpath set bound the recursion. The paths come back under the outer
 root, so `enumerate_files` still derives one relative path and still applies the outer excludes.
 
-Measured over the 23 worktrees that hold a populated submodule:
+Measured over the 22 worktrees that hold a populated submodule:
 
 | | before | after |
 |---|---|---|
-| PHP files indexed | 5,427 | 8,011 |
+| PHP files indexed | 5,189 | 7,773 |
 | of them inside a gitlink | **0** | **2,584** |
 
 One worktree in detail, `gen3-app-a/submodule-pin_2.1`:
