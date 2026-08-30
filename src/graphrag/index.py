@@ -75,17 +75,13 @@ def _facts(root: Path, metas: list[discover.FileMeta]) -> dict[str, extract.File
     return out
 
 
-def _overlay(conn, root: Path) -> dict[str, str]:
+def _overlay(conn, root: Path, cfg: projcfg.ProjectConfig) -> dict[str, str]:
     """The SCIP tier, off unless the project asks for it and names a tool.
 
     Imported here and not at module scope, so a project that never enables the
     overlay never loads it. The tier is deletable in one move, and an
     unconditional import is what would quietly stop that being true.
     """
-    try:
-        cfg = projcfg.load(root)
-    except projcfg.ConfigError:
-        return {}
     from . import scip
 
     if not scip.enabled(cfg.scip) or not cfg.scip_indexers:
@@ -96,6 +92,7 @@ def _overlay(conn, root: Path) -> dict[str, str]:
 def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
     """Enumerate, diff, parse, resolve and write. The whole engine in one call."""
     root = Path(root).resolve()
+    cfg = projcfg.effective(root)
     report = IndexReport(root=str(root))
     path = config.index_path(root)
 
@@ -107,7 +104,7 @@ def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
         conn = store.connect(path)
         report.rebuilt = reason
 
-    metas = discover.enumerate_files(root)
+    metas = discover.enumerate_files(root, exclude=cfg.exclude, languages=cfg.languages)
     report.languages = discover.languages(metas)
     stored = {
         row["path"]: row["sha256"]
@@ -141,7 +138,7 @@ def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
         for p, rows in resolutions.items():
             edges += indexwrite.reference_edges(p, rows, nodes, externals)
         indexwrite.write_edges(conn, edges)
-        report.scip = _overlay(conn, root)
+        report.scip = _overlay(conn, root, cfg)
         indexwrite.rebuild_fts(conn)
         store.stamp(conn)
 

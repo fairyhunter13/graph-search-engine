@@ -14,7 +14,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from . import config, grammars, index, query, registry, store
+from . import config, federation, grammars, index, query, registry, store
 
 
 def _out(payload: object) -> int:
@@ -30,27 +30,43 @@ def _open(root: Path) -> tuple[Path, sqlite3.Connection]:
     return path, store.connect(path)
 
 
+def _summary(report: index.IndexReport) -> dict[str, object]:
+    return {
+        "root": report.root,
+        "files": report.files,
+        "parsed": report.parsed,
+        "nodes": report.nodes,
+        "edges": report.edges,
+        "resolved": report.resolved,
+        "languages": report.languages,
+        "rebuilt": report.rebuilt,
+        "unchanged": report.unchanged,
+        "errors": report.errors,
+    }
+
+
 def cmd_index(args: argparse.Namespace) -> int:
+    """Enrol the root and its members, then pass over every one of them.
+
+    A member reached by a symlink is a project of its own, and a row with no
+    graph answers nothing. So the fleet pass belongs to the command an operator
+    already runs, rather than to a daemon they may not have started.
+    """
     root = registry.resolve(args.root)
     if not root.is_dir():
         raise SystemExit(f"{root} is not a directory")
-    registry.claim(root, direct=True)
+    members = federation.register(root)
     report = index.index_once(root, force=args.force)
     index.record(report)
-    return _out(
-        {
-            "root": report.root,
-            "files": report.files,
-            "parsed": report.parsed,
-            "nodes": report.nodes,
-            "edges": report.edges,
-            "resolved": report.resolved,
-            "languages": report.languages,
-            "rebuilt": report.rebuilt,
-            "unchanged": report.unchanged,
-            "errors": report.errors,
-        }
-    )
+    out = _summary(report)
+    if members:
+        rows = []
+        for member in members:
+            member_report = index.index_once(member, force=args.force)
+            index.record(member_report)
+            rows.append(_summary(member_report))
+        out["members"] = rows
+    return _out(out)
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:

@@ -7,10 +7,14 @@ The load happens *inside* the lock. Reading first and locking second is a lost
 update: two writers each read the rows, each add one, and the second write drops
 the first. It was measured once as a registry that kept 34 of 180 rows.
 
-Nothing prunes a row because its path is missing from disk. An unmounted volume,
+No scan prunes a row because its path is missing from disk. An unmounted volume,
 a repo moved for ten seconds, and a member behind a broken symlink all look
-identical to a deleted project. Removal is always explicit, and `forget` takes a
+identical to a deleted project when you only see the state. So `forget` takes a
 list of keys rather than a predicate.
+
+A delete event is the case that is not a scan, and `prune.py` acts on one behind
+a parent-exists test and a grace period. It calls `forget` and `release` here,
+and it adds no predicate of its own.
 """
 
 from __future__ import annotations

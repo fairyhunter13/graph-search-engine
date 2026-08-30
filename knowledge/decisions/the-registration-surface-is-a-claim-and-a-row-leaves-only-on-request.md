@@ -25,11 +25,15 @@ that skips resolution claims a different row, and every later answer files under
 asked for it directly, and which other projects name it as a member[^entry]. `release` drops one
 claim, and the row survives while anything else claims it.
 
-# Why a row is never pruned for a missing path
+# Why a row is never pruned by a scan
 
 An unmounted volume, a repo moved for ten seconds, and a member behind a broken symlink all look
-identical to a deleted project. So removal is always explicit. `forget` takes a list of keys rather
-than a predicate[^registry].
+identical to a deleted project — to a scan. So no scan removes anything, and `forget` takes a list
+of keys rather than a predicate[^registry].
+
+A delete event is not a scan, and since 2026-08-30 one does remove a row, behind a parent-exists
+test and a grace period. That is
+[a row leaves on a delete event](a-row-leaves-on-a-delete-event-and-never-on-a-scan.md).
 
 # Why removal is one write
 
@@ -57,8 +61,8 @@ key is hashed with the rest[^registry].
 
 # What this decision does not cover
 
-Which directories a project may declare as members. That is
-[the member declaration decision](a-member-is-declared-and-never-discovered.md).
+Which directories become members of a project. That is
+[the member discovery decision](a-member-is-discovered-by-walking-the-symlinks.md).
 
 [^registry]: The module docstring, `resolve`, `claim`, `release`, `forget`, `fleet_digest` and `unclaimed_stores` in `src/graphrag/registry.py`.
 [^entry]: `ProjectEntry` in `src/graphrag/entry.py`, with its `direct` and `roots` fields.

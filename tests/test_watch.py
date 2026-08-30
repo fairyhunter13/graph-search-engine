@@ -105,6 +105,49 @@ def test_rearm_only_when_the_watched_set_moved(watching, repo):
     assert watch._rearm.is_set()
 
 
+def test_a_row_written_by_another_process_reaches_the_watch_set(watching, repo):
+    """A project enrolled outside the daemon is watched, with nothing called.
+
+    `graphrag index` runs in the operator's own process and writes the registry
+    there. Until 2026-08-30 the daemon re-read that file only after a prune, so
+    a row added this way was watched only after a restart: its changes were
+    never indexed and its deletion was never seen.
+
+    The negative arm is the absence of any `watch` call below. Against the old
+    loop `_intent` never moves and this waits out the full ten seconds.
+    """
+    second = repo("enrolled-elsewhere", TWO)
+    registry.claim(second, direct=True)
+
+    deadline = time.time() + 10.0
+    while time.time() < deadline:
+        if second in watch._intent:
+            break
+        time.sleep(0.05)
+    assert second in watch._intent, "a row the daemon did not write never reached the watch set"
+
+
+def test_an_unmoved_registry_is_stat_ed_and_not_parsed(watching):
+    """The tick runs once a second, so the guard is what makes it affordable.
+
+    `_stamp` holds the file's mtime and size. A second call over an unchanged
+    file must return on that pair alone, which is one `stat` against a parse of
+    every row.
+    """
+    watch.rearm_if_changed()
+    stamp = watch._stamp
+    assert stamp is not None
+
+    unreadable = config.REGISTRY_PATH.with_suffix(".moved")
+    config.REGISTRY_PATH.rename(unreadable)
+    try:
+        # A parse here raises. Returning quietly proves the stat short-circuited.
+        watch.rearm_if_changed()
+        assert watch._stamp == stamp
+    finally:
+        unreadable.rename(config.REGISTRY_PATH)
+
+
 def test_progress_reports_a_pass_and_then_an_idle(repo):
     """`T-66`: the progress file carries a rate and an eta while a pass runs."""
     root = repo("progressed", TWO)

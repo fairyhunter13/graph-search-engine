@@ -15,7 +15,7 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from . import config, federation, index, query, registry, store
+from . import config, federation, index, query, registry, store, watch
 
 INSTRUCTIONS = """\
 Structural code search over the graph: who calls this, what breaks if I change
@@ -25,8 +25,10 @@ this, what implements this.
   the code when you have the wrong word for it. This returns an edge, which no
   ranking over text produces. Use `coderag` to get the name, then `neighbors`
   or `blast_radius` to get the facts about it.
-- `find_symbol` takes an exact name and returns locations, never bodies.
-- `neighbors` is one hop. `question` is one of callers, callees, imports,
+- `find_symbol` takes an exact name and returns locations, never bodies. It is
+  the one tool that spans the federation, and each hit names the project that
+  holds it. Pass that project as `root` to every call after it.
+- `neighbors` is one hop, over one project. `question` is one of callers, callees, imports,
   importers, implementations, references.
 - `blast_radius` is the transitive form, bounded by `depth`.
 - Every answer carries `gaps` and `capabilities`. Where a language has no
@@ -96,6 +98,10 @@ def enroll(root: Path | str) -> dict[str, Any]:
     state = index.QUEUE.submit(target)
     for member in members:
         index.QUEUE.submit(member)
+    # The watcher armed over the rows that existed when it started, and inotify
+    # has no replay. Without this the new rows are watched only after a restart:
+    # no change is indexed, and no deletion is ever seen.
+    watch.rearm_if_changed()
     out: dict[str, Any] = {
         "root": str(target),
         "members": [str(member) for member in members],
@@ -125,36 +131,80 @@ def index_project(root: str) -> dict[str, Any]:
 
 @mcp.tool(
     name="find_symbol",
-    description="Find a symbol by exact name over the graph. Returns locations "
-    "-- path, line range and kind -- never bodies. Use coderag to find the name "
-    "when you do not have it yet.",
+    description="Find a symbol by exact name across the root and every project "
+    "it federates. Returns locations -- project, path, line range and kind -- "
+    "never bodies. Each hit names its project, and that project is the `root` "
+    "for the `neighbors` or `blast_radius` call after it. No edge crosses a "
+    "project boundary: node ids are per-store, and these services talk over "
+    "gRPC and events rather than calls.",
     structured_output=True,
 )
-def find_symbol(name: str, root: str, limit: int = 20) -> dict[str, Any]:
+def find_symbol(name: str, root: str, limit: int = 20, federated: bool = True) -> dict[str, Any]:
+    """Search the root, then every project it federates. One store at a time.
+
+    Federated here and nowhere else. A caller asking `neighbors` already knows
+    the repo, because this is what told them. A caller asking for a name knows
+    only the workspace, and this workspace federates about 360 repos.
+    """
     try:
-        _, conn = _connect(root)
-    except LookupError as exc:
+        target = registry.resolve(root)
+    except (OSError, ValueError) as exc:
         return {"error": str(exc), "results": []}
     try:
-        hits = query.find_symbol(conn, name, limit=limit)
-        return {
-            "results": [
-                {
-                    "name": h.name,
-                    "qualified_name": h.qualified_name,
-                    "kind": h.kind,
-                    "path": h.path,
-                    "lang": h.lang,
-                    "line": h.line,
-                    "end_line": h.end_line,
-                }
-                for h in hits
-            ],
-            "gaps": [] if hits else [f"no symbol named {name!r} is indexed in this project"],
-            "capabilities": query.capability_report(conn),
-        }
-    finally:
-        conn.close()
+        # The root is opened first and on its own. A root with no graph is a
+        # project nobody has indexed, and that names `index`. A member with no
+        # graph is a gap, which is a different fact and a different reply.
+        _connect(str(target))[1].close()
+    except LookupError as exc:
+        return {"error": str(exc), "results": []}
+    projects = federation.expand(target) if federated else [target]
+
+    results: list[dict[str, Any]] = []
+    capabilities: dict[str, Any] = {}
+    unindexed: list[str] = []
+    for project in projects:
+        if len(results) >= limit:
+            break
+        try:
+            _, conn = _connect(str(project))
+        except LookupError:
+            unindexed.append(str(project))
+            continue
+        try:
+            for hit in query.find_symbol(conn, name, limit=limit - len(results)):
+                results.append(
+                    {
+                        # The owning project, because a path alone does not say
+                        # which of 360 graphs the next `neighbors` call names.
+                        "project": str(project),
+                        "name": hit.name,
+                        "qualified_name": hit.qualified_name,
+                        "kind": hit.kind,
+                        "path": hit.path,
+                        "lang": hit.lang,
+                        "line": hit.line,
+                        "end_line": hit.end_line,
+                    }
+                )
+            if project == target:
+                capabilities = query.capability_report(conn)
+        finally:
+            conn.close()
+
+    gaps: list[str] = []
+    if not results:
+        scope = "this project" if len(projects) == 1 else f"{len(projects)} federated projects"
+        gaps.append(f"no symbol named {name!r} is indexed in {scope}")
+    if unindexed:
+        # Named, never counted as an absence. An unindexed member is a project
+        # nobody has passed, and it answers nothing rather than answering no.
+        gaps.append(f"{len(unindexed)} member(s) have no graph yet: {', '.join(unindexed[:5])}")
+    return {
+        "searched": len(projects),
+        "results": results,
+        "gaps": gaps,
+        "capabilities": capabilities,
+    }
 
 
 @mcp.tool(

@@ -16,7 +16,7 @@ from pathlib import Path
 
 import yaml
 
-from . import config
+from . import config, registry
 
 
 class ConfigError(ValueError):
@@ -28,8 +28,13 @@ class ProjectConfig:
     """Everything a project may say about itself."""
 
     enabled: bool = True
-    # Extra directory names never descended into, on top of the global set.
+    # Path globs never indexed, on top of the global set. `*` spans `/`, so
+    # `system/*` matches at any depth.
     exclude: list[str] = field(default_factory=list)
+    # Globs that keep a discovered member out of the federation. Matched
+    # against the link path and the resolved target, because a layout pattern
+    # like `*/_worktrees/*` describes only the target.
+    federation_exclude: list[str] = field(default_factory=list)
     # Languages to index. Empty means every language with a grammar.
     languages: list[str] = field(default_factory=list)
     # Other projects this one federates. Expanded one level, never transitively.
@@ -42,6 +47,7 @@ class ProjectConfig:
 _FIELDS: dict[str, type] = {
     "enabled": bool,
     "exclude": list,
+    "federation_exclude": list,
     "languages": list,
     "members": list,
     "scip": bool,
@@ -99,3 +105,41 @@ def load(root: Path | str) -> ProjectConfig:
     except OSError as exc:
         raise ConfigError(f"{path}: unreadable: {exc}") from exc
     return parse(text, source=str(path))
+
+
+def effective(root: Path | str) -> ProjectConfig:
+    """The project's own config, or the excludes it inherits from its roots.
+
+    A member is a repository somebody else owns. Writing a `.graphrag.yaml` into
+    it is not on offer, so a member with no config of its own takes `exclude`
+    and `languages` from every root that claims it. That is the only way a rule
+    like "never index CodeIgniter's `system/`" reaches the 360 repositories a
+    workspace federates.
+
+    A member carrying its own config keeps it whole. Nothing is merged into a
+    file somebody wrote, because a half-obeyed config is what `projcfg` refuses.
+
+    A pass over an unreadable config indexes everything rather than nothing. The
+    CLI reports the parse error, so the operator is not left guessing.
+    """
+    root = Path(root)
+    try:
+        own = load(root)
+    except ConfigError:
+        return ProjectConfig()
+    if (root / config.PROJECT_CONFIG_NAME).exists():
+        return own
+
+    entry = registry.get(root)
+    exclude: list[str] = []
+    languages: list[str] = []
+    for parent in entry.roots if entry else []:
+        try:
+            inherited = load(Path(parent))
+        except ConfigError:
+            continue
+        exclude.extend(pat for pat in inherited.exclude if pat not in exclude)
+        languages.extend(name for name in inherited.languages if name not in languages)
+    own.exclude = exclude
+    own.languages = languages
+    return own

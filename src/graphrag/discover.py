@@ -76,7 +76,7 @@ def _git_files(root: Path) -> list[Path] | None:
     return [root / name for name in out.stdout.decode().split("\0") if name]
 
 
-def _walked_files(root: Path) -> list[Path]:
+def _walked_files(root: Path, exclude=()) -> list[Path]:
     found: list[Path] = []
     stack = [root]
     while stack:
@@ -89,32 +89,52 @@ def _walked_files(root: Path) -> list[Path]:
             if item.is_symlink():
                 continue
             if item.is_dir():
-                if not filters.skipped_dir(item.name):
-                    stack.append(item)
+                # Pruned here as well as filtered below. `system/` under a
+                # CodeIgniter repo holds thousands of files, and walking it to
+                # discard each one costs the walk it was excluded to avoid.
+                if filters.skipped_dir(item.name):
+                    continue
+                if exclude and filters.matches_any(str(item.relative_to(root)), exclude):
+                    continue
+                stack.append(item)
             else:
                 found.append(item)
     return found
 
 
-def enumerate_files(root: Path | str) -> list[FileMeta]:
+def enumerate_files(root: Path | str, *, exclude=(), languages=()) -> list[FileMeta]:
     """Every indexable file under `root`, as the store will hold it.
 
     The size comes from the stat that already happened, so a 100k-file tree is
     not stat-ed twice. Reading a file to hash it is the expensive half, and it
     happens only for a file that passed `indexable`.
+
+    `exclude` and `languages` are the project's own two lists out of
+    `.graphrag.yaml`. They are applied here, and not inside `filters.indexable`,
+    because the watcher shares that predicate across every project at once.
     """
     root = Path(root).resolve()
+    keep = frozenset(languages)
     candidates = _git_files(root)
     if candidates is None:
-        candidates = _walked_files(root)
+        candidates = _walked_files(root, exclude)
 
     metas: list[FileMeta] = []
     for path in candidates:
+        try:
+            rel = str(path.relative_to(root))
+        except ValueError:
+            continue
+        if exclude and filters.matches_any(rel, exclude):
+            continue
         try:
             stat = path.stat()
         except OSError:
             continue
         if not path.is_file() or not filters.indexable(path, size=stat.st_size):
+            continue
+        lang = filters.language_of(path)
+        if keep and lang not in keep:
             continue
         try:
             digest = sha256_of(path)
@@ -122,11 +142,11 @@ def enumerate_files(root: Path | str) -> list[FileMeta]:
             continue
         metas.append(
             FileMeta(
-                rel_path=str(path.relative_to(root)),
+                rel_path=rel,
                 size=stat.st_size,
                 mtime=stat.st_mtime,
                 sha256=digest,
-                lang=filters.language_of(path),
+                lang=lang,
             )
         )
     metas.sort(key=lambda m: m.rel_path)

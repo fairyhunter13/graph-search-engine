@@ -94,13 +94,13 @@ a signature change means a grammar pin moved, and `meta.incompatible(conn)` alre
 | `query.py` | the surface behind the tools | defaults to `resolved = 1` |
 | `scip/` | the optional overlay | never owns extraction |
 | `scope.py` | workspace pin | one root per session |
-| `federation.py` | member discovery | expands one level, not transitively |
+| `federation.py` | member discovery | walks the symlinks, expands one level, not transitively |
 | `peers.py` | peer identity | identity is stable across restarts |
 | `tools.py` | the four MCP tools | an unknown argument names the valid set |
 | `server.py` | the daemon | exits with `os._exit(0)` |
 | `bridge.py` | stdio bridge | one request, one response |
 | `cli.py` | the operator surface | everything that is not a tool |
-| `watch.py` | debounced observer | re-arms conditionally |
+| `watch.py` | debounced observer | re-arms on a moved registry stamp |
 | `progress.py` | a file per project | polled, never a protocol notification |
 | `health.py` | per-identity state | pages on two consecutive failures |
 | `ledger.py` | append-only JSONL | never read back as state |
@@ -192,6 +192,11 @@ for the callers of a known function and check them by hand.
 | D-32 | The quiet window, so a burst of saves buys one pass and not one each | done | src/graphrag/config.py, src/graphrag/index.py, src/graphrag/watch.py, src/graphrag/extract.py, tests/test_watch.py | T-16, T-214, T-215 |
 | D-33 | A receipt carries whether its own run can be read off | done | src/graphrag/config.py, knowledge/attesters, scripts/two_engine_measure.py, tests/test_attester.py, tests/test_two_engine.py, tests/test_resolve.py, scripts/check_attester_contract.py | T-211, T-212, T-213, T-216, T-217 |
 | D-34 | Prune removes the store directory, so the orphan count reaches zero | done | src/graphrag/cli.py, src/graphrag/registry.py, tests/test_registry.py | T-218 |
+| D-35 | Members are discovered by walking the symlinks, and `federation_exclude` bounds the walk | done | src/graphrag/federation.py, src/graphrag/projcfg.py, src/graphrag/filters.py, tests/test_discovery.py | T-219..T-225 |
+| D-36 | `exclude` and `languages` reach the index pass, which read neither | done | src/graphrag/discover.py, src/graphrag/index.py, tests/test_discovery.py | T-228..T-231 |
+| D-37 | A deleted project loses its row on the filesystem event, behind a parent test and a grace period | done | src/graphrag/prune.py, src/graphrag/watch.py, tests/test_prune.py | T-232..T-238 |
+| D-38 | `find_symbol` spans the federation and names the project holding each hit | done | src/graphrag/tools.py, tests/test_discovery.py | T-239, T-240 |
+| D-39 | Every writer of the registry re-arms the watcher, including one in another process | done | src/graphrag/watch.py, src/graphrag/tools.py, tests/test_watch.py | T-241, T-242 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -318,6 +323,64 @@ so passing a size here would drop exactly that event.
 a pass reparses the tree rather than the edited file, and what the watcher guarantees is one pass
 per project rather than one per file.
 
+# What `D-35` to `D-38` settled, 2026-08-30
+
+The maintainer deleted the encyclopedia in `largest-enrolled-project` and ruled that the two search engines answer in
+its place. That holds only if both reach the code. This one reached zero Acme repositories:
+its federation was declared, and the workspace declared nothing.
+
+So `federation.links` walks the root with `os.walk(followlinks=False)`, bounded at four levels, and
+resolves each symlink with `strict=True`. It never descends into a link, because the target is
+enrolled as a project of its own. The set is deduplicated by resolved target: that tree reaches 360
+targets through many more links. `members:` still adds to the walk.
+
+`federation_exclude` replaces the operator's veto, and it is matched against the link path and the
+resolved target. Both, because `*/_worktrees/*` describes only the target, and matching the link
+alone re-admits every second checkout of a repository already reached under its own name.
+
+`exclude` and `languages` were parsed, type-checked and read by nothing, which is the exact failure
+`projcfg.py` says it refuses. Both reach `discover.enumerate_files` now, and the walk prunes an
+excluded directory rather than walking it to discard each file. It is load-bearing at fleet scale:
+`gen2-php-app` indexes 5,994 files with no excludes, and about 1,400 once CodeIgniter's `system/`,
+`application/third_party/` and the vendored `public/js/` are cut.
+
+Removal became automatic, which overturns the registry rule against pruning a missing path. That
+rule is right about a scan and wrong about a delete event, and `prune.py` acts only on the event. A
+parent-exists test separates a deleted repository from an unmounted volume, and a 30 s grace period
+absorbs a checkout into a moved-aside path. A removed symlink is the weaker case: it releases one
+root's claim, so a member two roots reach keeps its row.
+
+`find_symbol` spans `federation.expand(root)` and tags each hit with its project. Enrolment alone
+left every question answering from the workspace's own scripts, because `_connect` opens one store
+and the caller had to already know which of 360 repositories held the symbol. Cross-project edge
+traversal stays out: node ids are per-store, and these services talk over gRPC and events, so no
+call edge crosses a repository boundary to begin with.
+
+# What `D-39` settled, 2026-08-30
+
+The live proof of the automatic removal failed, and the fault was not in `prune.py`. Two throwaway
+projects were enrolled with `graphrag index` against a running daemon, and neither reached the watch
+set. One was then deleted, and no event fired, because nothing watched it.
+
+`rearm_if_changed` was correct and nearly uncalled. Its one caller was the watch loop, on the branch
+that runs after a prune removed something. The reference engine calls the same function from four
+places, two of them enrolments, and the port took the function without them.
+
+`graphrag index` widens the gap. It runs the pass in the operator's own process, so the daemon is
+not late to hear about the new row. It is never told.
+
+So `enroll` re-arms, which covers the MCP tool and the daemon's own route, and the watch loop
+re-arms on every tick, which covers the CLI and any other writer. The tick runs once a second and
+`_roots` parses every row, so `rearm_if_changed` stats the registry first and returns on an
+unchanged mtime and size.
+
+The quiet half is the one that had to be found this way. A project whose changes go unindexed
+answers stale and a person notices. A project whose deletion is never seen answers nothing, and
+`D-37` was live and unreachable for every row the daemon did not write itself.
+
+`doctor --prune` still owns what neither reaches. inotify has no replay, so a project deleted while
+the daemon was down leaves a row for a path `_roots` filters out, and no event can ever remove it.
+
 # What `D-15` settled, 2026-08-27
 
 The strip runs in `module_name` and in `resolve_module`, not in the first alone. A relative import
@@ -330,14 +393,12 @@ file sitting directly under a source root.
 
 # What `D-16` settled, 2026-08-27
 
-Members are declared in `.graphrag.yaml` and never discovered. The semantic engine walks symlinks
-under the root to find them, and that is right for a ranked corpus: a member that arrives by
-accident only widens recall. A graph answers about a named symbol, so an undeclared member adds
-candidate definitions the operator never chose and cannot see in a config file.
+Members were declared in `.graphrag.yaml` and never discovered. The reason recorded here was that a
+graph answers about a named symbol, so an undeclared member adds candidate definitions the operator
+never chose and cannot see in a config file. `D-35` overturned it on 2026-08-30.
 
-The declaration is the truth in both directions. `sweep` claims a member the config gained and
-releases one the config lost, and nothing else moves. A member is an indirect claim, so releasing
-the root releases it, while a member also enrolled on its own keeps its row.
+`sweep` claims a member the reachable set gained and releases one it lost. A member is an indirect
+claim, so releasing the root releases it, while a member also enrolled on its own keeps its row.
 
 `scope.owner` answers with the deepest enrolled root rather than the first. A project vendored
 inside another is the more specific answer for its own files, and filing them under the outer root

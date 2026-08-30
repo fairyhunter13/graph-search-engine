@@ -60,7 +60,10 @@ WatchdogSec=180
 ExecStart={exe} serve
 Restart=on-failure
 RestartSec=5
-# One open file per watch, and a fleet pass arms about 120,000 of them.
+# Measured on 2026-08-30 over 367 projects: 11 open files, and 60,462 inotify
+# watches on a single one of them. A watch is not a file descriptor, so the
+# ceiling that binds is fs.inotify.max_user_watches (1,048,576 here) and it is
+# a sysctl no unit can set. This stays generous rather than tuned.
 LimitNOFILE=65536
 TimeoutStopSec=20
 Environment=GRAPHRAG_PORT={config.PORT}
@@ -69,6 +72,10 @@ Environment=GRAPHRAG_PORT={config.PORT}
 Nice=12
 CPUWeight=15
 IOWeight=15
+# Measured on 2026-08-30 over the same 367 projects: 365 MB peak while the
+# whole fleet drained through the queue, 138 MB at rest. The ceiling is left
+# at five times the measured peak, because a cold pass after an algorithm
+# change parses every file again.
 MemoryHigh=2G
 
 [Install]

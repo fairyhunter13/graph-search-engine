@@ -10,6 +10,7 @@ trusts that field gets an empty string and files everything under one key.
 
 from __future__ import annotations
 
+from fnmatch import fnmatch
 from pathlib import Path
 
 # Extension to the `tree-sitter-language-pack` name. The pack's spelling is the
@@ -134,6 +135,16 @@ def is_forbidden_root(path: Path | str) -> bool:
 
 def skipped_dir(name: str) -> bool:
     return name in SKIP_DIRS or (name.startswith(".") and name not in (".github",))
+
+
+def matches_any(rel: str, patterns) -> bool:
+    """fnmatch a relative path, with the directory form tried too.
+
+    `fnmatch`'s `*` spans `/`, so `system/*` matches at any depth. That is what
+    the config lists assume, and it is why these are not glob(1). The trailing
+    slash form is what lets a bare directory pattern match the directory itself.
+    """
+    return any(fnmatch(rel, pat) or fnmatch(f"{rel}/", pat) for pat in patterns)
 
 
 def indexable(path: Path, *, size: int | None = None) -> bool:

@@ -337,6 +337,28 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-216 | A hung search raises rather than scoring zero | S-11 | D-33 | done | tests/test_two_engine.py::test_a_hung_search_raises_rather_than_scoring_zero |
 | T-217 | The probe covers every mode the run uses | S-11 | D-33 | done | tests/test_two_engine.py::test_the_probe_covers_every_mode_the_run_uses |
 | T-218 | Prune removes the orphan directory and the count reaches zero | S-07 | D-34 | done | tests/test_registry.py::test_prune_removes_the_directory_so_the_count_reaches_zero |
+| T-219 | A symlink enrols the project it points at | S-07 | D-35 | done | tests/test_discovery.py::test_a_symlink_enrols_the_project_it_points_at |
+| T-220 | The resolved target is the key and never the link | S-07 | D-35 | done | tests/test_discovery.py::test_the_resolved_target_is_the_key_and_never_the_link |
+| T-221 | Two links to one target are one member | S-07 | D-35 | done | tests/test_discovery.py::test_two_links_to_one_target_are_one_member |
+| T-222 | A broken link is skipped and never registered | S-07 | D-35 | done | tests/test_discovery.py::test_a_broken_link_is_skipped_and_never_registered |
+| T-223 | A symlink cycle terminates | S-07 | D-35 | done | tests/test_discovery.py::test_a_symlink_cycle_terminates |
+| T-224 | federation_exclude matches the target and not only the link | S-07 | D-35 | done | tests/test_discovery.py::test_federation_exclude_matches_the_target_and_not_only_the_link |
+| T-225 | A declared member survives the walk | S-07 | D-35 | done | tests/test_discovery.py::test_a_declared_member_survives_the_walk |
+| T-228 | exclude removes a directory from the index pass | S-07 | D-36 | done | tests/test_discovery.py::test_exclude_removes_a_directory_from_the_index_pass |
+| T-229 | exclude reaches the index through the project config | S-07 | D-36 | done | tests/test_discovery.py::test_exclude_reaches_the_index_through_the_project_config |
+| T-230 | languages keeps only what the project names | S-07 | D-36 | done | tests/test_discovery.py::test_languages_keeps_only_what_the_project_names |
+| T-231 | A walked tree honours exclude without git | S-07 | D-36 | done | tests/test_discovery.py::test_a_walked_tree_honours_exclude_without_git |
+| T-232 | A deleted project loses its row | S-07 | D-37 | done | tests/test_prune.py::test_a_deleted_project_loses_its_row |
+| T-233 | A removed parent keeps the row, which is the unmount case | S-07 | D-37 | done | tests/test_prune.py::test_a_removed_parent_keeps_the_row |
+| T-234 | A project restored inside the grace period keeps the row | S-07 | D-37 | done | tests/test_prune.py::test_a_project_restored_inside_the_grace_period_keeps_the_row |
+| T-235 | A removed link releases the claim and the target survives | S-07 | D-37 | done | tests/test_prune.py::test_a_removed_link_releases_the_claim_and_the_target_survives |
+| T-236 | A removed link keeps a row another root claims | S-07 | D-37 | done | tests/test_prune.py::test_a_removed_link_keeps_a_row_another_root_claims |
+| T-237 | A directly enrolled member survives its link | S-07 | D-37 | done | tests/test_prune.py::test_a_directly_enrolled_member_survives_its_link |
+| T-238 | Nothing due reads no registry | S-07 | D-37 | done | tests/test_prune.py::test_nothing_due_reads_no_registry |
+| T-239 | find_symbol spans the federation and names the project | S-07 | D-38 | done | tests/test_discovery.py::test_find_symbol_spans_the_federation_and_names_the_project |
+| T-240 | An unindexed member is a gap and not an absence | S-07 | D-38 | done | tests/test_discovery.py::test_an_unindexed_member_is_a_gap_and_not_an_absence |
+| T-241 | A row another process wrote reaches the watch set | S-09 | D-39 | done | tests/test_watch.py::test_a_row_written_by_another_process_reaches_the_watch_set |
+| T-242 | An unmoved registry is stat'ed and not parsed | S-09 | D-39 | done | tests/test_watch.py::test_an_unmoved_registry_is_stat_ed_and_not_parsed |
 
 # User journeys
 

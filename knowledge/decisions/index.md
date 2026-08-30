@@ -4,10 +4,14 @@
   commit](a-measurement-is-an-attested-computation.md) - A passing test proves nothing on its own,
   because the assertion can move in the same commit as the number it guards. The receipt lets a
   deterministic attester re-read both and compare.
-* [A member is declared in the project config and never discovered by a
-  walk](a-member-is-declared-and-never-discovered.md) - The semantic engine finds members by walking
-  symlinks under the root. A graph engine will not, because an undeclared member adds candidate
-  definitions the operator never chose.
+* [A member is discovered by walking the symlinks under the root, and declaration adds to
+  it](a-member-is-discovered-by-walking-the-symlinks.md) - This engine declared its members until
+  2026-08-30. A workspace reaching ~360 repos through a symlink tree drifts on the first repo added,
+  so discovery replaced declaration and `federation_exclude` replaced the operator's veto.
+* [A row leaves on a delete event and never on a
+  scan](a-row-leaves-on-a-delete-event-and-never-on-a-scan.md) - The registry refused to prune a
+  missing path, because an unmount and a deletion look the same to a scan. They do not look the same
+  to a delete event, so removal became automatic behind a parent test and a grace period.
 * [A project registers by claim, keyed on its resolved path, and a row leaves only on
   request](the-registration-surface-is-a-claim-and-a-row-leaves-only-on-request.md) - The fleet
   registry keys every row on the resolved path, counts the claims a row carries, and never prunes a
