@@ -129,9 +129,8 @@ def test_a_second_concurrent_run_refuses_rather_than_clobbers(tmp_path, monkeypa
     monkeypatch.setattr(config, "RECEIPT_DIR", tmp_path)
     with config.receipt_lock(NODE_ID):
         config.write_receipt(NODE_ID, {"test_node_id": NODE_ID})
-        with pytest.raises(RuntimeError, match="already holds"):
-            with config.receipt_lock(NODE_ID):
-                pass
+        with pytest.raises(RuntimeError, match="already holds"), config.receipt_lock(NODE_ID):
+            pass
     assert json.loads(config.receipt_path(NODE_ID).read_text(encoding="utf-8")) == {
         "test_node_id": NODE_ID
     }

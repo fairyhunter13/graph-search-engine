@@ -148,9 +148,7 @@ def effective(root: Path | str) -> ProjectConfig:
         exclude.extend(pat for pat in inherited.exclude if pat not in exclude)
         languages.extend(name for name in inherited.languages if name not in languages)
         scip = scip or inherited.scip
-        scip_indexers.extend(
-            name for name in inherited.scip_indexers if name not in scip_indexers
-        )
+        scip_indexers.extend(name for name in inherited.scip_indexers if name not in scip_indexers)
     own.exclude = exclude
     own.languages = languages
     own.scip = scip

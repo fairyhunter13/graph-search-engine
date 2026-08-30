@@ -45,9 +45,9 @@ def test_an_unknown_indexer_is_an_error_that_names_the_known_ones():
 def test_a_refusal_is_an_outcome_and_never_an_exception(repo, tmp_path):
     """T-107. A bad index costs the project nothing, and the line says why."""
     root, conn = _store(
-         repo,
-         {"a.py": SRC, "b.py": SRC.replace("alpha", "beta"), "c.go": "package main\n"},
-     )
+        repo,
+        {"a.py": SRC, "b.py": SRC.replace("alpha", "beta"), "c.go": "package main\n"},
+    )
     w.write(
         root / run.OUTPUT_NAME,
         "scip-python",

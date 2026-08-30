@@ -32,8 +32,9 @@ def test_an_empty_submodule_directory_adds_nothing(repo, submodule):
     """47 of 69 worktrees in this workspace hold exactly this."""
     root = repo(files={"app/a.py": "x = 1\n"})
     submodule(root, "Domain", {"b.py": "y = 2\n"})
-    subprocess.run(["git", "submodule", "deinit", "-f", "Domain"], cwd=root, check=True,
-                   capture_output=True)
+    subprocess.run(
+        ["git", "submodule", "deinit", "-f", "Domain"], cwd=root, check=True, capture_output=True
+    )
 
     assert (root / "Domain").is_dir()
     assert {m.rel_path for m in discover.enumerate_files(root)} == {"app/a.py"}
@@ -45,14 +46,26 @@ def test_a_nested_submodule_is_reached(repo, submodule):
     submodule(inner, "Shared", {"c.py": "z = 3\n"}, name="leaf")
     root = repo(files={"a.py": "x = 1\n"})
     subprocess.run(
-        ["git", "-c", "protocol.file.allow=always", "submodule", "add", "-q",
-         "--", str(inner), "Domain"],
-        cwd=root, check=True, capture_output=True,
+        [
+            "git",
+            "-c",
+            "protocol.file.allow=always",
+            "submodule",
+            "add",
+            "-q",
+            "--",
+            str(inner),
+            "Domain",
+        ],
+        cwd=root,
+        check=True,
+        capture_output=True,
     )
     subprocess.run(
-        ["git", "-c", "protocol.file.allow=always", "submodule", "update",
-         "--init", "--recursive"],
-        cwd=root, check=True, capture_output=True,
+        ["git", "-c", "protocol.file.allow=always", "submodule", "update", "--init", "--recursive"],
+        cwd=root,
+        check=True,
+        capture_output=True,
     )
 
     found = {m.rel_path for m in discover.enumerate_files(root)}

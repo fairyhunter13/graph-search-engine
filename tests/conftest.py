@@ -62,8 +62,17 @@ def submodule(repo):
         subprocess.run(
             # `protocol.file.allow` is denied by default since CVE-2022-39253,
             # and a local path is the only clone source a test has.
-            ["git", "-c", "protocol.file.allow=always", "submodule", "add", "-q",
-             "--", str(inner), at],
+            [
+                "git",
+                "-c",
+                "protocol.file.allow=always",
+                "submodule",
+                "add",
+                "-q",
+                "--",
+                str(inner),
+                at,
+            ],
             cwd=outer,
             check=True,
             capture_output=True,
