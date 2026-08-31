@@ -143,6 +143,7 @@ def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
         store.stamp(conn)
 
     totals = store.counts(conn)
+    store.reclaim(conn)
     conn.close()
     report.files = totals["files"]
     report.nodes = totals["nodes"]

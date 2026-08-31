@@ -10,11 +10,15 @@ one that keeps the replacement honest.
 
 from __future__ import annotations
 
+import os
 import shutil
+import time
+from dataclasses import replace
+from pathlib import Path
 
 import pytest
 
-from graphrag import federation, prune, registry
+from graphrag import config, federation, prune, quarantine, registry
 
 SRC = {"a.py": "def alpha():\n    return 1\n"}
 
@@ -49,7 +53,7 @@ def test_a_deleted_project_loses_its_row(repo, pruner, clock):
     shutil.rmtree(project)
 
     pruner.note_gone(project)
-    assert pruner.run_due() == {"forgotten": [], "unclaimed": []}
+    assert pruner.run_due() == {"forgotten": [], "unclaimed": [], "quarantined": []}
     assert registry.get(project) is not None
 
     clock.advance(31.0)
@@ -156,4 +160,98 @@ def test_a_directly_enrolled_member_survives_its_link(repo, pruner, clock):
 def test_nothing_due_reads_no_registry(pruner):
     """Called on every watcher tick, so the empty case must cost nothing."""
     assert pruner.depth == 0
-    assert pruner.run_due() == {"forgotten": [], "unclaimed": []}
+    assert pruner.run_due() == {"forgotten": [], "unclaimed": [], "quarantined": []}
+
+
+def _plant_store(project, *, age: float = 0.0):
+    """A graph on disk for `project`, optionally aged past the idle floor."""
+    store = config.index_path(project)
+    store.parent.mkdir(parents=True, exist_ok=True)
+    store.write_bytes(b"graph")
+    if age:
+        stamp = time.time() - age
+        os.utime(store, (stamp, stamp))
+    return store
+
+
+def test_a_dead_row_takes_its_graph_with_it(repo, pruner, clock):
+    """The whole leak: the row left and the bytes stayed until a human typed a
+    command. Quarantined rather than deleted, so the week of undo holds."""
+    project = repo("reclaimed", SRC)
+    registry.claim(project, direct=True)
+    store = _plant_store(project, age=config.PRUNE_MIN_IDLE_S + 1)
+    shutil.rmtree(project)
+
+    pruner.note_gone(project)
+    clock.advance(31.0)
+    assert pruner.run_due()["quarantined"] == [str(project)]
+    assert not store.parent.exists(), "the graph outlived the row"
+    trashed = list(quarantine.trash_dir().iterdir())
+    assert len(trashed) == 1 and (trashed[0] / "graph.db").is_file()
+
+
+def test_a_graph_written_inside_the_idle_floor_is_left_alone(repo, pruner, clock):
+    """`PRUNE_MIN_IDLE_S` had no consumer at all before this. The semantic engine
+    has the defect recorded: a prune raced a store the daemon was mid-write on."""
+    project = repo("busy", SRC)
+    registry.claim(project, direct=True)
+    store = _plant_store(project)  # written just now
+    shutil.rmtree(project)
+
+    pruner.note_gone(project)
+    clock.advance(31.0)
+    done = pruner.run_due()
+    assert done["forgotten"] == [str(project)]
+    assert done["quarantined"] == []
+    assert store.is_file(), "a graph written this second was taken anyway"
+
+
+def test_quarantine_expires_on_its_own_clock(repo):
+    """Seven days, and a name this did not write is never guessed at."""
+    project = repo("expiring", SRC)
+    store = _plant_store(project)
+    moved = quarantine.take(store.parent)
+    assert moved is not None
+    stranger = quarantine.trash_dir() / "not-a-stamp"
+    stranger.mkdir()
+
+    assert quarantine.expire() == []
+    gone = quarantine.expire(now=time.time() + (config.QUARANTINE_DAYS + 1) * 86400)
+    assert gone == [moved]
+    assert stranger.is_dir(), "a directory this did not name was deleted anyway"
+
+
+def test_a_failed_quarantine_never_degrades_to_a_delete(repo, monkeypatch):
+    """The one rule the first version of this carried: a rename that fails leaves
+    the store standing. A path whose purpose is undo cannot delete harder."""
+    project = repo("stuck", SRC)
+    store = _plant_store(project)
+
+    def refuse(_self, _target):
+        raise OSError("cross-device link")
+
+    monkeypatch.setattr(Path, "rename", refuse)
+    assert quarantine.take(store.parent) is None
+    assert store.is_file(), "a failed move deleted the store"
+
+
+def test_an_unmounted_volume_is_never_read_as_a_deletion(repo, monkeypatch):
+    """The distinction `registry.py` refuses to prune by predicate without. A
+    mount point left standing after its volume goes is shaped exactly like a
+    deleted repo -- the recorded device is the only thing that separates them."""
+    project = repo("onvolume", SRC)
+    registry.claim(project, direct=True)
+    entry = registry.get(project)
+    assert entry is not None and entry.dev, "the claim recorded no device"
+    shutil.rmtree(project)
+
+    assert prune.verdict(entry) == "deleted"
+    # The same path, with a different filesystem answering its parent today.
+    moved = replace(entry, dev=entry.dev + 1)
+    assert prune.verdict(moved) == "unmounted"
+    # And a row written before the device was ever recorded.
+    assert prune.verdict(replace(entry, dev=0)) == "unknown"
+
+    survey = prune.survey()
+    assert survey["deleted"] == [str(project)]
+    assert survey["unmounted"] == [] and survey["unknown"] == []

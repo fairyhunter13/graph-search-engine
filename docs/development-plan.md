@@ -198,6 +198,10 @@ for the callers of a known function and check them by hand.
 | D-38 | `find_symbol` spans the federation and names the project holding each hit | done | src/graphrag/tools.py, tests/test_discovery.py | T-239, T-240 |
 | D-39 | Every writer of the registry re-arms the watcher, including one in another process | done | src/graphrag/watch.py, src/graphrag/tools.py, tests/test_watch.py | T-241, T-242 |
 | D-40 | A module identity per language, so a Go or PHP import names the file it imports | planned | src/graphrag/symtab.py, src/graphrag/resolve.py, src/graphrag/indexwrite.py | |
+| D-41 | A dead row takes its graph with it, quarantined for a week and behind an idle floor | done | src/graphrag/prune.py, src/graphrag/quarantine.py, src/graphrag/registry.py, src/graphrag/cli.py | T-243..T-247 |
+| D-42 | The watcher survives a re-arm in the same pass as a deletion, and an error mid-arm | done | src/graphrag/watch.py, tests/test_watch.py | T-248, T-249 |
+| D-43 | A row whose directory is gone is reported, and an unmounted volume is never read as a deletion | done | src/graphrag/prune.py, src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/cli.py | T-250 |
+| D-44 | An index pass returns its freed pages to the filesystem | done | src/graphrag/store.py, src/graphrag/index.py, src/graphrag/cli.py | T-251 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the

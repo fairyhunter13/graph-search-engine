@@ -28,7 +28,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 
-from . import config
+from . import config, quarantine
 from .entry import ProjectEntry
 
 Rows = dict[str, ProjectEntry]
@@ -111,6 +111,14 @@ def get(path: Path | str) -> ProjectEntry | None:
     return load().get(str(resolve(path)))
 
 
+def _device(path: Path | str) -> int:
+    """Which filesystem answers this path, or 0 where nothing does."""
+    try:
+        return Path(path).stat().st_dev
+    except OSError:
+        return 0
+
+
 def claim(path: Path | str, *, direct: bool = False, root: Path | str | None = None) -> str:
     """Enrol a project, or add a claim to one already enrolled."""
     key = str(resolve(path))
@@ -118,6 +126,7 @@ def claim(path: Path | str, *, direct: bool = False, root: Path | str | None = N
     with _mutate() as rows:
         entry = rows.setdefault(key, ProjectEntry(path=key))
         entry.direct = entry.direct or direct
+        entry.dev = _device(key) or entry.dev
         if root_key and root_key != key and root_key not in entry.roots:
             entry.roots.append(root_key)
     return key
@@ -207,24 +216,60 @@ def unclaimed_stores() -> list[Path]:
     caller that acts on that answer deletes a graph the daemon has open.
     """
     with _held(fcntl.LOCK_SH) as rows:
-        claimed = {config.index_path(e.path).parent for e in rows.values()}
-        if not config.INDEX_DIR.is_dir():
-            return []
-        return sorted(p for p in config.INDEX_DIR.iterdir() if p.is_dir() and p not in claimed)
+        return _stale_unlocked(rows)
 
 
-def prune_unclaimed() -> list[Path]:
+def _stale_unlocked(rows: Rows) -> list[Path]:
+    """Graph directories no row names. Call it holding the lock, never outside.
+
+    `.trash/` is skipped: quarantine lives under `INDEX_DIR` and no row names it,
+    so counting it here would have the reaper delete its own undo on the next
+    pass -- and report the deletion as reclaimed waste.
+    """
+    claimed = {config.index_path(e.path).parent for e in rows.values()}
+    if not config.INDEX_DIR.is_dir():
+        return []
+    return sorted(
+        p
+        for p in config.INDEX_DIR.iterdir()
+        if p.is_dir() and p not in claimed and p.name != quarantine.DIR_NAME
+    )
+
+
+def prune_unclaimed(*, force: bool = False) -> list[Path]:
     """Delete every graph directory no row names, and return what went.
 
     The walk and the rmtree run under one exclusive lock: a claim that lands
     between them would build the graph this deletes. `wipe` leaves the empty
     directory, which `unclaimed_stores` still counts, so a prune must rmtree.
+
+    Two refusals on the shape of the answer, ported from the semantic engine
+    after both of its fleet wipes returned a verdict that looked like this one.
+    An empty registry beside a full tree of graphs is a registry that failed to
+    load, not a fleet with nothing enrolled -- and `force` deliberately does not
+    lift that one, because a human forcing a prune is answering the question
+    "delete these", not "the registry is empty on purpose".
     """
     with _held(fcntl.LOCK_EX) as rows:
-        claimed = {config.index_path(e.path).parent for e in rows.values()}
-        if not config.INDEX_DIR.is_dir():
+        stale = _stale_unlocked(rows)
+        if not stale:
             return []
-        stale = sorted(p for p in config.INDEX_DIR.iterdir() if p.is_dir() and p not in claimed)
+        if not rows:
+            raise RuntimeError(
+                f"refusing to prune {len(stale)} graph(s) against an empty registry; "
+                "load projects.json before pruning"
+            )
+        total = len(
+            [
+                p
+                for p in config.INDEX_DIR.iterdir()
+                if p.is_dir() and p.name != quarantine.DIR_NAME
+            ]
+        )
+        if not force and len(stale) * 2 > total:
+            raise RuntimeError(
+                f"refusing to prune {len(stale)} of {total} graph(s) without --force"
+            )
         for path in stale:
             shutil.rmtree(path)
         return stale

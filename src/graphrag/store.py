@@ -119,12 +119,37 @@ def connect(path: Path | str, *, create: bool = True) -> sqlite3.Connection:
         path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    # First, and before `journal_mode`. `auto_vacuum` takes only on a database
+    # whose header has not been written yet, and setting WAL writes it. An
+    # existing store ignores this and converts only under `compact`, which needs
+    # free space equal to the file and stays a human's call.
+    conn.execute("PRAGMA auto_vacuum=INCREMENTAL")
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
     conn.execute("PRAGMA synchronous=NORMAL")
     if create:
         conn.executescript(SCHEMA)
     return conn
+
+
+def reclaim(conn: sqlite3.Connection) -> None:
+    """Give the pages an index pass freed back to the filesystem.
+
+    Every pass runs `DELETE FROM files` and rebuilds, so the freelist after one
+    is most of the old graph. Nothing returned those pages before this: the file
+    only ever grew, whatever the project did. Incremental, because the full
+    `VACUUM` rewrites the whole file and belongs behind a hand-typed command.
+    """
+    conn.execute("PRAGMA incremental_vacuum")
+    conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+
+
+def compact(conn: sqlite3.Connection) -> None:
+    """Rewrite the file whole. The one-time conversion for a store that predates
+    `auto_vacuum`, and the only thing that reclaims its standing freelist."""
+    conn.execute("PRAGMA auto_vacuum=INCREMENTAL")
+    conn.execute("VACUUM")
+    conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
 
 
 def get_meta(conn: sqlite3.Connection, key: str, default: str = "") -> str:
@@ -163,26 +188,6 @@ def incompatible(conn: sqlite3.Connection, *, grammars: str = "", queries: str =
     if queries and get_meta(conn, "queries") != queries:
         return "a query hash moved"
     return ""
-
-
-def delete_file(conn: sqlite3.Connection, file_id: int) -> None:
-    """Remove one file, its nodes, its edges and its FTS rows.
-
-    The FTS delete comes first and names each rowid, because an external-content
-    table cannot recover the old column values once `nodes` has dropped them.
-    """
-    conn.executemany(
-        "INSERT INTO nodes_fts(nodes_fts, rowid, name, qualified_name, signature) "
-        "VALUES('delete', ?, ?, ?, ?)",
-        [
-            (r["id"], r["name"], r["qualified_name"], r["signature"])
-            for r in conn.execute(
-                "SELECT id, name, qualified_name, signature FROM nodes WHERE file_id = ?",
-                (file_id,),
-            )
-        ],
-    )
-    conn.execute("DELETE FROM files WHERE id = ?", (file_id,))
 
 
 def wipe(path: Path | str) -> None:

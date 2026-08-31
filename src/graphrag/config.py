@@ -60,6 +60,10 @@ BACKUP_KEEP = 20
 # A store nothing has written to for this long is not being indexed right now.
 PRUNE_MIN_IDLE_S = _env_int("PRUNE_MIN_IDLE_S", 60)
 
+# How long a quarantined graph stays restorable. A week covers the gap the two
+# fleet wipes were found in: someone searched a repo days later and got nothing.
+QUARANTINE_DAYS = _env_int("QUARANTINE_DAYS", 7)
+
 
 def index_path(project: Path | str) -> Path:
     """Where a project's graph lives.

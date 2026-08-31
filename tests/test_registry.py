@@ -6,7 +6,9 @@ import json
 import multiprocessing as mp
 import time
 
-from graphrag import config, registry
+import pytest
+
+from graphrag import config, quarantine, registry
 
 
 def _claim_in_child(state: str, path: str) -> None:
@@ -120,6 +122,50 @@ def test_prune_removes_the_directory_so_the_count_reaches_zero(tmp_path):
     assert not orphan.exists()
     assert kept.exists()
     assert registry.unclaimed_stores() == []
+
+
+def test_quarantine_is_not_counted_as_an_orphan(tmp_path):
+    """`.trash` lives under `INDEX_DIR` and no row names it. Counted, the reaper
+    would delete its own undo on the next pass and report it as reclaimed."""
+    live = tmp_path / "live"
+    live.mkdir()
+    registry.claim(live, direct=True)
+    trash = quarantine.trash_dir() / "1700000000-svc-deadbeef"
+    trash.mkdir(parents=True)
+    (trash / "graph.db").write_bytes(b"undo")
+
+    assert registry.unclaimed_stores() == []
+    assert registry.prune_unclaimed() == []
+    assert trash.is_dir(), "the reaper deleted the quarantine it had just written"
+
+
+def test_a_prune_against_an_empty_registry_refuses():
+    """Ported after both of the semantic engine's fleet wipes returned a verdict
+    shaped like this one. A registry that failed to load reads as a fleet with
+    nothing enrolled, and `--force` deliberately does not lift this."""
+    orphan = config.INDEX_DIR / "svc-deadbeef"
+    orphan.mkdir(parents=True)
+
+    with pytest.raises(RuntimeError, match="empty registry"):
+        registry.prune_unclaimed()
+    with pytest.raises(RuntimeError, match="empty registry"):
+        registry.prune_unclaimed(force=True)
+    assert orphan.is_dir()
+
+
+def test_a_prune_over_half_the_tree_needs_force(tmp_path):
+    """A majority verdict is the shape a wipe has. It is allowed, once a human
+    has said so on the command line."""
+    live = tmp_path / "live"
+    live.mkdir()
+    registry.claim(live, direct=True)
+    config.index_path(live).parent.mkdir(parents=True)
+    for name in ("a-1111", "b-2222"):
+        (config.INDEX_DIR / name).mkdir()
+
+    with pytest.raises(RuntimeError, match="without --force"):
+        registry.prune_unclaimed()
+    assert len(registry.prune_unclaimed(force=True)) == 2
 
 
 def test_a_symlinked_path_claims_the_row_it_points_at(tmp_path):

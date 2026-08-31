@@ -1,5 +1,6 @@
 # Decision
 
+* [A dead row takes its graph, and the delete is a move](a-dead-row-takes-its-graph-and-the-delete-is-a-move.md) - Dropping a row freed no disk: the graph directory waited for a hand-typed prune. The reaper now takes it, behind an idle floor `GRAPHRAG_PRUNE_MIN_IDLE_S` declared but never implemented, and the removal is a move into a week-long quarantine.
 * [A load-bearing number is an Attested Computation, and its receipt carries the test node and the
   commit](a-measurement-is-an-attested-computation.md) - A passing test proves nothing on its own,
   because the assertion can move in the same commit as the number it guards. The receipt lets a
@@ -8,18 +9,19 @@
   it](a-member-is-discovered-by-walking-the-symlinks.md) - This engine declared its members until
   2026-08-30. A workspace reaching ~360 repos through a symlink tree drifts on the first repo added,
   so discovery replaced declaration and `federation_exclude` replaced the operator's veto.
-* [A row leaves on a delete event and never on a
-  scan](a-row-leaves-on-a-delete-event-and-never-on-a-scan.md) - The registry refused to prune a
-  missing path, because an unmount and a deletion look the same to a scan. They do not look the same
-  to a delete event, so removal became automatic behind a parent test and a grace period.
 * [A project registers by claim, keyed on its resolved path, and a row leaves only on
   request](the-registration-surface-is-a-claim-and-a-row-leaves-only-on-request.md) - The fleet
   registry keys every row on the resolved path, counts the claims a row carries, and never prunes a
   row for a missing path.
+* [A row leaves on a delete event and never on a
+  scan](a-row-leaves-on-a-delete-event-and-never-on-a-scan.md) - The registry refused to prune a
+  missing path, because an unmount and a deletion look the same to a scan. They do not look the same
+  to a delete event, so removal became automatic behind a parent test and a grace period.
 * [A stale date is declared only where a re-measurement date is
   real](a-stale-date-is-declared-only-where-a-remeasurement-is-real.md) - Reachability beats a
   calendar. The nightly sweep catches a moved page, a rewritten commit and a deleted path, and a
   date with no owner and no runbook is a scheduled outage.
+* [An absent directory is three answers and only one is a deletion](an-absent-directory-is-three-answers-and-only-one-is-a-deletion.md) - inotify has no replay, so a repository deleted while the daemon was down reaches no event. The cold-start reconciliation answers `deleted`, `unmounted` or `unknown` from the `st_dev` recorded at enrolment, reports by default, and acts on `deleted` alone.
 * [Go and TypeScript get a SCIP tier, and every other language in this estate gets
   none](which-languages-get-a-scip-tier.md) - Nine indexers are registered and three carry a
   command, but an operator can feed any of the nine by hand, so this is a decision and not a code

@@ -159,31 +159,46 @@ def _loop() -> None:
         _rearm.clear()
         _register_paths(_intent)
         log.info("watching %d projects", len(_intent))
-        for batch in _watch(
-            *_intent,
-            watch_filter=_keep,
-            stop_event=_stop,
-            debounce=config.WATCH_DEBOUNCE_MS,
-            rust_timeout=config.WATCH_POLL_MS,
-            yield_on_timeout=True,
-        ):
-            if _rearm.is_set() or _stop.is_set():
-                break
-            # Runs on the empty batch too. `yield_on_timeout` is what makes this
-            # loop the clock a waiting deletion is measured against.
-            pruned = prune.PRUNER.run_due()
-            if pruned["forgotten"] or pruned["unclaimed"]:
-                ledger.append(ledger.WATCH, {"pruned": pruned})
-            # Every tick, and not only after a prune. A row this process never
-            # wrote reaches the watch set no other way, and an unwatched row is
-            # a project whose changes and whose deletion are both unseen.
-            rearm_if_changed()
-            if not batch:
-                continue
-            _note_deletions(batch)
-            touched = _submit(batch, _intent)
-            if touched:
-                ledger.append(ledger.WATCH, {"events": len(batch), "projects": touched})
+        try:
+            for batch in _watch(
+                *_intent,
+                watch_filter=_keep,
+                stop_event=_stop,
+                debounce=config.WATCH_DEBOUNCE_MS,
+                rust_timeout=config.WATCH_POLL_MS,
+                yield_on_timeout=True,
+            ):
+                # Above the break, because `rearm_if_changed` runs every tick and
+                # the batch it breaks on is the one carrying the root's own
+                # deletion. inotify has no replay to hand that event back.
+                if batch:
+                    _note_deletions(batch)
+                if _rearm.is_set() or _stop.is_set():
+                    break
+                # Runs on the empty batch too. `yield_on_timeout` is what makes
+                # this loop the clock a waiting deletion is measured against.
+                pruned = prune.PRUNER.run_due()
+                if pruned["forgotten"] or pruned["unclaimed"]:
+                    ledger.append(ledger.WATCH, {"pruned": pruned})
+                # Every tick, and not only after a prune. A row this process never
+                # wrote reaches the watch set no other way, and an unwatched row is
+                # a project whose changes and whose deletion are both unseen.
+                rearm_if_changed()
+                if not batch:
+                    continue
+                touched = _submit(batch, _intent)
+                if touched:
+                    ledger.append(ledger.WATCH, {"events": len(batch), "projects": touched})
+        except OSError as err:
+            # An ENOSPC on the watch descriptors, or a root deleted between
+            # `_roots()` and the arm, used to end watching until the daemon was
+            # restarted: `start()` returns early on a live thread and only
+            # `lifespan` calls it. Re-arm on the next pass instead.
+            log.warning("watch pass failed on %d project(s): %s", len(_intent), err)
+            ledger.append(ledger.WATCH, {"armed": 0, "error": str(err), "was_watching": len(_intent)})
+            _intent = ()
+            if _stop.wait(1.0):
+                return
 
 
 def start() -> None:

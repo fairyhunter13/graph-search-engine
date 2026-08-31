@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import shutil
 import threading
 import time
 
 import pytest
 
-from graphrag import config, index, ledger, progress, registry, trace, watch
+from graphrag import config, index, ledger, progress, prune, registry, trace, watch
 
 TWO = {
     "a.py": "def alpha():\n    return 1\n",
@@ -221,3 +222,62 @@ def test_a_trace_id_reaches_the_error_text():
         assert trace_id == "a1b2c3d4"
         assert trace.stamp("the graph could not be opened").endswith("[trace a1b2c3d4]")
     assert trace.current() == ""
+
+
+def _run_loop(monkeypatch, fake) -> None:
+    """Drive `watch._loop` synchronously against a scripted `watchfiles.watch`."""
+    monkeypatch.setattr(watch, "_watch", fake)
+    watch._stop.clear()
+    watch._rearm.clear()
+    watch._intent = ()
+    watch._stamp = None
+    watch._loop()
+
+
+def test_a_deletion_is_not_lost_to_a_rearm_queued_in_the_same_pass(repo):
+    """`rearm_if_changed` runs inside the loop, so the break it sets lands on the
+    batch carrying the deletion. Noting the deletion after that break drops it,
+    and inotify has no replay to hand it back.
+    """
+    doomed = repo("vanishing", TWO)
+    keeper = repo("staying", TWO)
+    registry.claim(doomed, direct=True)
+    registry.claim(keeper, direct=True)
+    _drain()
+    passes = []
+
+    def fake(*roots, **_kw):
+        passes.append(roots)
+        if len(passes) > 1:
+            watch._stop.set()
+            return
+        shutil.rmtree(doomed)
+        watch._rearm.set()  # what `rearm_if_changed()` does mid-pass
+        yield {(3, str(doomed))}  # Change.deleted, on the root itself
+
+    before = prune.PRUNER.depth
+    with pytest.MonkeyPatch.context() as mp:
+        _run_loop(mp, fake)
+    assert prune.PRUNER.depth > before, "the re-arm threw away the deletion event"
+
+
+def test_the_watcher_rearms_after_an_error_instead_of_dying(repo):
+    """One ENOSPC, or one root that vanishes between `_roots()` and arming, must
+    not end watching until the daemon is restarted. `start()` returns early on a
+    live thread and nothing else calls it, so the loop is the only restart path.
+    """
+    root = repo("erroring", TWO)
+    registry.claim(root, direct=True)
+    _drain()
+    passes = []
+
+    def fake(*roots, **_kw):
+        passes.append(roots)
+        if len(passes) == 1:
+            raise OSError(28, "No space left on device")
+        watch._stop.set()
+        return iter(())
+
+    with pytest.MonkeyPatch.context() as mp:
+        _run_loop(mp, fake)
+    assert len(passes) >= 2, "the loop died on the first error instead of re-arming"

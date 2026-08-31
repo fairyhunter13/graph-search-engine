@@ -213,5 +213,10 @@ def write_edges(conn: sqlite3.Connection, rows: Iterable[tuple]) -> int:
 
 
 def rebuild_fts(conn: sqlite3.Connection) -> None:
-    """A full pass rebuilds. `store.delete_file` owns the incremental delete."""
+    """Called after the pass has replaced `files` wholesale.
+
+    There is no incremental delete here and the rebuild is why: `nodes_fts` is
+    external-content, so the cascade from `files` never reaches it and a search
+    would keep answering with symbols the graph no longer holds.
+    """
     conn.execute("INSERT INTO nodes_fts(nodes_fts) VALUES('rebuild')")

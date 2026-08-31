@@ -26,6 +26,12 @@ class ProjectEntry:
     edge_count: int = 0
     resolved_edge_count: int = 0
     capabilities: dict[str, list[str]] = field(default_factory=dict)
+    # `st_dev` of the path when the row was written. A missing directory whose
+    # parent now sits on a different filesystem is an unmounted volume, not a
+    # deletion, and that is the one distinction a reaper has to get right. Zero
+    # means never recorded, which every row written before this field reads as
+    # "cannot tell" -- the answer that leaves the row alone.
+    dev: int = 0
 
     def to_json(self) -> dict:
         return {
@@ -38,6 +44,7 @@ class ProjectEntry:
             "edge_count": self.edge_count,
             "resolved_edge_count": self.resolved_edge_count,
             "capabilities": self.capabilities,
+            "dev": self.dev,
         }
 
     @classmethod
@@ -53,4 +60,5 @@ class ProjectEntry:
             edge_count=int(row.get("edge_count", 0)),
             resolved_edge_count=int(row.get("resolved_edge_count", 0)),
             capabilities=dict(row.get("capabilities") or {}),
+            dev=int(row.get("dev", 0)),
         )

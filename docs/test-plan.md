@@ -359,6 +359,15 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-240 | An unindexed member is a gap and not an absence | S-07 | D-38 | done | tests/test_discovery.py::test_an_unindexed_member_is_a_gap_and_not_an_absence |
 | T-241 | A row another process wrote reaches the watch set | S-09 | D-39 | done | tests/test_watch.py::test_a_row_written_by_another_process_reaches_the_watch_set |
 | T-242 | An unmoved registry is stat'ed and not parsed | S-09 | D-39 | done | tests/test_watch.py::test_an_unmoved_registry_is_stat_ed_and_not_parsed |
+| T-243 | A dead row takes its graph with it | S-07 | D-41 | done | tests/test_prune.py::test_a_dead_row_takes_its_graph_with_it |
+| T-244 | A graph written inside the idle floor is left alone | S-07 | D-41 | done | tests/test_prune.py::test_a_graph_written_inside_the_idle_floor_is_left_alone |
+| T-245 | Quarantine expires on its own clock | S-07 | D-41 | done | tests/test_prune.py::test_quarantine_expires_on_its_own_clock |
+| T-246 | A failed quarantine never degrades to a delete | S-07 | D-41 | done | tests/test_prune.py::test_a_failed_quarantine_never_degrades_to_a_delete |
+| T-247 | Quarantine is not counted as an orphan, and a prune refuses the wipe shape | S-07 | D-41 | done | tests/test_registry.py::test_quarantine_is_not_counted_as_an_orphan |
+| T-248 | A deletion is not lost to a re-arm queued in the same pass | S-09 | D-42 | done | tests/test_watch.py::test_a_deletion_is_not_lost_to_a_rearm_queued_in_the_same_pass |
+| T-249 | The watcher re-arms after an error instead of dying | S-09 | D-42 | done | tests/test_watch.py::test_the_watcher_rearms_after_an_error_instead_of_dying |
+| T-250 | An unmounted volume is never read as a deletion | S-07 | D-43 | done | tests/test_prune.py::test_an_unmounted_volume_is_never_read_as_a_deletion |
+| T-251 | A new graph can give its pages back | S-01 | D-44 | done | tests/test_store.py::test_a_new_graph_can_give_its_pages_back |
 
 # User journeys
 

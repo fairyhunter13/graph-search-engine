@@ -14,7 +14,18 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from . import config, federation, grammars, index, query, registry, store
+from . import (
+    config,
+    federation,
+    grammars,
+    index,
+    progress,
+    prune,
+    quarantine,
+    query,
+    registry,
+    store,
+)
 
 
 def _out(payload: object) -> int:
@@ -71,10 +82,18 @@ def cmd_index(args: argparse.Namespace) -> int:
 
 def cmd_doctor(args: argparse.Namespace) -> int:
     root = registry.resolve(args.root)
-    _, conn = _open(root)
+    path, conn = _open(root)
+    compacted = None
     try:
         table = query.capability_report(conn)
         counts = query.project_counts(conn)
+        if args.compact:
+            # Hand-typed, because a full VACUUM rewrites the file and needs free
+            # space equal to its size. Stores built before `auto_vacuum` reclaim
+            # their freelist no other way.
+            before = path.stat().st_size
+            store.compact(conn)
+            compacted = {"bytes_before": before, "bytes_after": path.stat().st_size}
     finally:
         conn.close()
     # The gaps ride beside the table rather than being left for the reader to
@@ -85,7 +104,10 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         for lang in table
         if "calls" not in grammars.capabilities(lang)
     ]
-    return _out({"root": str(root), "counts": counts, "capabilities": table, "gaps": gaps})
+    out = {"root": str(root), "counts": counts, "capabilities": table, "gaps": gaps}
+    if compacted is not None:
+        out["compacted"] = compacted
+    return _out(out)
 
 
 def cmd_status(_args: argparse.Namespace) -> int:
@@ -98,6 +120,9 @@ def cmd_status(_args: argparse.Namespace) -> int:
             "queue_depth": index.QUEUE.depth,
             "fleet_digest": registry.fleet_digest(rows),
             "unclaimed_stores": [str(p) for p in registry.unclaimed_stores()],
+            # A row whose directory is gone was reported nowhere before. Only
+            # `missing` is a deletion; the other two are rows this cannot judge.
+            "missing": prune.survey(),
             "rows": {k: e.to_json() for k, e in rows.items()},
         }
     )
@@ -110,18 +135,50 @@ def cmd_forget(args: argparse.Namespace) -> int:
     not deleted, and pruning it loses the roots that claimed it.
     """
     gone, unknown = registry.forget([str(registry.resolve(p)) for p in args.roots])
+    retired = []
     for key in gone:
-        store.wipe(config.index_path(key))
-    return _out({"forgotten": gone, "unknown": unknown})
+        # Quarantined, not wiped. `wipe` unlinks the db and leaves the directory
+        # standing -- the recorded defect that kept the orphan count off zero --
+        # while a move takes the directory with it and stays reversible.
+        if quarantine.take(config.index_path(key).parent) is not None:
+            retired.append(key)
+        progress.path_for(key).unlink(missing_ok=True)
+    quarantine.expire()
+    return _out({"forgotten": gone, "unknown": unknown, "quarantined": retired})
+
+
+def _orphan_progress() -> list[Path]:
+    """Progress files whose store is gone. They survive `forget` and `prune`."""
+    if not config.PROGRESS_DIR.is_dir():
+        return []
+    live = {p.name for p in config.INDEX_DIR.iterdir() if p.is_dir()} if config.INDEX_DIR.is_dir() else set()
+    return sorted(p for p in config.PROGRESS_DIR.glob("*.json") if p.stem not in live)
 
 
 def cmd_prune(args: argparse.Namespace) -> int:
     """Delete graph directories no registry row names."""
+    orphans = _orphan_progress()
     if not args.apply:
         stale = registry.unclaimed_stores()
-        return _out({"would_delete": [str(p) for p in stale], "applied": False})
-    deleted = registry.prune_unclaimed()
-    return _out({"deleted": [str(p) for p in deleted], "applied": True})
+        return _out(
+            {
+                "would_delete": [str(p) for p in stale],
+                "would_delete_progress": [str(p) for p in orphans],
+                "applied": False,
+            }
+        )
+    deleted = registry.prune_unclaimed(force=args.force)
+    for path in orphans:
+        path.unlink(missing_ok=True)
+    expired = quarantine.expire()
+    return _out(
+        {
+            "deleted": [str(p) for p in deleted],
+            "deleted_progress": [str(p) for p in orphans],
+            "expired_quarantine": [str(p) for p in expired],
+            "applied": True,
+        }
+    )
 
 
 def cmd_serve(args: argparse.Namespace) -> int:
@@ -177,6 +234,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("doctor", help="the per-language capability table and the gaps")
     p.add_argument("root", nargs="?", default=".")
+    p.add_argument("--compact", action="store_true", help="VACUUM the graph and report the bytes")
     p.set_defaults(func=cmd_doctor)
 
     p = sub.add_parser("status", help="every registry row, the queue and the digest")
@@ -188,6 +246,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("prune", help="delete graphs no row claims")
     p.add_argument("--apply", action="store_true", help="delete rather than list")
+    p.add_argument("--force", action="store_true", help="allow a verdict over half the tree")
     p.set_defaults(func=cmd_prune)
 
     p = sub.add_parser("serve", help="run the daemon")

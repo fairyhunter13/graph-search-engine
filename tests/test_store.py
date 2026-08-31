@@ -14,6 +14,28 @@ def graph(tmp_path):
     conn.close()
 
 
+def test_a_new_graph_can_give_its_pages_back(graph, tmp_path):
+    """Nothing ran a VACUUM here before, so a rebuild freed pages inside the file
+    and never to the filesystem. `auto_vacuum` only takes on an empty database,
+    which is why `connect` sets it before the schema and not after."""
+    assert graph.execute("PRAGMA auto_vacuum").fetchone()[0] == 2  # INCREMENTAL
+
+    with graph:
+        graph.execute("INSERT INTO files(path, mtime, size, sha256) VALUES('a.py', 0, 1, 'x')")
+        graph.executemany(
+            "INSERT INTO meta(key, value) VALUES(?, ?)",
+            [(f"k{i}", "v" * 4000) for i in range(400)],
+        )
+    # Checkpointed first: in WAL mode the pages are in the sidecar until then,
+    # so an uncheckpointed `grown` reads as the empty file it started as.
+    graph.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    grown = (tmp_path / "graph.db").stat().st_size
+    with graph:
+        graph.execute("DELETE FROM meta")
+    store.reclaim(graph)
+    assert (tmp_path / "graph.db").stat().st_size < grown
+
+
 def _one_node(conn, name: str = "retry") -> int:
     conn.execute("INSERT INTO files(path, mtime, size, sha256) VALUES('a.py', 0, 1, 'x')")
     file_id = conn.execute("SELECT id FROM files").fetchone()["id"]
@@ -56,11 +78,16 @@ def test_deleting_a_file_takes_its_fts_rows_with_it(graph):
 
     `nodes_fts` is external-content, so the cascade from `files` does not reach
     it. A search would keep answering with a symbol the graph no longer holds.
+    Exercised through the pass's own two statements: the incremental delete this
+    used to call had no caller outside this test.
     """
-    file_id = _one_node(graph)
+    _one_node(graph)
     assert graph.execute("SELECT count(*) c FROM nodes_fts").fetchone()["c"] == 1
 
-    store.delete_file(graph, file_id)
+    from graphrag import indexwrite
+
+    graph.execute("DELETE FROM files")
+    indexwrite.rebuild_fts(graph)
 
     assert graph.execute("SELECT count(*) c FROM nodes").fetchone()["c"] == 0
     hits = graph.execute("SELECT count(*) c FROM nodes_fts WHERE nodes_fts MATCH 'retry'")
