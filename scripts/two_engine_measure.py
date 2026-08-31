@@ -110,6 +110,7 @@ TRUTH: list[dict] = [
             "src/graphrag/server.py",
             "src/graphrag/watch.py",
             "tests/test_discovery.py",
+            "tests/test_prune.py",
             "tests/test_registry.py",
         ],
     },
