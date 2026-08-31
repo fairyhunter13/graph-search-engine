@@ -10,6 +10,7 @@ one that keeps the replacement honest.
 
 from __future__ import annotations
 
+import argparse
 import os
 import shutil
 import time
@@ -18,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from graphrag import config, federation, prune, quarantine, registry
+from graphrag import cli, config, federation, progress, prune, quarantine, registry
 
 SRC = {"a.py": "def alpha():\n    return 1\n"}
 
@@ -255,3 +256,44 @@ def test_an_unmounted_volume_is_never_read_as_a_deletion(repo, monkeypatch):
     survey = prune.survey()
     assert survey["deleted"] == [str(project)]
     assert survey["unmounted"] == [] and survey["unknown"] == []
+    # The population, not a total of the three lists: an empty `deleted` and a
+    # registry that read nothing are otherwise the same answer.
+    assert survey["read"] == len(registry.load())
+
+
+def _plant(project: Path) -> Path:
+    """A store directory and the progress file keyed to it, as an index leaves them."""
+    store = config.index_path(project)
+    store.parent.mkdir(parents=True, exist_ok=True)
+    store.write_bytes(b"x" * 64)
+    return store.parent
+
+
+def test_a_progress_file_outlives_its_store_and_the_prune_sweeps_it(repo):
+    """The third thing a forgotten project leaves behind, after the row and the graph.
+
+    `progress/*.json` is keyed by store directory and written by the indexer, so
+    neither `forget` nor `prune_unclaimed` reaches one. 378 of them stood on this
+    fleet. The reconciliation is against the store *directory*, never the registry:
+    an orphan whose store is still standing is left alone, which keeps this off the
+    filesystem predicate the registry refuses.
+    """
+    live = repo("kept", SRC)
+    dead = repo("gone", SRC)
+    registry.claim(live, direct=True)
+    _plant(live)
+    config.PROGRESS_DIR.mkdir(parents=True, exist_ok=True)
+    kept_json = progress.path_for(live)
+    orphan_json = progress.path_for(dead)
+    for path in (kept_json, orphan_json):
+        path.write_text('{"phase": "parsing"}')
+
+    assert cli._orphan_progress() == [orphan_json]
+
+    assert cli.cmd_prune(argparse.Namespace(apply=False, force=False)) == 0
+    assert orphan_json.is_file(), "the dry run deleted a file"
+
+    assert cli.cmd_prune(argparse.Namespace(apply=True, force=False)) == 0
+
+    assert not orphan_json.exists()
+    assert kept_json.is_file(), "a progress file whose store still stands was swept"

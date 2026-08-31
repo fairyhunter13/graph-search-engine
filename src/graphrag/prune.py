@@ -112,14 +112,20 @@ def verdict(entry) -> str:
     return "deleted"
 
 
-def survey() -> dict[str, list[str]]:
-    """Every row, by verdict. Reports and never acts: 4.2's read-only half."""
+def survey() -> dict[str, list[str] | int]:
+    """Every row, by verdict. Reports and never acts: 4.2's read-only half.
+
+    `read` is the population, not a total of the lists below it. An empty
+    `deleted` against 373 rows and an empty `deleted` against a registry that
+    failed to load are the same three lists otherwise.
+    """
+    rows = registry.load()
     out: dict[str, list[str]] = {"deleted": [], "unmounted": [], "unknown": []}
-    for key, entry in registry.load().items():
+    for key, entry in rows.items():
         answer = verdict(entry)
         if answer != "present":
             out[answer].append(key)
-    return {k: sorted(v) for k, v in out.items()}
+    return {"read": len(rows), **{k: sorted(v) for k, v in out.items()}}
 
 
 @dataclass(slots=True)
