@@ -148,6 +148,24 @@ So the Gen-1 buy is narrower than "fix the resolver". A CI3 receiver rule that r
 of the largest in-project miss in the estate, and it needs no import work and no external tool.
 That does not move the ruling above. It names which half of it to buy first.
 
+# Re-opened on 2026-08-31, and the ruling holds
+
+A token census of the caller's own workspace asked whether this deferral should move. Over 7 days
+that workspace ran 54,496 Bash commands, 7,324 tree searches and 450 index searches. Over 2 days
+only 1 of 39 searching sessions reached an index first. PHP is the estate's largest language, and
+a PHP caller question has no precise answer here, so a session that asks one falls back to a tree
+search.
+
+That reading raises the cost of the gap. It does not touch any of the three blockers above. No
+bridge exists, the byte-offset precondition is still untested, and CodeIgniter 3 still has no
+extension. So PHPStan stays deferred, and the evidence argues for the resolver, which this
+decision already names as the next buy.
+
+One thing did change on the caller's side. The `php-lsp` plugin is now enabled, and `intelephense`
+is installed. A language server answers a definition and a reference inside one open project, at
+edit time. It writes no edge into the graph, so it narrows the daily cost of the gap and it closes
+none of it.
+
 Related: [which languages get a SCIP tier](which-languages-get-a-scip-tier.md), which places this
 refusal beside the other eight,
 [scip is an overlay and never the extractor](scip-is-an-overlay-and-never-the-extractor.md),
