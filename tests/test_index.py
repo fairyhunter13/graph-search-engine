@@ -18,6 +18,16 @@ CYCLE = {
 }
 
 
+# One file per shape a `files` row can take: two that answer, one whose language
+# has no capability at all, and one that parses clean and defines nothing.
+MIXED = {
+    "a.py": CYCLE["a.py"],
+    "b.py": CYCLE["b.py"],
+    "conf.json": '{"a": 1}\n',
+    "empty.py": "# nothing here\n",
+}
+
+
 @pytest.fixture
 def cycle(repo):
     root = repo("cycle", CYCLE)
@@ -25,6 +35,55 @@ def cycle(repo):
     conn = store.connect(config.index_path(root))
     yield root, report, conn
     conn.close()
+
+
+@pytest.fixture
+def mixed(repo):
+    root = repo("mixed", MIXED)
+    index.index_once(root)
+    conn = store.connect(config.index_path(root))
+    yield conn
+    conn.close()
+
+
+def _reason(conn, path: str) -> tuple[str, str]:
+    row = conn.execute("SELECT tier, reason FROM files WHERE path = ?", (path,)).fetchone()
+    return row["tier"], row["reason"]
+
+
+def test_a_language_with_no_capability_says_so(mixed):
+    """`T-300`. A `.json` file and an empty `.py` file were the same row.
+
+    Both read `tier='none'` and nothing else, so the census that found 24,318 of
+    them could not say which were expected silence and which were a parse this
+    engine should have answered.
+    """
+    assert _reason(mixed, "conf.json") == ("none", "no_capability")
+    assert _reason(mixed, "empty.py") == ("none", "no_symbols")
+    assert _reason(mixed, "a.py")[0] == "symbols"
+
+
+def test_no_file_answers_none_without_saying_why(mixed):
+    """`T-302`. The invariant, stated as the query an operator would run.
+
+    The converse is not asserted, because it does not hold: `query_failed` rides
+    beside `symbols` where one query matched and the other raised.
+    """
+    bare = mixed.execute(
+        "SELECT count(*) AS n FROM files WHERE tier = 'none' AND reason = ''"
+    ).fetchone()["n"]
+    assert bare == 0
+
+    written = {row["reason"] for row in mixed.execute("SELECT DISTINCT reason FROM files")}
+    assert written - {""} <= store.REASONS
+
+
+def test_the_census_counts_every_file_once(mixed):
+    """`T-303`'s store half. `by_tier` sums to the file count or a row is unseen."""
+    census = store.census(mixed)
+    assert sum(census["by_tier"].values()) == store.counts(mixed)["files"]
+    assert census["by_reason"]["no_capability"] == 1
+    assert census["by_reason"]["no_symbols"] == 1
 
 
 def test_a_pass_writes_nodes_and_edges(cycle):

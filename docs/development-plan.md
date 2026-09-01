@@ -210,6 +210,7 @@ for the callers of a known function and check them by hand.
 | D-50 | `SymbolTable.module_of` is deleted: it was written and never read | done | src/graphrag/symtab.py | |
 | D-51 | The SCIP overlay rides the reconciler, because it has no per-file form | done | src/graphrag/index.py, tests/test_perfile.py | T-286 |
 | D-52 | This repository is public, so no tracked file carries a private name or a machine path, and the gate reads the whole tree | done | tests/test_hygiene.py, .githooks/pre-push, .github/workflows/ci.yml, scripts/partc_probe.py, src/graphrag/federation.py, src/graphrag/filters.py, src/graphrag/index.py, src/graphrag/scip/run.py, docs/, knowledge/ | T-295, T-296, T-304 |
+| D-53 | A file that answers nothing says which of five causes it was, and doctor counts them | done | src/graphrag/store.py, src/graphrag/extract.py, src/graphrag/index.py, src/graphrag/indexwrite.py, src/graphrag/cli.py, src/graphrag/config.py, tests/test_store.py, tests/test_extract.py, tests/test_index.py, tests/test_tools.py | T-299, T-300, T-301, T-302, T-303 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -736,3 +737,39 @@ content is already published. `coderag` reached the same ruling first and this o
 
 The scrub covers the working tree and not the history. These names are in past commits of an
 already-public repository, and stopping the bleeding is not undoing it.
+
+`D-53` was asked for so a pathological file would not be re-parsed and re-failed on every pass.
+That motive is dropped, and the row records it rather than quietly dropping it. `index.index_once`
+builds its targets from `discover.diff`, which compares `sha256` per path, so an unchanged file
+never reaches `extract` and the re-parse the column was to prevent does not happen. The skip cache
+went with it.
+
+What carries the row instead is a census. Over 376 live stores, 24,318 files read `tier='none'`
+and nothing else. `grammars.capabilities` returns nothing for vue, json and css, so their silence
+is expected; php, rust, javascript and typescript return the full set, and 6,301 files in those
+four are silent with no reason recorded anywhere. Five causes wore one name, and the column
+separates them. It is a diagnostic and not a graph change: the tier of every file is what it was.
+
+The bar this column has to clear is `producer_version`, which was dropped from this schema because
+nothing read it. `store.census` is the reader, and `cli.cmd_doctor` prints it beside `gaps` on
+purpose — `gaps` says a language captures no calls, and `by_reason` says how many files that
+silence costs. If the reader is ever cut, the column is cut with it.
+
+`EXTRACTION_ALGORITHM` moves 4 to 5, and that is mandatory rather than tidy. `connect()` runs
+`CREATE TABLE IF NOT EXISTS`, so an existing store keeps its seven-column `files` and the next
+`write_files` raises `no column named reason`. The stamp is the only carrier a schema change has,
+because `incompatible()` compares `algorithm`, `grammars` and `queries` and never the schema
+itself. `incompatible()` is unchanged, so S-07 still holds: the store is rebuilt and never altered
+in place.
+
+The invariant is `tier='none'` implies a reason, and the converse does not hold. `query_failed`
+rides beside `tier='symbols'` where one query matched and the other raised, and that partial case
+is the whole reason a swallowed query error is worth separating from a clean parse that found
+nothing.
+
+The rebuild was run and read back rather than assumed: 375 roots, 100,997 files, 438 seconds, zero
+errors. `count(*) WHERE tier='none' AND reason=''` is **0** in every store, and the three reasons
+written sum to the `none` count exactly. The 6,301 php, rust, javascript and typescript files the
+row was justified by come back as 6,271 `no_symbols` and 30 `unreadable`, so the silence was a
+clean parse with nothing to record and not a failure. Two `tmp*` stores no registry row claims
+still carry the seven-column table; `prune` is what removes those.

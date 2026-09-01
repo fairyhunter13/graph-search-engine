@@ -33,7 +33,8 @@ def test_an_unmapped_name_is_reported_rather_than_dropped():
 
 def test_typescript_concatenates_javascript():
     """TypeScript's tags file is a delta, and alone it captures nothing at all."""
-    alone = extract._run("typescript", queries.pack_tags("typescript"), _tree())
+    facts = extract.FileFacts(lang="typescript")
+    alone = extract._run(facts, "typescript", queries.pack_tags("typescript"), _tree())
     assert alone == []
 
     facts = extract.extract("typescript", FIXTURE)

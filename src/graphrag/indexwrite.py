@@ -30,12 +30,19 @@ _NODE_INSERT = (
 )
 
 
-def _tier(facts: FileFacts | None) -> str:
-    if facts is None or facts.error:
-        return "none"
+def _tier(facts: FileFacts | None) -> tuple[str, str]:
+    """The tier, and why it is not higher. A `none` tier always carries a reason,
+    and the converse does not hold: `query_failed` rides beside `symbols` where one
+    query matched and the other raised."""
+    if facts is None:
+        return "none", "no_symbols"
+    if facts.error:
+        return "none", facts.reason
     if facts.definitions or facts.references:
-        return "symbols"
-    return "imports" if facts.imports else "none"
+        return "symbols", facts.reason
+    if facts.imports:
+        return "imports", facts.reason
+    return "none", facts.reason or "no_symbols"
 
 
 def _node_id(conn: sqlite3.Connection, file_id: int, start: int, end: int) -> int:
@@ -53,12 +60,13 @@ def write_files(
     ids: dict[str, int] = {}
     for meta in metas:
         facts = facts_by_path.get(meta.rel_path)
+        tier, reason = _tier(facts)
         conn.execute(
-            "INSERT INTO files(path, mtime, size, sha256, lang, n_lines, tier) "
-            "VALUES(?, ?, ?, ?, ?, ?, ?) "
+            "INSERT INTO files(path, mtime, size, sha256, lang, n_lines, tier, reason) "
+            "VALUES(?, ?, ?, ?, ?, ?, ?, ?) "
             "ON CONFLICT(path) DO UPDATE SET mtime = excluded.mtime, size = excluded.size, "
             "sha256 = excluded.sha256, lang = excluded.lang, n_lines = excluded.n_lines, "
-            "tier = excluded.tier",
+            "tier = excluded.tier, reason = excluded.reason",
             (
                 meta.rel_path,
                 meta.mtime,
@@ -66,7 +74,8 @@ def write_files(
                 meta.sha256,
                 meta.lang,
                 facts.n_lines if facts else 0,
-                _tier(facts),
+                tier,
+                reason,
             ),
         )
         ids[meta.rel_path] = conn.execute(

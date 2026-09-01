@@ -412,6 +412,11 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-297 | A Go package receiver narrows to the package it names | S-01 | D-40 | done | tests/test_resolve.py::test_a_go_package_receiver_narrows_to_the_package_it_names |
 | T-298 | A PHP class receiver narrows across the case PSR-4 drops | S-01 | D-40 | done | tests/test_resolve.py::test_a_php_class_receiver_narrows_across_the_case_psr4_drops |
 | T-304 | The ban reads a name and its own capitalisation as one name | S-01 | D-52 | done | tests/test_hygiene.py::test_the_name_ban_folds_case |
+| T-299 | Every reason a writer produces is declared | S-01 | D-53 | done | tests/test_store.py::test_every_reason_a_writer_produces_is_declared |
+| T-300 | A language with no capability says so, and an empty file says something else | S-01 | D-53 | done | tests/test_index.py::test_a_language_with_no_capability_says_so |
+| T-301 | A query that raises leaves the file saying so | S-01 | D-53 | done | tests/test_extract.py::test_a_query_that_raises_leaves_the_file_saying_so |
+| T-302 | No file answers `none` without saying why | S-01 | D-53 | done | tests/test_index.py::test_no_file_answers_none_without_saying_why |
+| T-303 | `doctor` prints the file census, and `by_tier` sums to the file count | S-01 | D-53 | done | tests/test_index.py::test_the_census_counts_every_file_once, tests/test_tools.py::test_doctor_prints_the_file_census |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted
@@ -459,6 +464,24 @@ still shipped two names the list already held — one camel-cased inside a longe
 upper-cased as an environment variable. It fails on the predecessor because `_hits` does not exist
 there and the comparison it replaces returns no match on either. The case that grades it names
 neither leak: this file is tracked, and `T-295` reads it.
+
+`T-299` through `T-303` are six cases for five rows, and all six fail on the predecessor
+`1dd0fe9` — the whole selection, not a subset. Each fails for its own reason and not for a shared
+import error: `T-299` on `store.REASONS` not existing, `T-301` on `_run` swallowing the query error
+and leaving a `[]` byte-identical to a clean parse, `T-300` and `T-302` on `sqlite3` refusing a
+column named `reason`, `T-303`'s store half on `store.census` not existing and its doctor half on
+`cmd_doctor` having no `files` key.
+
+`T-299` is the mirror of `T-262`, which grades `store.NODE_KINDS` from the other direction, and it
+reads the writers rather than restating them: a set and a copy of itself agree about everything.
+Three modules assign a reason, in three syntactic shapes — an attribute assignment, a keyword
+argument, and the pair `_tier` returns — so the helper walks the AST for all three. The design's
+sixth value `not_parsed` was dropped by this case before it shipped: `filters.indexable` refuses a
+path whose language is empty, so every target reaches `extract` and carries facts, and a declared
+value no writer produces is a filter a reader writes against nothing.
+
+`T-302` asserts the invariant as the query an operator would actually run, which is what makes it
+the row the fleet reindex is graded by rather than a restatement of `T-300`.
 
 `T-286` fails on the predecessor commit with one failure, on the first assertion: the overlay ran on
 a hinted pass. The reading behind it is in `defects/the-overlay-ran-on-every-save.md`.

@@ -83,7 +83,13 @@ def index_path(project: Path | str) -> Path:
 # the edges produced from unchanged input. `store.incompatible` compares it and
 # the indexer wipes: there is no ALTER path, because a half-migrated graph
 # answers a structural question with a mix of two algorithms and says nothing.
-EXTRACTION_ALGORITHM = 4
+#
+# It is also the only carrier a schema change has. `incompatible` compares this,
+# the grammar pins and the query pins and nothing else, while `connect` runs
+# `CREATE TABLE IF NOT EXISTS` — so a store built before `files.reason` keeps its
+# eight-column table and the next write raises `no column named reason`. 5 is
+# that column.
+EXTRACTION_ALGORITHM = 5
 
 # -------------------------------------------------------------------- serving
 

@@ -9,6 +9,7 @@ capture at all.
 from __future__ import annotations
 
 import asyncio
+import json
 
 import pytest
 
@@ -130,3 +131,19 @@ def test_doctor_prints_the_capability_table(repo, capsys):
     printed = capsys.readouterr().out
     assert '"c"' in printed
     assert "no call capture" in printed or "c in this project" in printed
+
+
+def test_doctor_prints_the_file_census(repo, capsys):
+    """`T-303`. The reader that makes `files.reason` worth storing.
+
+    `producer_version` was dropped from this schema because nothing read it, so a
+    column with no reader is cut with its reader. This is that reader, and it sits
+    beside `gaps` on purpose: `gaps` says a language captures no calls, and
+    `by_reason` says how many files that silence costs.
+    """
+    root = repo("census", {"a.py": "def alpha():\n    return 1\n", "conf.json": "{}\n"})
+    index.index_once(root)
+    assert cli.main(["doctor", str(root)]) == 0
+    files = json.loads(capsys.readouterr().out)["files"]
+    assert files["by_tier"] == {"symbols": 1, "none": 1}
+    assert files["by_reason"] == {"no_capability": 1}

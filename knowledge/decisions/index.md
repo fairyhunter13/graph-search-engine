@@ -84,3 +84,8 @@
   corpora across three builds. The stage-1 redesign moved nothing; `D-40` raised p99 2.8 times
   against a reach that rose 8.5 times, so cost per reached node fell 8.9 times. No cache is
   written, and the one the plan drafted is the wrong instrument for what was measured.
+* [A silent file names its cause, and the census is what earns the
+  column](a-silent-file-names-its-cause.md) - 24,318 files across 376 stores read `tier='none'` and
+  five causes wore that one name. The skip-cache motive is dropped, because an unchanged file never
+  reaches the extractor. What earns the column is the 6,301 files in fully-capable languages that
+  are silent for no recorded reason.

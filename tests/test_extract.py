@@ -120,6 +120,26 @@ def test_one_import_row_per_statement():
 def test_an_unknown_language_is_reported_and_not_raised():
     facts = extract.extract("not-a-language", "x = 1\n")
     assert facts.error == "no parser for not-a-language"
+    assert facts.reason == "no_parser"
+    assert facts.definitions == []
+
+
+def test_a_query_that_raises_leaves_the_file_saying_so(monkeypatch):
+    """`T-301`. Cause F had no signal at all before this.
+
+    `_run` swallows a query error and returns `[]`, which is byte-identical in the
+    store to a file that parsed clean and defined nothing. A language with the
+    full capability set reaching `tier='none'` is the one shape that cannot be
+    read off the tier, so the mark is the whole point.
+    """
+
+    def boom(*_args):
+        raise RuntimeError("query is broken")
+
+    monkeypatch.setattr(extract, "_compiled", boom)
+    facts = extract.extract("python", "def alpha():\n    return 1\n")
+    assert facts.reason == "query_failed"
+    assert facts.error == ""
     assert facts.definitions == []
 
 

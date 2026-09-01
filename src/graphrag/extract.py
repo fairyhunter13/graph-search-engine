@@ -65,6 +65,10 @@ class FileFacts:
     references: list[Reference] = field(default_factory=list)
     imports: list[Import] = field(default_factory=list)
     error: str = ""
+    # Why this file answers less than its language promises, from `store.REASONS`.
+    # `error` carries the message and this carries the class; a reader branches on
+    # one and prints the other.
+    reason: str = ""
 
 
 @cache
@@ -77,17 +81,22 @@ def _compiled(lang: str, source: str):
     return ts.Query(get_language(lang), source)
 
 
-def _run(lang: str, source: str, tree) -> list:
+def _run(facts: FileFacts, lang: str, source: str, tree) -> list:
     """Run a query, returning matches. A broken query is not fatal.
 
     The cursor is the mutable half and is built per call; the query is immutable
     once compiled and is shared.
+
+    It leaves a mark rather than only an empty list. A swallowed query error
+    returned `[]`, which is byte-identical in the store to a file that parsed
+    clean and defined nothing.
     """
     if not source:
         return []
     try:
         return ts.QueryCursor(_compiled(lang, source)).matches(tree.root_node)
     except Exception:
+        facts.reason = "query_failed"
         return []
 
 
@@ -159,17 +168,19 @@ def extract(path_lang: str, text: str) -> FileFacts:
     parser = grammars.parser_for(path_lang)
     if parser is None:
         facts.error = f"no parser for {path_lang}"
+        facts.reason = "no_parser"
         return facts
     # No capability means both query texts are empty, so the parse can only
     # return an empty match set. JSON alone is 96% of the files in one indexed
     # tree, at 14.85 s a pass.
     if not grammars.capabilities(path_lang):
+        facts.reason = "no_capability"
         return facts
 
     data = text.encode("utf-8")
     tree = parser.parse(data)
 
-    for _, caps in _run(path_lang, queries.tags_source(path_lang), tree):
+    for _, caps in _run(facts, path_lang, queries.tags_source(path_lang), tree):
         names = caps.get("name") or []
         if not names:
             continue
@@ -209,7 +220,7 @@ def extract(path_lang: str, text: str) -> FileFacts:
         ref.scope = _enclosing(facts.definitions, ref.call_site_byte)
 
     facts.references = _dedup(facts.references, lambda r: (r.kind, r.name, r.call_site_byte))
-    rows = _dedup(_imports(path_lang, data, tree), lambda i: (i.module, i.symbol, i.alias))
+    rows = _dedup(_imports(facts, path_lang, data, tree), lambda i: (i.module, i.symbol, i.alias))
     facts.imports = _narrow(rows)
     return facts
 
@@ -242,10 +253,10 @@ def _dedup(rows: list, key) -> list:
     return out
 
 
-def _imports(lang: str, data: bytes, tree) -> list[Import]:
+def _imports(facts: FileFacts, lang: str, data: bytes, tree) -> list[Import]:
     """From the vendored query. No `tags.scm` supplies a usable import capture."""
     out: list[Import] = []
-    for _, caps in _run(lang, queries.import_source(lang), tree):
+    for _, caps in _run(facts, lang, queries.import_source(lang), tree):
         mods = caps.get("module") or []
         syms = caps.get("symbol") or []
         aliases = caps.get("alias") or []

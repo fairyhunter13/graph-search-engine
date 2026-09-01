@@ -34,7 +34,10 @@ CREATE TABLE IF NOT EXISTS files (
   n_lines INTEGER NOT NULL DEFAULT 0,
   -- none | imports | symbols | scip. What this file actually answers, which is
   -- not what its language answers in general: a parse can fail on one file.
-  tier    TEXT NOT NULL DEFAULT 'none'
+  tier    TEXT NOT NULL DEFAULT 'none',
+  -- Why this file answers less than its language promises, from a closed set.
+  -- 'none' with no reason was five causes wearing one name.
+  reason  TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS nodes (
@@ -131,6 +134,15 @@ NODE_KINDS: frozenset[str] = frozenset(
 # graded against a real index rather than trusted.
 EVIDENCE: frozenset[str] = frozenset(
     {"same_class", "same_file", "import", "package", "global", "scip"}
+)
+
+# Why a file answers less than its language promises, closed, and every value has
+# a writer. `not_parsed` is deliberately absent: `filters.indexable` refuses a
+# path whose language is empty, so every target reaches `extract` and carries
+# facts. A declared value nothing writes is a filter a reader writes against
+# nothing, which is what `NODE_KINDS` above was graded for.
+REASONS: frozenset[str] = frozenset(
+    {"unreadable", "no_parser", "no_capability", "query_failed", "no_symbols"}
 )
 
 
@@ -234,3 +246,28 @@ def counts(conn: sqlite3.Connection) -> dict[str, int]:
         "(SELECT count(*) FROM edges WHERE resolved = 1) AS resolved"
     ).fetchone()
     return {k: one[k] for k in ("files", "nodes", "edges", "resolved")}
+
+
+def census(conn: sqlite3.Connection) -> dict[str, dict[str, int]]:
+    """The file population by tier and by reason, for `doctor`.
+
+    Not folded into `counts`, which returns flat ints into three callers that all
+    want a number. It sits beside `gaps` instead, and the pairing is the point:
+    `gaps` says a language has no `calls` capability, and `by_reason` says how
+    many files that silence costs.
+
+    A reason is omitted where no file carries it, so an empty map is a store
+    where every file answers.
+    """
+    return {
+        "by_tier": {
+            row["tier"]: row["n"]
+            for row in conn.execute("SELECT tier, count(*) AS n FROM files GROUP BY tier")
+        },
+        "by_reason": {
+            row["reason"]: row["n"]
+            for row in conn.execute(
+                "SELECT reason, count(*) AS n FROM files WHERE reason != '' GROUP BY reason"
+            )
+        },
+    }

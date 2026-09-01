@@ -146,3 +146,47 @@ def test_the_two_closed_sets_have_a_reader():
     asked = {kind for _, kinds, _ in query.QUESTIONS.values() for kind in kinds}
     assert asked <= store.EDGE_KINDS
     assert set(queries.DEFINITION_KINDS.values()) <= store.NODE_KINDS
+
+
+def _reasons_written() -> set[str]:
+    """Every reason literal the three writer modules produce, read from the source.
+
+    Read from the writers and never from a literal here, because a set and a copy
+    of itself agree about everything. Two shapes carry a reason: an assignment or
+    a keyword naming the field, and the pair `_tier` returns.
+    """
+    import ast
+    from pathlib import Path
+
+    def _is_reason(node) -> bool:
+        return isinstance(node, ast.Attribute) and node.attr == "reason"
+
+    def _strings(node) -> set[str]:
+        if isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value:
+            return {node.value}
+        if isinstance(node, ast.BoolOp):
+            return {s for value in node.values for s in _strings(value)}
+        return set()
+
+    written: set[str] = set()
+    src = Path(store.__file__).parent
+    for name in ("extract.py", "index.py", "indexwrite.py"):
+        for node in ast.walk(ast.parse((src / name).read_text(encoding="utf-8"))):
+            if isinstance(node, ast.Assign) and any(_is_reason(t) for t in node.targets):
+                written |= _strings(node.value)
+            if isinstance(node, ast.keyword) and node.arg == "reason":
+                written |= _strings(node.value)
+            if isinstance(node, ast.Return) and isinstance(node.value, ast.Tuple):
+                written |= _strings(node.value.elts[-1])
+    return written
+
+
+def test_every_reason_a_writer_produces_is_declared():
+    """`T-299`. The mirror of `T-262`, over `store.REASONS`.
+
+    `not_parsed` was in the design and is not in the set. `filters.indexable`
+    refuses a path whose language is empty, so every target reaches `extract` and
+    carries facts, and a declared value nothing writes is a filter a reader writes
+    against nothing.
+    """
+    assert _reasons_written() == store.REASONS

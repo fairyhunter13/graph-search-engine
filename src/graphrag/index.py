@@ -64,7 +64,9 @@ def _facts(root: Path, metas: list[discover.FileMeta]) -> dict[str, extract.File
         try:
             text = (root / meta.rel_path).read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError) as exc:
-            out[meta.rel_path] = extract.FileFacts(lang=meta.lang, error=str(exc))
+            out[meta.rel_path] = extract.FileFacts(
+                lang=meta.lang, error=str(exc), reason="unreadable"
+            )
             progress.advance()
             continue
         out[meta.rel_path] = extract.extract(meta.lang, text)

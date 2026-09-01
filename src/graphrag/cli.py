@@ -88,6 +88,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     try:
         table = query.capability_report(conn)
         counts = query.project_counts(conn)
+        files = store.census(conn)
         if args.compact:
             # Hand-typed, because a full VACUUM rewrites the file and needs free
             # space equal to its size. Stores built before `auto_vacuum` reclaim
@@ -105,7 +106,13 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         for lang in table
         if "calls" not in grammars.capabilities(lang)
     ]
-    out = {"root": str(root), "counts": counts, "capabilities": table, "gaps": gaps}
+    out = {
+        "root": str(root),
+        "counts": counts,
+        "files": files,
+        "capabilities": table,
+        "gaps": gaps,
+    }
     if compacted is not None:
         out["compacted"] = compacted
     return _out(out)
