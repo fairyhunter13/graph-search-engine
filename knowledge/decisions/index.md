@@ -33,6 +33,11 @@
   command, but an operator can feed any of the nine by hand, so this is a decision and not a code
   limit. Measured over 372 stores: Go and TypeScript are kept, PHP and Python are refused, Java is
   deferred with one bounded experiment, and Vue is the wrong instrument entirely.
+* [The watcher hints which files changed, and the whole-tree scan
+  reconciles](the-watcher-hints-and-the-scan-reconciles.md) - inotify already answers what changed,
+  and `_submit` threw the answer away. The paths ride along as a hint now, so a save hashes those
+  files and not the 2,461 of `go-monorepo`. The hint never replaces the scan, because inotify has no
+  replay and only the unhinted pass heals an event no process saw.
 * [PHP gets no SCIP tier, PHPStan is deferred, and the resolver is the next
   buy](php-gets-no-scip-tier-and-the-resolver-is-the-next-buy.md) - `scip-php` is registered with no
   command, and it stays that way. It needs a Composer install no PHP tree in this estate has, and

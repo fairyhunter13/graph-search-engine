@@ -43,6 +43,9 @@ class IndexReport:
     # overlay was not asked for, which is the default.
     scip: dict[str, str] = field(default_factory=dict)
     unchanged: bool = False
+    # Whether the pass read a named path set rather than the tree. A hinted
+    # pass saw part of the tree, so its `languages` is a part too.
+    hinted: bool = False
     errors: dict[str, str] = field(default_factory=dict)
 
 
@@ -83,8 +86,16 @@ def _overlay(conn, root: Path, cfg: projcfg.ProjectConfig) -> dict[str, str]:
     return scip.overlay(conn, root, cfg.scip_indexers)
 
 
-def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
-    """Enumerate, diff, parse, resolve and write. The whole engine in one call."""
+def index_once(
+    root: Path | str, *, force: bool = False, paths: frozenset[str] | None = None
+) -> IndexReport:
+    """Enumerate, diff, parse, resolve and write. The whole engine in one call.
+
+    `paths` is the watcher's hint: the relative paths a batch of events named.
+    Given it, the pass stats and hashes only those paths and diffs them against
+    their own stored rows. Given nothing, it hashes the tree. The hint buys
+    latency and the scan buys correctness, so the hint never replaces the scan.
+    """
     root = Path(root).resolve()
     cfg = projcfg.effective(root)
     report = IndexReport(root=str(root))
@@ -98,14 +109,27 @@ def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
         conn = store.connect(path)
         report.rebuilt = reason
 
-    metas = discover.enumerate_files(root, exclude=cfg.exclude, languages=cfg.languages)
+    # A wiped store holds no row for the hint to diff against, and `force` asks
+    # for the tree by name. Either one outranks a hint.
+    if force or report.rebuilt:
+        paths = None
+    report.hinted = paths is not None
+
+    rows = conn.execute("SELECT path, sha256 FROM files")
+    if paths is None:
+        metas = discover.enumerate_files(root, exclude=cfg.exclude, languages=cfg.languages)
+        stored = {row["path"]: row["sha256"] for row in rows}
+    else:
+        metas = discover.enumerate_paths(root, paths, exclude=cfg.exclude, languages=cfg.languages)
+        # Narrowed to the hinted names, so a file the hint does not name is not
+        # read as removed and deleted.
+        stored = {row["path"]: row["sha256"] for row in rows if row["path"] in paths}
     report.languages = discover.languages(metas)
-    stored = {row["path"]: row["sha256"] for row in conn.execute("SELECT path, sha256 FROM files")}
     changes = discover.diff(metas, stored)
     if not changes and not force and not report.rebuilt:
-        conn.close()
         report.unchanged = True
-        report.files = len(metas)
+        report.files = store.counts(conn)["files"] if report.hinted else len(metas)
+        conn.close()
         return report
 
     # A whole-tree rewrite where the graph is being rebuilt from nothing, and the
@@ -175,5 +199,8 @@ def record(report: IndexReport) -> None:
     caps = None
     if not report.unchanged:
         counts = (report.nodes, report.edges, report.resolved)
-        caps = {lang: sorted(grammars.capabilities(lang)) for lang in report.languages}
+        # A hinted pass saw the languages the hint named, and writing those as
+        # the project's capabilities would narrow the row to one save's worth.
+        if not report.hinted:
+            caps = {lang: sorted(grammars.capabilities(lang)) for lang in report.languages}
     registry.mark_indexed(report.root, counts=counts, capabilities=caps)

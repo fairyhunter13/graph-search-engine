@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import shutil
 import threading
 import time
@@ -66,25 +67,94 @@ def test_single_edit_reparses_one_file(watching):
     assert list(rows[0]["projects"]) == [str(watching)]
 
 
-def test_a_further_save_restarts_the_quiet_window(tmp_path):
-    """`T-214`: a pass runs once the person stops typing, never once per save."""
+def test_a_submitted_job_is_takeable_at_once(tmp_path):
+    """T-260. The 15 s window bought one whole-tree pass per burst of saves, and
+    it was what a query could be behind the disk by. A per-file pass costs
+    milliseconds, so the window is pure latency and the countdown is deleted.
+    """
+    assert "delay" not in inspect.signature(jobs.Queue.submit).parameters
     queue = jobs.Queue()
-    queue.submit(tmp_path, delay=0.3)
-    time.sleep(0.2)
-    queue.submit(tmp_path, delay=0.3)
-    # This take runs out past the first countdown, so a job it returned would be
-    # one the second save should have pushed back.
-    assert queue.take(timeout=0.2) is None
-    assert queue.take(timeout=1.0) == str(tmp_path.resolve())
+    assert queue.submit(tmp_path) == "queued"
+    assert queue.take(timeout=0.0) == jobs.Job(str(tmp_path.resolve()))
 
 
-def test_an_explicit_call_pulls_a_waiting_job_forward(tmp_path):
-    """`T-215`: a caller wanting the tree now is not held by someone else's countdown."""
+def test_the_watcher_hands_the_changed_paths_to_the_queue(repo):
+    """T-270. inotify already answers "what changed", and `_submit` threw that
+    answer away and submitted a bare root string. Rediscovering it costs the
+    228-252 ms whole-tree hash on a 2,461-file repo, which is the latency floor
+    this stage removes.
+    """
+    root = repo("hinted", TWO)
     queue = jobs.Queue()
-    assert queue.submit(tmp_path, delay=30) == "queued"
-    assert queue.take(timeout=0.05) is None
-    assert queue.submit(tmp_path) == "dropped"
-    assert queue.take(timeout=1.0) == str(tmp_path.resolve())
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(jobs, "QUEUE", queue)
+        touched = watch._submit({(2, str(root / "a.py"))}, (root,))
+    assert touched == {str(root): 1}
+    assert queue.take(timeout=0.1).paths == frozenset({"a.py"})
+
+
+def test_two_hinted_submissions_merge_their_paths(tmp_path):
+    """T-271. The old `dropped` verdict was correct only while a job meant
+    *reindex everything*. A dropped second submission loses its paths, and the
+    file stays stale until the next unhinted pass.
+    """
+    queue = jobs.Queue()
+    assert queue.submit(tmp_path, paths=frozenset({"a.py"})) == "queued"
+    assert queue.submit(tmp_path, paths=frozenset({"b.py"})) == "merged"
+    assert queue.take(timeout=0.1).paths == frozenset({"a.py", "b.py"})
+
+
+def test_a_hint_merged_with_a_whole_tree_job_runs_whole_tree(tmp_path):
+    """T-272. The merge must widen and never narrow. A scan covers any hint, so
+    the union of a hint and a scan is the scan, in either arrival order."""
+    first = jobs.Queue()
+    first.submit(tmp_path)
+    first.submit(tmp_path, paths=frozenset({"a.py"}))
+    assert first.take(timeout=0.1).paths is None
+
+    second = jobs.Queue()
+    second.submit(tmp_path, paths=frozenset({"a.py"}))
+    second.submit(tmp_path)
+    assert second.take(timeout=0.1).paths is None
+
+
+def test_a_hint_over_the_cap_falls_back_to_the_whole_tree(tmp_path, monkeypatch):
+    """T-273. A `git checkout` moves thousands of files inside one 400 ms
+    debounce window, and rewriting them one at a time costs more than one scan.
+    The merge is capped too, or two hints under the cap sum past it."""
+    monkeypatch.setattr(config, "WATCH_HINT_MAX_PATHS", 3)
+    queue = jobs.Queue()
+    queue.submit(tmp_path, paths=frozenset(f"f{n}.py" for n in range(4)))
+    assert queue.take(timeout=0.1).paths is None
+
+    queue.submit(tmp_path, paths=frozenset({"a.py", "b.py"}))
+    queue.submit(tmp_path, paths=frozenset({"c.py", "d.py"}))
+    assert queue.take(timeout=0.1).paths is None
+
+
+def test_the_prune_clock_still_ticks_on_an_empty_batch(repo):
+    """T-275. `WATCH_QUIET_MS` sat four lines from `yield_on_timeout=True`, and
+    that flag is what makes the loop yield an empty batch every second. The
+    empty batch is the only clock `prune.run_due` is measured against, so a
+    deletion of the flag stops pruning and no prune test sees it.
+    """
+    root = repo("ticking", TWO)
+    registry.claim(root, direct=True)
+    _drain()
+    ticks: list[int] = []
+
+    def fake(*roots, **_kw):
+        yield set()  # what `yield_on_timeout` produces on a quiet second
+        watch._stop.set()
+
+    def counted():
+        ticks.append(1)
+        return {"forgotten": 0, "unclaimed": 0}
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(prune.PRUNER, "run_due", counted)
+        _run_loop(mp, fake)
+    assert ticks, "the empty batch no longer reaches the prune clock"
 
 
 def test_a_file_the_indexer_would_refuse_never_wakes_it(watching):

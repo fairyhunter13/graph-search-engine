@@ -3,24 +3,58 @@
 The queue is the write serializer. There is no second write lock, because a
 lock plus a queue is two answers to one question and they drift apart.
 
-Its dedup is asymmetric on purpose. A job already queued is dropped, because
+Its dedup is asymmetric on purpose. A job already queued is merged into, because
 the queued pass has not read the tree yet and will see the change. A job whose
 root is already *running* is queued again, because the running pass may have
 read the tree before the change landed. Losing that re-queue is a missed edit
 that never heals until the next full pass.
+
+A job carries the watcher's hint, and the merge is what keeps it. Dropping the
+second submission was safe while a job meant *reindex everything*. It loses the
+paths the moment a job names them, and the file then stays stale until the next
+unhinted pass.
 """
 
 from __future__ import annotations
 
 import logging
 import threading
-import time
 from collections import deque
+from dataclasses import dataclass
 from pathlib import Path
 
-from . import index, ledger, registry, trace
+from . import config, index, ledger, registry, trace
 
 log = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, slots=True)
+class Job:
+    """One pass to run. `paths` is the hint, and `None` means the whole tree."""
+
+    root: str
+    paths: frozenset[str] | None = None
+
+
+def _capped(paths) -> frozenset[str] | None:
+    """A hint the pass is cheaper for, or `None` for the whole-tree scan.
+
+    A branch switch moves thousands of files inside one debounce window, and
+    rewriting them one at a time costs more than one scan of the tree.
+    """
+    if paths is None:
+        return None
+    paths = frozenset(paths)
+    if len(paths) > config.WATCH_HINT_MAX_PATHS:
+        return None
+    return paths
+
+
+def _merge(left, right) -> frozenset[str] | None:
+    """An unhinted job absorbs a hinted one, because a scan covers any hint."""
+    if left is None or right is None:
+        return None
+    return _capped(left | right)
 
 
 class Queue:
@@ -29,66 +63,47 @@ class Queue:
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._waiting: deque[str] = deque()
-        self._queued: set[str] = set()
+        self._hints: dict[str, frozenset[str] | None] = {}
         self._running: set[str] = set()
-        self._ready: dict[str, float] = {}
         self._wake = threading.Condition(self._lock)
 
-    def submit(self, root: Path | str, *, delay: float = 0.0) -> str:
-        """Returns `queued`, `dropped` or `requeued`, and the third is the point.
-
-        `delay` holds the job until the project has been quiet that long, and a
-        further submission restarts the countdown. Saves land a median 11 s
-        apart while someone edits, and each one otherwise buys a whole pass.
-        """
+    def submit(self, root: Path | str, *, paths=None) -> str:
+        """Returns `queued`, `merged` or `requeued`, and the third is the point."""
         key = str(Path(root).resolve())
+        hint = _capped(paths)
         with self._wake:
-            ready = time.monotonic() + delay
-            if key in self._queued:
-                # An explicit call pulls a waiting job forward; a further watch
-                # event pushes it back.
-                self._ready[key] = ready if not delay else max(self._ready[key], ready)
+            if key in self._hints:
+                self._hints[key] = _merge(self._hints[key], hint)
                 self._wake.notify()
-                return "dropped"
+                return "merged"
             verdict = "requeued" if key in self._running else "queued"
-            self._queued.add(key)
+            self._hints[key] = hint
             self._waiting.append(key)
-            self._ready[key] = ready
             self._wake.notify()
             return verdict
 
-    def _pop_ready(self) -> str | None:
-        now = time.monotonic()
-        for key in self._waiting:
-            if self._ready[key] <= now:
-                self._waiting.remove(key)
-                self._queued.discard(key)
-                self._ready.pop(key, None)
-                self._running.add(key)
-                return key
-        return None
+    def _pop(self) -> Job | None:
+        if not self._waiting:
+            return None
+        key = self._waiting.popleft()
+        paths = self._hints.pop(key, None)
+        self._running.add(key)
+        return Job(key, paths)
 
-    def take(self, timeout: float = 1.0) -> str | None:
+    def take(self, timeout: float = 1.0) -> Job | None:
         with self._wake:
-            key = self._pop_ready()
-            if key is not None:
-                return key
-            if self._ready:
-                timeout = min(timeout, max(0.0, min(self._ready.values()) - time.monotonic()))
+            job = self._pop()
+            if job is not None:
+                return job
             self._wake.wait(timeout)
-            return self._pop_ready()
+            return self._pop()
 
     def drain(self) -> int:
-        """Discard everything waiting, quiet window included.
-
-        `take` skips a job whose countdown is still running, so a caller that
-        polls `take` until it returns None cannot empty the queue.
-        """
+        """Discard everything waiting. What is running is not touched."""
         with self._wake:
             dropped = len(self._waiting)
             self._waiting.clear()
-            self._queued.clear()
-            self._ready.clear()
+            self._hints.clear()
             return dropped
 
     def done(self, key: str) -> None:
@@ -108,23 +123,24 @@ def run_worker(queue: Queue = QUEUE, *, stop: threading.Event | None = None) -> 
     """Drain the queue until told to stop. One thread, so one writer."""
     stop = stop or threading.Event()
     while not stop.is_set():
-        key = queue.take()
-        if key is None:
+        job = queue.take()
+        if job is None:
             continue
         with trace.span():
             try:
-                report = index.index_once(key)
+                report = index.index_once(job.root, paths=job.paths)
                 index.record(report)
                 ledger.append(
                     ledger.RUN,
                     {
                         "kind": "index",
-                        "root": key,
+                        "root": job.root,
                         "files": report.files,
                         "parsed": report.parsed,
                         "edges": report.edges,
                         "resolved": report.resolved,
                         "unchanged": report.unchanged,
+                        "hinted": report.hinted,
                         "rebuilt": report.rebuilt,
                     },
                 )
@@ -132,8 +148,8 @@ def run_worker(queue: Queue = QUEUE, *, stop: threading.Event | None = None) -> 
                 # The row carries the failure, so the health rule can hold it
                 # across two samples. A worker that dies on one project stops
                 # indexing every other one.
-                registry.mark_indexed(key, error=str(exc))
-                ledger.append(ledger.RUN, {"kind": "index", "root": key, "error": str(exc)})
-                log.exception("index pass failed for %s", key)
+                registry.mark_indexed(job.root, error=str(exc))
+                ledger.append(ledger.RUN, {"kind": "index", "root": job.root, "error": str(exc)})
+                log.exception("index pass failed for %s", job.root)
             finally:
-                queue.done(key)
+                queue.done(job.root)

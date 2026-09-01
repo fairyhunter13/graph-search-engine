@@ -2,9 +2,9 @@
 type: Constraint
 resource: src/graphrag/index.py, src/graphrag/watch.py, src/graphrag/config.py
 title: A pass waits 15 seconds for the project to go quiet, and a query may be that far behind the disk
-description: "Watch batches carried one event each, 5 to 20 seconds apart, so the debounce merged almost nothing and every save bought a whole-tree pass. The countdown restarts on each event, and an explicit index call pulls the job forward."
-tags: [watcher, indexing, throughput, freshness]
-status: stable
+description: "Deprecated on 2026-09-01 with `WATCH_QUIET_MS`. The window hedged a whole-tree pass, and `D-47` made the pass per file, so the 15 seconds became pure latency. Watch batches carried one event each, 5 to 20 seconds apart, so the debounce merged almost nothing and every save bought a whole-tree pass. The countdown restarts on each event, and an explicit index call pulls the job forward."
+tags: [watcher, indexing, throughput, freshness, deviation]
+status: deprecated
 generated: { by: claude/opus-5, at: 2026-08-27T00:00:00Z }
 sources:
   - id: queue
@@ -39,3 +39,20 @@ longer empties the queue. `Queue.drain` discards what is waiting, countdown incl
 
 [^run-ledger]: The daemon's own run ledger, read over one hour on 2026-08-27.
 [^queue]: `index.Queue.drain`, used by the watcher tests between cases.
+
+# Deprecated on 2026-09-01, and what replaced it
+
+`WATCH_QUIET_MS` is deleted. See
+[the watcher hints which files changed and the scan reconciles](../decisions/the-watcher-hints-and-the-scan-reconciles.md).
+
+The window bought one whole-tree pass per burst of saves, and it cost every query up to 15 seconds
+of staleness on top of the pass. `D-47` made the pass rewrite the files the diff names, and `D-48`
+made the watcher hand those names over, so a save costs a hinted diff and a per-file write. At that
+price the hedge is worth less than the latency it charges.
+
+The measurement above stands as written. 89 passes an hour is unaffordable at whole-tree cost and
+cheap at per-file cost, so the same figure argues the opposite way once the cost moves.
+
+`Queue._ready`, the countdown in `_pop_ready` and the `delay` argument all go with the window.
+`Queue.drain` stays, and its reason narrows: it discards what is waiting, and there is no countdown
+left for a `take` to skip.

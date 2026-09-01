@@ -69,5 +69,18 @@ The whole-tree hash is not deleted when `D-48` lands, and it must not be. The qu
 *does the graph match the disk*, which stays correct after a crash, after a missed inotify event and
 after a week of downtime. The hint buys latency. The scan buys correctness.
 
+# The scan is off the save path since 2026-09-01, and it is not deleted
+
+`D-48` landed. See
+[the watcher hints which files changed and the scan reconciles](../decisions/the-watcher-hints-and-the-scan-reconciles.md).
+
+A pass given the watcher's paths hashes those files and not the tree, so the 228-252 ms floor is off
+the save path. The unhinted pass still hashes every file, on the daemon's start and on the
+reconciler, and that is the design rather than a leftover. inotify has no replay, so the scan is the
+only thing that heals an event no process saw.
+
+So the title is false about the write and false about a hinted scan. It stays true about the
+reconciler, which is the last claim this record carries.
+
 [^pass]: `index._facts`, which drives the progress file over the parsable set.
 [^watcher]: `watch._submit`, one `QUEUE.submit` per project the batch touched.

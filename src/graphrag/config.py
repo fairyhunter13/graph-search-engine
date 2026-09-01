@@ -123,11 +123,10 @@ PROGRESS_WRITE_S = float(_env("PROGRESS_WRITE_S") or "1.0")
 WATCH_POLL_MS = _env_int("WATCH_POLL_MS", 1000)
 WATCH_DEBOUNCE_MS = _env_int("WATCH_DEBOUNCE_MS", 400)
 
-# How quiet a project has to be before its pass starts. The debounce above is
-# the Rust batch and merges nothing here: saves arrive a median 11 s apart, so
-# at 400 ms every save bought a whole-tree pass. The window is what a query can
-# be behind the disk by, on top of the pass itself.
-WATCH_QUIET_MS = _env_int("WATCH_QUIET_MS", 15000)
+# How many paths a watcher hint may carry before the job falls back to the
+# whole-tree scan. A branch switch moves thousands of files inside one debounce
+# window, and rewriting them one at a time costs more than one scan.
+WATCH_HINT_MAX_PATHS = _env_int("WATCH_HINT_MAX_PATHS", 200)
 
 # ------------------------------------------------------------------- querying
 

@@ -175,6 +175,39 @@ def _walked_files(root: Path, exclude=()) -> list[Path]:
     return found
 
 
+def _meta(root: Path, rel: str, keep: frozenset[str], exclude) -> FileMeta | None:
+    """One file as the store will hold it, or None where the pass refuses it."""
+    path = root / rel
+    if exclude and filters.matches_any(rel, exclude):
+        return None
+    try:
+        stat = path.stat()
+    except OSError:
+        return None
+    if not path.is_file() or not filters.indexable(path, size=stat.st_size):
+        return None
+    lang = filters.language_of(path)
+    if keep and lang not in keep:
+        return None
+    try:
+        digest, body = _hash_and_body(path, stat.st_size)
+    except OSError:
+        return None
+    # A generated bundle is one node with ten thousand edges that resolve
+    # nothing, and one such tree held 28.7% of every reference row in the
+    # fleet. The watcher still wakes for it, and the pass then finds no
+    # change, which is cheaper than keeping the file.
+    if body is not None and filters.generated(body):
+        return None
+    return FileMeta(
+        rel_path=rel,
+        size=stat.st_size,
+        mtime=stat.st_mtime,
+        sha256=digest,
+        lang=lang,
+    )
+
+
 def enumerate_files(root: Path | str, *, exclude=(), languages=()) -> list[FileMeta]:
     """Every indexable file under `root`, as the store will hold it.
 
@@ -198,37 +231,32 @@ def enumerate_files(root: Path | str, *, exclude=(), languages=()) -> list[FileM
             rel = str(path.relative_to(root))
         except ValueError:
             continue
-        if exclude and filters.matches_any(rel, exclude):
-            continue
-        try:
-            stat = path.stat()
-        except OSError:
-            continue
-        if not path.is_file() or not filters.indexable(path, size=stat.st_size):
-            continue
-        lang = filters.language_of(path)
-        if keep and lang not in keep:
-            continue
-        try:
-            digest, body = _hash_and_body(path, stat.st_size)
-        except OSError:
-            continue
-        # A generated bundle is one node with ten thousand edges that resolve
-        # nothing, and one such tree held 28.7% of every reference row in the
-        # fleet. The watcher still wakes for it, and the pass then finds no
-        # change, which is cheaper than keeping the file.
-        if body is not None and filters.generated(body):
-            continue
-        metas.append(
-            FileMeta(
-                rel_path=rel,
-                size=stat.st_size,
-                mtime=stat.st_mtime,
-                sha256=digest,
-                lang=lang,
-            )
-        )
+        meta = _meta(root, rel, keep, exclude)
+        if meta is not None:
+            metas.append(meta)
     metas.sort(key=lambda m: m.rel_path)
+    return metas
+
+
+def enumerate_paths(root: Path | str, paths, *, exclude=(), languages=()) -> list[FileMeta]:
+    """The same shape as `enumerate_files`, over the paths the caller names.
+
+    The watcher already knows which files moved, and the whole-tree hash costs
+    228-252 ms on a 2,461-file repo. A path that is gone, or that the filters
+    refuse, is absent from the result. The caller diffs the result against the
+    stored rows for the same names, so an absent path reads as a removal.
+    """
+    root = Path(root).resolve()
+    keep = frozenset(languages)
+    metas: list[FileMeta] = []
+    for rel in sorted(set(paths)):
+        # A hint arrives from the watcher, so it is data and not a literal. A
+        # path that leaves the root would rewrite another project's rows.
+        if Path(rel).is_absolute() or ".." in Path(rel).parts:
+            continue
+        meta = _meta(root, rel, keep, exclude)
+        if meta is not None:
+            metas.append(meta)
     return metas
 
 

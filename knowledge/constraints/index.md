@@ -15,9 +15,9 @@
   every other file as a repo that does not define the name. Per-file facts are not persisted, so
   there is nothing to reuse.
 * [A pass waits 15 seconds for the project to go quiet, and a query may be that far behind the
-  disk](a-pass-waits-for-the-project-to-go-quiet.md) - Watch batches carried one event each, 5 to 20
-  seconds apart, so the debounce merged almost nothing and every save bought a whole-tree pass. The
-  countdown restarts on each event, and an explicit index call pulls the job forward.
+  disk](a-pass-waits-for-the-project-to-go-quiet.md) - **Deprecated 2026-09-01.** Watch batches
+  carried one event each, 5 to 20 seconds apart, so the debounce merged almost nothing and every
+  save bought a whole-tree pass. The window hedged that cost, and `D-47` removed the cost.
 * [A stale date without an explicit UTC offset reads as fresh
   forever](a-stale-date-needs-an-explicit-utc-offset.md) - OKF section 5 wants an absolute instant.
   An offset-free value parses, passes the standard rule set, and turns freshness checking off with

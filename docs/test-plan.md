@@ -389,6 +389,28 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-280 | The file count is the tree's and carries no synthetic row | S-01 | D-47 | done | tests/test_perfile.py::test_the_file_count_is_the_tree_s_and_carries_no_synthetic_row |
 | T-282 | A changed file makes one file parse, and not the tree | S-01 | D-47 | done | tests/test_index.py::test_a_changed_file_makes_the_pass_run |
 | T-283 | Deleting a file takes its FTS rows through the pass path | S-01 | D-47 | done | tests/test_store.py::test_deleting_a_file_takes_its_fts_rows_with_it |
+| T-260 | A submitted job is takeable at once | S-01 | D-48 | done | tests/test_watch.py::test_a_submitted_job_is_takeable_at_once |
+| T-270 | The watcher hands the changed paths to the queue | S-01 | D-48 | done | tests/test_watch.py::test_the_watcher_hands_the_changed_paths_to_the_queue |
+| T-285 | A hinted pass hashes the named paths and not the tree | S-01 | D-48 | done | tests/test_perfile.py::test_a_hinted_pass_hashes_the_named_paths_and_not_the_tree |
+| T-271 | Two hinted submissions merge their paths | S-01 | D-48 | done | tests/test_watch.py::test_two_hinted_submissions_merge_their_paths |
+| T-272 | A hint merged with a whole-tree job runs whole-tree | S-01 | D-48 | done | tests/test_watch.py::test_a_hint_merged_with_a_whole_tree_job_runs_whole_tree |
+| T-273 | A hint over the cap falls back to the whole tree | S-01 | D-48 | done | tests/test_watch.py::test_a_hint_over_the_cap_falls_back_to_the_whole_tree |
+| T-274 | An unhinted pass finds a change no event reported | S-01 | D-48 | done | tests/test_perfile.py::test_an_unhinted_pass_finds_a_change_no_event_reported |
+| T-275 | The prune clock still ticks on an empty batch | S-01 | D-48 | done | tests/test_watch.py::test_the_prune_clock_still_ticks_on_an_empty_batch |
+| T-284 | The queue merges a queued job and requeues a running one | S-01 | D-48 | done | tests/test_index.py::test_the_queue_merges_a_queued_job_and_requeues_a_running_one |
+
+`T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
+negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted
+window: the empty batch that flag produces is the only clock `prune.run_due` is measured against,
+and nothing else calls it. `T-274` fails on the predecessor for the keyword alone, because that
+pass reads the tree every time and the healing it asserts is what the pass already was. The other
+seven fail there on the behaviour.
+
+`T-285` is the second half of the plan's `T-270`: the watcher hands the paths over, and the pass
+hashes those and not the tree. Two claims, so two cases, and the plan wrote them as one row.
+
+`T-284` records an edited test rather than a new one. The queue verdict `dropped` became `merged`,
+because dropping a second submission was correct only while a job meant *reindex everything*.
 
 `T-277` and `T-280` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `D-44` bought the `auto_vacuum` pragma and `D-46` removed the synthetic

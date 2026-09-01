@@ -138,6 +138,54 @@ def test_two_overlapping_identifier_ranges_are_not_both_written(repo):
         conn.close()
 
 
+def test_a_hinted_pass_hashes_the_named_paths_and_not_the_tree(tree, monkeypatch):
+    """T-270, the pass half. Stage 2 made the write per file and left the scan
+    whole, so the floor on save-to-searchable stayed the 228-252 ms hash on a
+    2,461-file repo. The hint is what removes it.
+
+    `enumerate_files` is replaced by a refusal, so a pass that still reads the
+    tree fails here rather than merely running slower.
+    """
+    root, conn = tree
+
+    def refuse(*_args, **_kwargs):
+        raise AssertionError("the hinted pass hashed the whole tree")
+
+    monkeypatch.setattr(discover, "enumerate_files", refuse)
+    (root / "a.py").write_text("def alpha():\n    return 1\n\n\ndef delta():\n    return 4\n")
+    report = index.index_once(root, paths=frozenset({"a.py"}))
+
+    assert report.hinted is True
+    assert report.parsed == 1
+    assert set(_nodes_of(conn, "a.py")) == {"alpha", "delta"}
+    # The stored rows are narrowed to the hint too. Diffed against all of them,
+    # every file the hint does not name reads as removed and is deleted.
+    assert set(_nodes_of(conn, "b.py")) == {"beta"}
+
+
+def test_an_unhinted_pass_finds_a_change_no_event_reported(tree):
+    """T-274. The reconciler, and the reason the hint never replaces the scan.
+
+    inotify has no replay, so an event lost to a re-arm, to a crash or to a week
+    of downtime is lost for good. A watcher-only engine goes quietly stale and
+    no test sees it.
+
+    A regression guard, and not a negative test. Against the predecessor it
+    fails on the keyword alone, because that pass reads the tree every time and
+    the healing it asserts is what the whole pass already was.
+    """
+    root, conn = tree
+    (root / "b.py").write_text("def beta():\n    return 2\n\n\ndef zeta():\n    return 6\n")
+
+    # The hint names another file, which is what a dropped event leaves behind.
+    index.index_once(root, paths=frozenset({"a.py"}))
+    assert set(_nodes_of(conn, "b.py")) == {"beta"}
+
+    report = index.index_once(root)
+    assert report.hinted is False
+    assert set(_nodes_of(conn, "b.py")) == {"beta", "zeta"}
+
+
 def test_a_pass_that_rewrites_part_of_the_tree_does_not_checkpoint(tree, monkeypatch):
     """T-276. `wal_checkpoint(TRUNCATE)` is fsync-bound, and after this stage a
     pass runs on every save. The pages worth reclaiming are the ones a whole-tree

@@ -94,16 +94,16 @@ def test_an_unknown_direction_is_refused():
         traverse._columns("sideways")
 
 
-def test_the_queue_drops_a_queued_job_and_requeues_a_running_one(tmp_path):
+def test_the_queue_merges_a_queued_job_and_requeues_a_running_one(tmp_path):
     queue = jobs.Queue()
     assert queue.submit(tmp_path) == "queued"
-    assert queue.submit(tmp_path) == "dropped"
+    assert queue.submit(tmp_path) == "merged"
 
     taken = queue.take(timeout=0.1)
-    assert taken == str(tmp_path.resolve())
+    assert taken == jobs.Job(str(tmp_path.resolve()))
     assert queue.submit(tmp_path) == "requeued"
 
-    queue.done(taken)
+    queue.done(taken.root)
     assert queue.take(timeout=0.1) == taken
     assert queue.take(timeout=0.1) is None
 

@@ -133,17 +133,26 @@ def _note_deletions(batch: set[tuple[int, str]]) -> int:
 
 
 def _submit(batch: set[tuple[int, str]], roots: tuple[Path, ...]) -> dict[str, int]:
-    """One job per project the batch touched, never one job per file."""
+    """One job per project the batch touched, never one job per file.
+
+    The paths ride along as a hint, so the pass hashes them instead of the tree.
+    They are never the source of truth: inotify has no replay, and the unhinted
+    pass is what heals a change no event reported.
+    """
     touched: dict[str, int] = {}
+    hints: dict[str, set[str]] = {}
     for _kind, raw in batch:
         if raw in _keys or raw in _links:
             continue
-        owner = _owner(Path(raw), roots)
+        path = Path(raw)
+        owner = _owner(path, roots)
         if owner is None:
             continue
-        touched[str(owner)] = touched.get(str(owner), 0) + 1
-    for root in touched:
-        jobs.QUEUE.submit(root, delay=config.WATCH_QUIET_MS / 1000)
+        key = str(owner)
+        touched[key] = touched.get(key, 0) + 1
+        hints.setdefault(key, set()).add(str(path.relative_to(owner)))
+    for root, paths in hints.items():
+        jobs.QUEUE.submit(root, paths=frozenset(paths))
     return touched
 
 
