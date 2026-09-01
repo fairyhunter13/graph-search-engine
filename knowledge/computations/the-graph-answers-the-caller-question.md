@@ -58,11 +58,11 @@ caller, and scoping it out prices a correct answer as a false positive.
 The test asserts the ordering and the class split, never the digits. A number moves with the corpus,
 and the corpus is the repo under work.
 
-The arm figures also move between runs on one commit. Fourteen runs span `d64e8fc`, `396f183`,
+The arm figures also move between runs on one commit. Fifteen runs span `d64e8fc`, `396f183`,
 `1443efc`, `75bacf7`, `5f3495c`, `4c89a21`, `57de0b0`, `4470719`, `61cbcba`, `58c8a19`, `3ca2c9d`,
-`e6f2282` and `7957b6d`. They
-gave 0.535, 0.510, 0.510, 0.497, 0.497, 0.497, 0.488, 0.454, 0.439, 0.452, 0.407, 0.442, 0.432 and 0.441 lexical. They
-gave 0.331, 0.316, 0.316, 0.306, 0.306, 0.306, 0.272, 0.294, 0.291, 0.226, 0.201, 0.202, 0.214 and 0.189 semantic. The
+`e6f2282`, `7957b6d` and `0f6520c`. They
+gave 0.535, 0.510, 0.510, 0.497, 0.497, 0.497, 0.488, 0.454, 0.439, 0.452, 0.407, 0.442, 0.432, 0.441 and 0.466 lexical. They
+gave 0.331, 0.316, 0.316, 0.306, 0.306, 0.306, 0.272, 0.294, 0.291, 0.226, 0.201, 0.202, 0.214, 0.189 and 0.176 semantic. The
 graph scored 1.000 in every one. The retrieval arms rank by an embedding over a live index, so read them
 as the scale of the gap and never as a constant.
 
@@ -199,5 +199,11 @@ The arms read 0.441 lexical and 0.189 semantic. The semantic arm is the lowest o
 and the lexical arm the highest since `4470719`, which is the spread doing what the section above
 says it does and not a finding.
 
+The fifteenth run, at `0f6520c`, holds 1.000 on both classes with no repair to the truth — the second
+such run in a row, after six that each needed one. `D-53` adds a column and a reader and touches no
+resolution path, so an unmoved graph figure is the reading it should give. Both arms moved again and
+in opposite directions, 0.466 lexical and 0.176 semantic, which is the widest spread of the fifteen
+in both directions at once and still not a finding.
+
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 85 ground-truth caller entries, measured 2026-09-01 at commit `7957b6d`.
+[^two-engine-run]: Ten caller questions over this repo, 85 ground-truth caller entries, measured 2026-09-01 at commit `0f6520c`.
