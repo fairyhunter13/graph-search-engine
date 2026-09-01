@@ -53,10 +53,12 @@
 * [The overlay ran on every save](the-overlay-ran-on-every-save.md) - A one-file save on the Go monorepo was
   queryable after 34.7 s against a one-second criterion. The SCIP overlay was 49 s of a 58 s
   profiled pass: it re-ran the indexer and re-read 1.8 M occurrences for one changed file.
-* [The fleet-wide arm loses roots](the-fleet-wide-arm-loses-roots.md) - **Retracted.** All 375
-  roots hold an inotify watch and the descent covers all 60,475 directories. 362 of 375 projects
-  have zero ledger rows because nobody edits them, and the isolation probe used a file the
-  daemon's filter refuses while the bare library run had no filter.
+* [The isolation probe and the daemon did not run the same
+  experiment](the-fleet-wide-arm-loses-roots.md) - **Retracted 2026-09-01.** Two projects were
+  reported as receiving no watch event when 375 roots are armed in one call. All 375 roots hold an
+  inotify watch, the descent covers every directory, and 362 of 375 projects have zero ledger rows
+  because nobody edits them. The isolation probe wrote a file the daemon's filter refuses and the
+  bare library run had no filter, so the two experiments were not the same experiment.
 * [A generated bundle was indexed as source](a-generated-bundle-was-indexed-as-source.md) -
   The web tree's hottest callee name is the single character `n`, at 90,156 CALLS edges, and that
   one store holds 28.7% of every reference row in the fleet. A `.min.js` suffix test refuses none of

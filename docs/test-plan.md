@@ -493,7 +493,10 @@ predecessor with `external: True` and an empty candidate list, and both pass onc
 the spelling for its own separator. `T-298` carries the case half: `module_name` lowercases a PSR-4
 namespace and a PHP receiver is written in the class's own case, so the two never meet unfolded.
 
-`T-295` and `T-296` widen the public-hygiene gate from `src/graphrag/*.py` to every tracked file.
+`T-295` and `T-296` widen the public-hygiene gate from `src/graphrag/*.py` to every tracked file
+but one suffix: `tests/test_hygiene.py` holds `_UNSCANNED = (".lock",)`, because a lock file is a
+resolver's transcript of public package names and is the one tracked file whose contents nobody
+wrote.
 Both fail on the predecessor with the ban populated, and both are unreachable there without it:
 CI set `GRAPHRAG_NAME_BAN` to `none`, so the ban had never held a name and had never rejected
 anything. `T-295` found 70 occurrences across 23 files and `T-296` found one home path in

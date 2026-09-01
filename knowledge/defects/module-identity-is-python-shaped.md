@@ -21,6 +21,15 @@ stores:
 | CALLS edges, whole fleet | 2,784,438 |
 | CALLS edges whose `evidence` is `external` | 1,872,253, or 67.2% |
 
+**That row cannot be re-run as written.** `D-46` stopped storing an edge whose evidence is
+`external`, so the same query over the fleet on 2026-09-01 returns no `external` bucket at all and
+a reader re-running it reads 0% and concludes the defect is gone. The 67.2% is a reading taken
+before that change and it is kept as one.
+
+It is also not the pair `99.51%` to `95.09%` recorded against `D-40`. Those are a read-side share
+over `refs`, measured at query time on the same corpus; this row is a write-side count over stored
+`CALLS` edges. Two different populations, and only the second one moved when `D-40` landed.
+
 The external share per generation:
 
 | Generation | Repository | CALLS | external |

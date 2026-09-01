@@ -1,7 +1,7 @@
 ---
 type: Defect
 resource: src/graphrag/watch.py
-title: The fleet-wide arm loses roots
+title: The isolation probe and the daemon did not run the same experiment
 description: "Retracted 2026-09-01. Two projects were reported as receiving no watch event when 375 roots are armed in one call. All 375 roots hold an inotify watch, the descent covers every directory, and 362 of 375 projects have zero ledger rows because nobody edits them. The isolation probe wrote a file the daemon's filter refuses and the bare library run had no filter, so the two experiments were not the same experiment."
 tags: [watcher, inotify, daemon, retracted]
 status: deprecated
@@ -13,7 +13,7 @@ sources:
     resource: src/graphrag/watch.py
 ---
 
-# What was claimed
+# What was claimed, and retracted
 
 `watch._loop` arms every enrolled root in one `watchfiles.watch` call[^loop]. On 2026-09-01 that
 was 375 roots. Two of them held zero rows across `watch.jsonl` and `watch.jsonl.1`, against 8
