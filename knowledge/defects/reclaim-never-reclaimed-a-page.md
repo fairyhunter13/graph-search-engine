@@ -50,7 +50,7 @@ another reason, and it is verified by reading the pragma rather than by a diff.
 over while it ran: passes were rare, and the vacuum was a no-op. After the per-file pass a pass runs
 on every save, and after the rebuild the vacuum is real. So `reclaim` left the per-file path and
 runs on the whole-tree pass only. `T-276` holds that, and the SCIP overlay was later moved for the
-same reason: see [[the-overlay-ran-on-every-save]].
+same reason: see [the overlay ran on every save](the-overlay-ran-on-every-save.md).
 
 [^connect]: `store.connect`, the `auto_vacuum` pragma and the comment above it.
 [^reclaim]: `store.reclaim`.

@@ -54,5 +54,5 @@ the hint's own bargain stated once more: the hint buys latency and the scan buys
 `scip` edge is an upgrade over a syntactic one, never the only edge, so the file stays answerable at
 the lower tier in the meantime.
 
-See [[reclaim-never-reclaimed-a-page]] for the precedent, and
-[[the-overlay-writes-an-fts-column-and-never-the-index]] for the coupling that stays latent.
+See [reclaim never reclaimed a page](reclaim-never-reclaimed-a-page.md) for the precedent, and
+[the overlay writes an FTS column and never the index](the-overlay-writes-an-fts-column-and-never-the-index.md) for the coupling that stays latent.

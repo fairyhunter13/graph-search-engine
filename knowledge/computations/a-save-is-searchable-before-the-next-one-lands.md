@@ -43,6 +43,17 @@ Twelve saves on `go-monorepo`, 2,461 files, measured 2026-09-01 at commit `e6f22
 
 The criterion is one second, and the p99 sits at a sixth of it.
 
+# Computation
+
+```yaml
+test_node_id: tests/test_freshness.py::test_a_save_is_searchable_before_the_next_one_lands
+corpus_ref: go-monorepo
+```
+
+The corpus is a real repository with a `go.mod` and 2,461 files, and the run needs the daemon
+holding its writer lock. Name the root and the file in the environment, because a repository
+this size is not a fixture and the claim is about a save into a real one.
+
 # What the before-arm is, and what it is not
 
 `whole_tree_pass_s` times `discover.enumerate_files` alone, and not a pass. The daemon holds the
