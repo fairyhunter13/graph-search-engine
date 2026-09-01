@@ -2,7 +2,7 @@
 type: Attested Computation
 resource: scripts/two_engine_measure.py
 title: The graph answers the caller question, and the retrieval index does not
-description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 1.000, against 0.439 lexical and 0.291 semantic. The class split it once carried is closed."
+description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 1.000, against 0.452 lexical and 0.226 semantic. The class split it once carried is closed."
 tags: [routing, measurement, two-engine, attestation]
 status: stable
 runtime: python
@@ -30,7 +30,7 @@ sources:
 The routing rule says coderag names the symbol and graphrag walks the edges from it. No record
 measured that, so the rule was argued and never graded.[^two-engine-run] Ten caller questions over
 this repo are scored at file granularity, against a ground truth read by hand. They give the graph
-F1 1.000, against 0.439 for lexical retrieval and 0.291 for semantic. So the second engine earns
+F1 1.000, against 0.452 for lexical retrieval and 0.226 for semantic. So the second engine earns
 its process.
 
 # The finding one number hides
@@ -58,10 +58,11 @@ caller, and scoping it out prices a correct answer as a false positive.
 The test asserts the ordering and the class split, never the digits. A number moves with the corpus,
 and the corpus is the repo under work.
 
-The arm figures also move between runs on one commit. Nine runs span `d64e8fc`, `396f183`,
-`1443efc`, `75bacf7`, `5f3495c`, `4c89a21`, `57de0b0` and `4470719`. They gave 0.535, 0.510, 0.510,
-0.497, 0.497, 0.497, 0.488, 0.454 and 0.439 lexical. They gave 0.331, 0.316, 0.316, 0.306, 0.306,
-0.306, 0.272, 0.294 and 0.291 semantic. The graph scored 1.000 in every one. The retrieval arms rank by an embedding over a live index, so read them
+The arm figures also move between runs on one commit. Ten runs span `d64e8fc`, `396f183`,
+`1443efc`, `75bacf7`, `5f3495c`, `4c89a21`, `57de0b0`, `4470719` and `61cbcba`. They gave 0.535,
+0.510, 0.510, 0.497, 0.497, 0.497, 0.488, 0.454, 0.439 and 0.452 lexical. They gave 0.331, 0.316,
+0.316, 0.306, 0.306, 0.306, 0.272, 0.294, 0.291 and 0.226 semantic. The graph scored 1.000 in every
+one. The retrieval arms rank by an embedding over a live index, so read them
 as the scale of the gap and never as a constant.
 
 The last three agree to three digits, and the fifth ran while the `coderag` daemon was indexing 409
@@ -123,5 +124,19 @@ The falsifier above says a closed split shrinks the receipt into a new concept. 
 followed, and the reason is evidence. The class fields at 1.000 are what shows the split closed,
 and a receipt without them cannot show it. So this concept is amended and the fields stay.
 
+# What `D-46` did not move, 2026-09-01
+
+`D-46` moved every cross-file resolution from index time to query time. A caller question no longer
+reads a stored edge for a call that leaves its file: it reads the `refs` rows that spell the name,
+scores each one against the graph, and keeps the rows whose winning candidate is the target. That is
+a different computation reaching the same answer, and this concept is the assertion that it does.
+
+The graph scored F1 1.000 at `61cbcba`, on both classes, with the truth grown to 81 caller entries
+by the three new callers `tests/test_resolvedb.py` adds. Nothing here was relaxed to reach it: the
+hand truth is what went stale, for the third time in three days. See
+[what the hand truth cost](#what-the-hand-truth-cost-2026-08-30): the first run read 0.981 overall
+and 0.957 `distinctive` precision, and the three diffs were three real calls in a file this work
+wrote. The engine was right and the corpus was behind it.
+
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 78 ground-truth caller files, measured 2026-09-01 at commit `4470719`.
+[^two-engine-run]: Ten caller questions over this repo, 81 ground-truth caller entries, measured 2026-09-01 at commit `61cbcba`.
