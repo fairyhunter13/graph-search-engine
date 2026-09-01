@@ -206,7 +206,7 @@ for the callers of a known function and check them by hand.
 | D-46 | Resolution moves to query time, and only a file-local reference resolves at index time | done | src/graphrag/dbread.py, src/graphrag/resolvedb.py, src/graphrag/derive.py, src/graphrag/query.py, src/graphrag/indexwrite.py, src/graphrag/index.py, src/graphrag/config.py, src/graphrag/scip/ingest.py, tests/test_resolvedb.py, tests/test_scip_ingest.py | T-254, T-255, T-258, T-259, T-263, T-264, T-279, T-281 |
 | D-47 | An index pass rewrites only the files that changed | done | src/graphrag/index.py, src/graphrag/jobs.py, src/graphrag/indexwrite.py, src/graphrag/discover.py, src/graphrag/filters.py, src/graphrag/store.py, src/graphrag/query.py, src/graphrag/dbread.py | T-256, T-257, T-261, T-262, T-268, T-276, T-277, T-278, T-280, T-282, T-283 |
 | D-48 | The watcher hints which files changed, and the quiet window is deleted | done | src/graphrag/watch.py, src/graphrag/jobs.py, src/graphrag/index.py, src/graphrag/discover.py, src/graphrag/config.py, tests/test_watch.py, tests/test_perfile.py, tests/test_index.py | T-260, T-270, T-271, T-272, T-273, T-274, T-275 |
-| D-49 | `grammars.py` reports the digits the live pin produces | planned | src/graphrag/grammars.py, tests/test_grammars.py | T-269 |
+| D-49 | `grammars.py` reports the digits the live pin produces | done (no change needed) | src/graphrag/grammars.py, tests/test_grammars.py | T-06 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
