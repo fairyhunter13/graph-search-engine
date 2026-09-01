@@ -205,5 +205,20 @@ resolution path, so an unmoved graph figure is the reading it should give. Both 
 in opposite directions, 0.466 lexical and 0.176 semantic, which is the widest spread of the fifteen
 in both directions at once and still not a finding.
 
+The sixteenth run, at `0dd0cc4`, holds 1.000 on both classes and needed a repair to get there.
+The first pass at `b65db31` read precision 0.962 on the distinctive class, and the graph was right
+three times over: `scip/deps.py` calls `config.index_path` and `store.connect`, and
+`tests/test_scip_deps.py` calls `index.index_once`. All three files were written by the commit
+under test, so the truth was behind by exactly the change being graded. The truth is 88 entries.
+
+That is the seam this concept keeps proving. Stage 6 adds a module that reads the store and a case
+that indexes a project, and neither touches a resolution path -- so the only way the digit could
+move was through the table, and it did. Two clean runs in a row before this one is not a trend, and
+the run that needs a repair is worth as much as the run that does not.
+
+The arms read 0.447 lexical and 0.161 semantic. The semantic arm is the lowest of the sixteen runs,
+and the corpus grew by three files between the two readings, which is the spread doing what the
+section above says it does.
+
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 85 ground-truth caller entries, measured 2026-09-01 at commit `0f6520c`.
+[^two-engine-run]: Ten caller questions over this repo, 88 ground-truth caller entries, measured 2026-09-01 at commit `0dd0cc4`.
