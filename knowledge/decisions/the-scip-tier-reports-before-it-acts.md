@@ -54,8 +54,9 @@ worse than no report, because the number it produces is the one an operator woul
 # The estate, measured over 375 enrolled roots
 
 The producer is `scripts/scip_census.py tiers`[^census], and it calls the shipped `readiness` in a
-loop. The figures below were a loop nobody committed until 2026-09-01; the arm reproduces them
-exactly, so a reader can re-run rather than believe.
+loop. The figures below were a loop nobody committed until 2026-09-01, and the arm reproduces
+them exactly — for the operator who holds this estate. No reader outside it can, and the section
+at the end of this record says so rather than leaving the arm to imply otherwise.
 
 The column is **indexer/root pairs** and it always was. The count is 490, over 375 roots, because a
 root holding two languages stands twice. That denominator was never stated, which is the only thing
@@ -150,6 +151,22 @@ shipped function in a loop.
 Cut: inferring a `tsconfig.json` for the 119 roots that lack one. `scip-typescript` can be told to
 infer one, and an inferred build is a build this engine invented -- the coverage guard would then
 be grading a project against a configuration its own authors never wrote.
+
+# Why this is a Decision and not an Attested Computation
+
+Every figure here is read over 375 private repositories. A reader cannot fetch one, so the census
+arms are re-runnable by exactly one operator and a receipt they emit attests nothing to anyone
+else — the same reason `the-transitive-query-buys-no-cache-yet.md` states for its own corpus. What
+the arms buy is that the numbers stop being a loop nobody kept: the grouping rule, the skipped
+population and the refusal are in committed code, and the next reading is taken the same way as
+this one.
+
+Three of them do carry a contract the suite grades, because they are properties of the code and
+not of the estate: the worktree grouping, the anonymity of a receipt, and the overlay's refusal of
+any root below `ready`. `T-333`..`T-336` hold those, and they run on a clean clone with no fleet.
+
+The suite, the linter and the bundle check behind this work are graded by CI on every push. The
+fleet figures are not, and nothing here should be read as though they were.
 
 [^census]: `scripts/scip_census.py` -- the arms `tiers`, `share` and `overlay`.
 [^readiness]: `src/graphrag/scip/run.py`, `readiness` and `_standing`.

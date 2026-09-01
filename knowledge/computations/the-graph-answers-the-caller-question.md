@@ -58,11 +58,12 @@ caller, and scoping it out prices a correct answer as a false positive.
 The test asserts the ordering and the class split, never the digits. A number moves with the corpus,
 and the corpus is the repo under work.
 
-The arm figures also move between runs on one commit. Fifteen runs span `d64e8fc`, `396f183`,
+The arm figures also move between runs on one commit. Seventeen runs span `d64e8fc`, `396f183`,
 `1443efc`, `75bacf7`, `5f3495c`, `4c89a21`, `57de0b0`, `4470719`, `61cbcba`, `58c8a19`, `3ca2c9d`,
-`e6f2282`, `7957b6d` and `0f6520c`. They
-gave 0.535, 0.510, 0.510, 0.497, 0.497, 0.497, 0.488, 0.454, 0.439, 0.452, 0.407, 0.442, 0.432, 0.441 and 0.466 lexical. They
-gave 0.331, 0.316, 0.316, 0.306, 0.306, 0.306, 0.272, 0.294, 0.291, 0.226, 0.201, 0.202, 0.214, 0.189 and 0.176 semantic. The
+`e6f2282`, `7957b6d`, `0f6520c`, `0dd0cc4` and `6f3fe27` -- sixteen shas against seventeen figures,
+because one early run's sha went unrecorded and is not recoverable. They
+gave 0.535, 0.510, 0.510, 0.497, 0.497, 0.497, 0.488, 0.454, 0.439, 0.452, 0.407, 0.442, 0.432, 0.441, 0.466, 0.447 and 0.424 lexical. They
+gave 0.331, 0.316, 0.316, 0.306, 0.306, 0.306, 0.272, 0.294, 0.291, 0.226, 0.201, 0.202, 0.214, 0.189, 0.176, 0.161 and 0.183 semantic. The
 graph scored 1.000 in every one. The retrieval arms rank by an embedding over a live index, so read them
 as the scale of the gap and never as a constant.
 
@@ -209,7 +210,7 @@ The sixteenth run, at `0dd0cc4`, holds 1.000 on both classes and needed a repair
 The first pass at `b65db31` read precision 0.962 on the distinctive class, and the graph was right
 three times over: `scip/deps.py` calls `config.index_path` and `store.connect`, and
 `tests/test_scip_deps.py` calls `index.index_once`. All three files were written by the commit
-under test, so the truth was behind by exactly the change being graded. The truth is 88 entries.
+under test, so the truth was behind by exactly the change being graded. The truth is 89 entries.
 
 That is the seam this concept keeps proving. Stage 6 adds a module that reads the store and a case
 that indexes a project, and neither touches a resolution path -- so the only way the digit could
@@ -220,5 +221,20 @@ The arms read 0.447 lexical and 0.161 semantic. The semantic arm is the lowest o
 and the corpus grew by three files between the two readings, which is the spread doing what the
 section above says it does.
 
+The seventeenth run, at `6f3fe27`, holds 1.000 on both classes and needed a repair to get there. The
+first pass read distinctive precision **0.981**, 53 files returned against 52, and the graph was
+right in all three cases: `scripts/scip_census.py` calls `config.index_path`, `registry.load` and
+`store.connect`. Nothing in `src/` moved between the two readings -- the three commits that landed
+after `0dd0cc4` are a test, a script and a set of records -- so this is the first run whose repair
+came from a producer written *beside* the engine rather than inside it.
+
+That is the same seam under a new shape. A file added to `scripts/` is in the corpus by the rule at
+the top of this concept, and the ten names it happens to call are the ten the corpus asks about.
+Eight of the ten runs since this concept was written have found a real caller the table lacked, and
+the direction has not once reversed: the graph has never invented one. The truth is 92 entries.
+
+The arms read 0.424 lexical and 0.183 semantic, both inside the spread the sixteen before them
+describe.
+
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 88 ground-truth caller entries, measured 2026-09-01 at commit `0dd0cc4`.
+[^two-engine-run]: Ten caller questions over this repo, 92 ground-truth caller entries, measured 2026-09-01 at commit `6f3fe27`.

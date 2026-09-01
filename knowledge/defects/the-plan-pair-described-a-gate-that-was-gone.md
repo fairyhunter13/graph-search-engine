@@ -71,5 +71,21 @@ Six rows moved to `dropped` with one line of reason each, and none was deleted. 
 keeps its number forever, because a number that can be reissued makes every earlier reference to
 it a lie.
 
+# What it does not check, stated so the next audit need not re-derive it
+
+The contract both documents state is *at least one*: every `T-nn` names one `S-nn` and at least
+one `D-nn`, every `D-nn` names at least one `T-nn`. The gate holds exactly that. It does not hold
+reciprocity — that a `D-nn` a test row names lists that `T-nn` back.
+
+Measured on 2026-09-01: **96** test-to-dev pairs where the dev row does not name the test row back,
+and **3** the other way (`D-25`/`T-11`, `D-32`/`T-16`, `D-49`/`T-06`). **81** of the 96 stand at
+`a4917bf`, before this gate existed, spread from `T-129` to `T-289` — so a partial coverage cell is
+the convention this pair has always been written in, and not drift these commits introduced. A dev
+row's coverage cell is a pointer; the test row's `D-nn covered` cell is what carries coverage.
+
+Adding the check would assert a stronger contract than either document states and would land 99
+mechanical cell edits with it. That is a plan-pair ruling and not a gate fix, so it is recorded
+here rather than taken.
+
 [^hook]: `.githooks/pre-push` — the header naming 2026-08-29 and the three deleted scripts.
 [^gate]: `tests/test_plan_pair.py` — the seven checks, run against `git show HEAD:docs/*`.
