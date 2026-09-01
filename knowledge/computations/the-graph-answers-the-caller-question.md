@@ -30,7 +30,7 @@ sources:
 The routing rule says coderag names the symbol and graphrag walks the edges from it. No record
 measured that, so the rule was argued and never graded.[^two-engine-run] Ten caller questions over
 this repo are scored at file granularity, against a ground truth read by hand. They give the graph
-F1 1.000, against 0.432 for lexical retrieval and 0.214 for semantic. So the second engine earns
+F1 1.000, against 0.441 for lexical retrieval and 0.189 for semantic. So the second engine earns
 its process.
 
 # The finding one number hides
@@ -58,11 +58,11 @@ caller, and scoping it out prices a correct answer as a false positive.
 The test asserts the ordering and the class split, never the digits. A number moves with the corpus,
 and the corpus is the repo under work.
 
-The arm figures also move between runs on one commit. Thirteen runs span `d64e8fc`, `396f183`,
-`1443efc`, `75bacf7`, `5f3495c`, `4c89a21`, `57de0b0`, `4470719`, `61cbcba`, `58c8a19`, `3ca2c9d`
-and `e6f2282`. They
-gave 0.535, 0.510, 0.510, 0.497, 0.497, 0.497, 0.488, 0.454, 0.439, 0.452, 0.407, 0.442 and 0.432 lexical. They
-gave 0.331, 0.316, 0.316, 0.306, 0.306, 0.306, 0.272, 0.294, 0.291, 0.226, 0.201, 0.202 and 0.214 semantic. The
+The arm figures also move between runs on one commit. Fourteen runs span `d64e8fc`, `396f183`,
+`1443efc`, `75bacf7`, `5f3495c`, `4c89a21`, `57de0b0`, `4470719`, `61cbcba`, `58c8a19`, `3ca2c9d`,
+`e6f2282` and `7957b6d`. They
+gave 0.535, 0.510, 0.510, 0.497, 0.497, 0.497, 0.488, 0.454, 0.439, 0.452, 0.407, 0.442, 0.432 and 0.441 lexical. They
+gave 0.331, 0.316, 0.316, 0.306, 0.306, 0.306, 0.272, 0.294, 0.291, 0.226, 0.201, 0.202, 0.214 and 0.189 semantic. The
 graph scored 1.000 in every one. The retrieval arms rank by an embedding over a live index, so read them
 as the scale of the gap and never as a constant.
 
@@ -181,5 +181,23 @@ truth row, so none of the three is an entry. The truth is 85 entries now.
 The arms read 0.432 lexical and 0.214 semantic, which is inside the spread the twelve runs before
 them describe.
 
+# What `D-40` did not move, and the first run in seven that needed no repair, 2026-09-01
+
+`D-40` gave every language its own module spelling, and on the read side it is the largest change
+the resolver has taken: across the fleet, resolved-single `CALLS` edges go 433 to 5,346 and the
+external share falls 99.51% to 95.09%. A change that turns four thousand non-edges into edges is
+exactly the shape that invents a caller, so this run is the one the concept exists to grade.
+
+The graph scored F1 1.000 at `7957b6d`, on both classes, **on the first run and with no repair to
+the hand truth.** Six of the seven runs before it each found a real caller the corpus had not
+listed, so a clean first pass is worth stating: the four thousand edges `D-40` adds are Go, PHP and
+TypeScript member calls, and this corpus is Python and TypeScript. It confirms the digit rather
+than stressing it, and the stress test is the 8,460-file signature diff that rode with the change
+instead.
+
+The arms read 0.441 lexical and 0.189 semantic. The semantic arm is the lowest of the fourteen runs
+and the lexical arm the highest since `4470719`, which is the spread doing what the section above
+says it does and not a finding.
+
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 85 ground-truth caller entries, measured 2026-09-01 at commit `e6f2282`.
+[^two-engine-run]: Ten caller questions over this repo, 85 ground-truth caller entries, measured 2026-09-01 at commit `7957b6d`.
