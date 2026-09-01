@@ -31,7 +31,7 @@ rm -f /tmp/graphrag-hygiene.$$
 if [[ -d "$REPO_ROOT/knowledge" ]]; then
   if ! command -v okfrules >/dev/null 2>&1; then
     echo "[pre-push] x okfrules not installed - knowledge/ cannot be checked, and this hook is its only local gate"
-    echo "[pre-push]   go install github.com/fairyhunter13/okf/cmd/okfrules@v0.6.0"
+    echo "[pre-push]   go install github.com/fairyhunter13/okf/cmd/okfrules@v0.6.1"
     exit 1
   fi
   # -strict, not the fleet default: TimestampsCarryAnOffset is a Strict rule, and an

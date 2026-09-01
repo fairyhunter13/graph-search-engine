@@ -65,7 +65,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           # setup-go sets GOTOOLCHAIN=local, so the toolchain never upgrades
-          # itself. okf v0.6.0 declares `go 1.26.4` and an older Go refuses it.
+          # itself. okf v0.6.1 declares `go 1.26.4` and an older Go refuses it.
           go-version: "1.26.4"
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
@@ -73,6 +73,6 @@ jobs:
       - run: uv sync --frozen
       - name: Install the checker, pinned
         run: |
-          go install github.com/fairyhunter13/okf/cmd/okfrules@v0.6.0
-          go install github.com/fairyhunter13/okf/cmd/okf@v0.6.0
+          go install github.com/fairyhunter13/okf/cmd/okfrules@v0.6.1
+          go install github.com/fairyhunter13/okf/cmd/okf@v0.6.1
       - run: okfrules -strict check -Werror knowledge

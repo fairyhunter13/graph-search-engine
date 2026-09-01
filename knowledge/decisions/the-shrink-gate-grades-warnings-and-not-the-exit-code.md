@@ -48,4 +48,4 @@ bundle skill, as instruction.
 `okf check` grows an exit code for a shrink, or `okf verify -stamp` appends an event rather than
 moving one. Either one removes the reason for this script.
 
-[^okf]: v0.6.0, the version the gate pins.
+[^okf]: v0.6.1, the version the gate pins.
