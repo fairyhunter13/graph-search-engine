@@ -63,6 +63,30 @@ The cause was the SCIP overlay, which ran on every hinted save and re-read 1.8 M
 whatever changed.[^overlay-defect] `D-51` moved it onto the unhinted reconciler pass, the way
 `reclaim` already rode it. The figures above are the same measurement after that one condition.
 
+# The live run, over four real projects
+
+The receipt above is `go-monorepo`. Three more projects were driven the same way on 2026-09-01, through
+the same daemon, and each one grades a different half of the change.
+
+| Project | Reading |
+|---|---|
+| `graph-search-engine`, 167 files | Six saves: p50 **127.2 ms**, worst 129.1 ms, 0 misses. The caller question over `module_name` returns 8 callers against 8 read by hand, and no edge reads `external`. |
+| `web-tree`, 11,722 files | 510,127 `refs` rows, against the 992,526 the census projected before the filter. The hottest name is `__` at 22,661, and `n` at 90,156 is gone with the bundles that spelled it. |
+| `gen2-php-app`, 1,402 files | 7.4 MB, `auto_vacuum` 2, freelist **0.8%**. It was 151 MB at 93.6% free, holding about 9.7 MB. |
+
+Three watcher behaviours were run live beside them, each one an editor or a shell doing the real
+thing rather than a fixture:
+
+1. An atomic save -- write a temp file, rename over the target -- moves the graph. Every sample in
+   this measurement is one, so the property is not asserted separately.
+2. A branch switch over the hint cap falls back to the whole-tree scan. A 300-file switch logs
+   `hinted: false` and `parsed: 300` in **both** directions, against `WATCH_HINT_MAX_PATHS` of 200.
+3. A project enrolled by a second process is armed with no daemon restart. It appeared in
+   `/healthz` inside 0.1 s, and a save on it was queryable in 153.7 ms.
+4. A change made while the daemon was stopped is healed by the reconciler and not by an event. The
+   store carried no such node before the start, and the start-up pass found it 122.1 s later,
+   behind 375 other projects in the queue.
+
 # Why a miss is a field and not an absence
 
 `misses` counts a save that never became queryable inside the deadline. A run that dropped the row
