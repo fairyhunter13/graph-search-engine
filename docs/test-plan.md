@@ -379,7 +379,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-279 | Rewriting one file destroys no edge that names another file | S-01 | D-46 | done | tests/test_resolvedb.py::test_no_stored_edge_crosses_a_file |
 | T-281 | An upgraded cross-file call is answered once | S-06 | D-46 | done | tests/test_scip_ingest.py::test_an_upgraded_cross_file_call_is_answered_once |
 | T-256 | Editing one file rewrites that file's rows and no other file's | S-01 | D-47 | done | tests/test_perfile.py::test_editing_one_file_rewrites_that_file_and_no_other |
-| T-257 | The FTS row count tracks the node count after a per-file rewrite | S-01 | D-47 | done | tests/test_perfile.py::test_the_fts_row_count_tracks_the_node_count |
+| T-257 | Every FTS posting names a live node, and every node has one | S-01 | D-47 | done | tests/test_perfile.py::test_every_posting_names_a_live_node_and_every_node_has_one |
 | T-261 | A generated bundle is refused on its content and not its name | S-01 | D-47 | done | tests/test_perfile.py::test_a_generated_bundle_is_refused_on_its_content_and_not_its_name |
 | T-262 | A kind no writer produces is not declared | S-01 | D-47 | done | tests/test_store.py::test_a_kind_no_writer_produces_is_not_declared |
 | T-268 | Two overlapping identifier ranges are not both written | S-01 | D-47 | done | tests/test_perfile.py::test_two_overlapping_identifier_ranges_are_not_both_written |
@@ -389,6 +389,18 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-280 | The file count is the tree's and carries no synthetic row | S-01 | D-47 | done | tests/test_perfile.py::test_the_file_count_is_the_tree_s_and_carries_no_synthetic_row |
 | T-282 | A changed file makes one file parse, and not the tree | S-01 | D-47 | done | tests/test_index.py::test_a_changed_file_makes_the_pass_run |
 | T-283 | Deleting a file takes its FTS rows through the pass path | S-01 | D-47 | done | tests/test_store.py::test_deleting_a_file_takes_its_fts_rows_with_it |
+
+`T-277` and `T-280` pass on the predecessor commit, and they are regression guards rather than
+negative tests. `D-44` bought the `auto_vacuum` pragma and `D-46` removed the synthetic
+`<external>` file row, so both properties were already true before `D-47`. What they add is the
+tier: `T-251` grades the pragma on a bare `store.connect`, and `T-277` grades it on a store a real
+index pass created.
+
+`T-257` was written as a row count first, and a row count cannot fail. `count(*)` on an
+external-content FTS5 table reads `nodes`, so it agrees with itself whatever the index holds, and
+FTS5's own `'integrity-check'` grades internal consistency and not the content table. Both passed
+against a build with the per-file delete removed. The assertion reads the postings through
+`fts5vocab` instead, and that build reds it.
 
 # User journeys
 

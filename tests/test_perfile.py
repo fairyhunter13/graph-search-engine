@@ -58,26 +58,34 @@ def test_editing_one_file_rewrites_that_file_and_no_other(tree):
     assert set(after["a.py"].values()).isdisjoint(before["a.py"].values())
 
 
-def test_the_fts_row_count_tracks_the_node_count(tree):
-    """T-257. `nodes_fts` takes no cascade and there is no trigger, so the two
-    counts agree only because the pass writes both. A drift is not an error: it
-    is `find_symbol` answering with a location the graph no longer holds."""
+def test_every_posting_names_a_live_node_and_every_node_has_one(tree):
+    """T-257. `nodes_fts` takes no cascade and there is no trigger, so the index
+    and `nodes` agree only because the pass writes both.
+
+    The assertion reads the postings themselves, through `fts5vocab`. Two cheaper
+    checks were tried against a build with the delete removed, and both passed on
+    it: `count(*)` on an external-content table reads `nodes`, so it agrees with
+    itself whatever the index holds, and FTS5's `'integrity-check'` grades the
+    index for internal consistency and not against the content table. A stale
+    posting is internally consistent. It is also a `find_symbol` hit at a
+    location the graph no longer holds.
+    """
     root, conn = tree
 
-    def counts():
-        return (
-            conn.execute("SELECT count(*) c FROM nodes").fetchone()["c"],
-            conn.execute("SELECT count(*) c FROM nodes_fts").fetchone()["c"],
-        )
+    def postings() -> set[int]:
+        conn.execute("DROP TABLE IF EXISTS temp.v")
+        conn.execute("CREATE VIRTUAL TABLE temp.v USING fts5vocab(main, nodes_fts, 'instance')")
+        return {r["doc"] for r in conn.execute("SELECT DISTINCT doc FROM temp.v")}
 
-    nodes, fts = counts()
-    assert nodes == fts
+    def live() -> set[int]:
+        return {r["id"] for r in conn.execute("SELECT id FROM nodes")}
+
+    assert postings() == live()
 
     (root / "a.py").write_text("def alpha():\n    return 1\n\n\ndef delta():\n    return 4\n")
     (root / "c.py").unlink()
     index.index_once(root)
-    nodes, fts = counts()
-    assert nodes == fts
+    assert postings() == live()
 
 
 def test_a_renamed_symbol_is_not_findable_under_its_old_name(tree):

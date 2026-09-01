@@ -2,7 +2,7 @@
 type: Attested Computation
 resource: scripts/two_engine_measure.py
 title: The graph answers the caller question, and the retrieval index does not
-description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 1.000, against 0.452 lexical and 0.226 semantic. The class split it once carried is closed."
+description: "The measurement that decides whether a second engine earns its process. Over ten caller questions the graph scores F1 1.000, against 0.407 lexical and 0.201 semantic. The class split it once carried is closed."
 tags: [routing, measurement, two-engine, attestation]
 status: stable
 runtime: python
@@ -30,7 +30,7 @@ sources:
 The routing rule says coderag names the symbol and graphrag walks the edges from it. No record
 measured that, so the rule was argued and never graded.[^two-engine-run] Ten caller questions over
 this repo are scored at file granularity, against a ground truth read by hand. They give the graph
-F1 1.000, against 0.452 for lexical retrieval and 0.226 for semantic. So the second engine earns
+F1 1.000, against 0.407 for lexical retrieval and 0.201 for semantic. So the second engine earns
 its process.
 
 # The finding one number hides
@@ -59,10 +59,10 @@ The test asserts the ordering and the class split, never the digits. A number mo
 and the corpus is the repo under work.
 
 The arm figures also move between runs on one commit. Ten runs span `d64e8fc`, `396f183`,
-`1443efc`, `75bacf7`, `5f3495c`, `4c89a21`, `57de0b0`, `4470719` and `61cbcba`. They gave 0.535,
-0.510, 0.510, 0.497, 0.497, 0.497, 0.488, 0.454, 0.439 and 0.452 lexical. They gave 0.331, 0.316,
-0.316, 0.306, 0.306, 0.306, 0.272, 0.294, 0.291 and 0.226 semantic. The graph scored 1.000 in every
-one. The retrieval arms rank by an embedding over a live index, so read them
+`1443efc`, `75bacf7`, `5f3495c`, `4c89a21`, `57de0b0`, `4470719`, `61cbcba` and `58c8a19`. They
+gave 0.535, 0.510, 0.510, 0.497, 0.497, 0.497, 0.488, 0.454, 0.439, 0.452 and 0.407 lexical. They
+gave 0.331, 0.316, 0.316, 0.306, 0.306, 0.306, 0.272, 0.294, 0.291, 0.226 and 0.201 semantic. The
+graph scored 1.000 in every one. The retrieval arms rank by an embedding over a live index, so read them
 as the scale of the gap and never as a constant.
 
 The last three agree to three digits, and the fifth ran while the `coderag` daemon was indexing 409
@@ -138,5 +138,18 @@ hand truth is what went stale, for the third time in three days. See
 and 0.957 `distinctive` precision, and the three diffs were three real calls in a file this work
 wrote. The engine was right and the corpus was behind it.
 
+# What `D-47` did not move, 2026-09-01
+
+`D-47` narrowed the pass to the files the diff names. The graph scored F1 1.000 at `58c8a19`, on
+both classes, so a per-file rewrite answers the caller question the way a whole-tree rewrite did.
+That is the whole gate on the stage.
+
+The truth grew to 84 entries, and it went stale in two ways this time rather than one.
+`tests/test_perfile.py` adds three real calls, which is the pattern of the three runs before it. Two
+entries also **moved**: `ledger.append` and `index.index_once` were called from
+`src/graphrag/index.py`, and the queue that called them is `src/graphrag/jobs.py` now. A caller that
+moves reads as a false positive and a false negative at once, so it costs twice what a new one does.
+Both diffs were confirmed against the tree before the corpus was touched.
+
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 81 ground-truth caller entries, measured 2026-09-01 at commit `61cbcba`.
+[^two-engine-run]: Ten caller questions over this repo, 84 ground-truth caller entries, measured 2026-09-01 at commit `58c8a19`.
