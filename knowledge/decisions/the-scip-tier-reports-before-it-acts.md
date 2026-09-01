@@ -161,9 +161,10 @@ the arms buy is that the numbers stop being a loop nobody kept: the grouping rul
 population and the refusal are in committed code, and the next reading is taken the same way as
 this one.
 
-Three of them do carry a contract the suite grades, because they are properties of the code and
-not of the estate: the worktree grouping, the anonymity of a receipt, and the overlay's refusal of
-any root below `ready`. `T-333`..`T-336` hold those, and they run on a clean clone with no fleet.
+Four properties here do carry a contract the suite grades, because they belong to the code and not
+to the estate: the worktree grouping, the anonymity of a receipt, the overlay's refusal of any root
+below `ready`, and the share arm counting the stores it could not read. `T-333`..`T-336` hold them
+one each, and they run on a clean clone with no fleet.
 
 The suite, the linter and the bundle check behind this work are graded by CI on every push. The
 fleet figures are not, and nothing here should be read as though they were.

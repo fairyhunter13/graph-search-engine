@@ -60,8 +60,11 @@ and the corpus is the repo under work.
 
 The arm figures also move between runs on one commit. Seventeen runs span `d64e8fc`, `396f183`,
 `1443efc`, `75bacf7`, `5f3495c`, `4c89a21`, `57de0b0`, `4470719`, `61cbcba`, `58c8a19`, `3ca2c9d`,
-`e6f2282`, `7957b6d`, `0f6520c`, `0dd0cc4` and `6f3fe27` -- sixteen shas against seventeen figures,
-because one early run's sha went unrecorded and is not recoverable. They
+`e6f2282`, `7957b6d`, `0f6520c`, `0dd0cc4` and `6f3fe27` -- sixteen shas against seventeen figures.
+The unnamed one is the second run, 0.510 lexical and 0.316 semantic. It was recorded as *the parent
+of `d64e8fc`* until `c1e9504` flattened this paragraph into a list and dropped the relation, and the
+hex cannot be recovered now because that history was rewritten: twelve of the sixteen shas here,
+`d64e8fc` among them, are no longer objects in this repository. They
 gave 0.535, 0.510, 0.510, 0.497, 0.497, 0.497, 0.488, 0.454, 0.439, 0.452, 0.407, 0.442, 0.432, 0.441, 0.466, 0.447 and 0.424 lexical. They
 gave 0.331, 0.316, 0.316, 0.306, 0.306, 0.306, 0.272, 0.294, 0.291, 0.226, 0.201, 0.202, 0.214, 0.189, 0.176, 0.161 and 0.183 semantic. The
 graph scored 1.000 in every one. The retrieval arms rank by an embedding over a live index, so read them
@@ -182,7 +185,7 @@ truth row, so none of the three is an entry. The truth is 85 entries now.
 The arms read 0.432 lexical and 0.214 semantic, which is inside the spread the twelve runs before
 them describe.
 
-# What `D-40` did not move, and the first run in seven that needed no repair, 2026-09-01
+# What `D-40` did not move, and the second run that needed no repair, 2026-09-01
 
 `D-40` gave every language its own module spelling, and on the read side it is the largest change
 the resolver has taken: across the fleet, resolved-single `CALLS` edges go 433 to 5,346 and the
@@ -190,7 +193,7 @@ external share falls 99.51% to 95.09%. A change that turns four thousand non-edg
 exactly the shape that invents a caller, so this run is the one the concept exists to grade.
 
 The graph scored F1 1.000 at `7957b6d`, on both classes, **on the first run and with no repair to
-the hand truth.** Six of the seven runs before it each found a real caller the corpus had not
+the hand truth.** Every run before it but `3ca2c9d` found a real caller the corpus had not
 listed, so a clean first pass is worth stating: the four thousand edges `D-40` adds are Go, PHP and
 TypeScript member calls, and this corpus is Python and TypeScript. It confirms the digit rather
 than stressing it, and the stress test is the 8,460-file signature diff that rode with the change
@@ -201,7 +204,7 @@ and the lexical arm the highest since `4470719`, which is the spread doing what 
 says it does and not a finding.
 
 The fifteenth run, at `0f6520c`, holds 1.000 on both classes with no repair to the truth — the second
-such run in a row, after six that each needed one. `D-53` adds a column and a reader and touches no
+such run in a row, and the third since this concept was written. `D-53` adds a column and a reader and touches no
 resolution path, so an unmoved graph figure is the reading it should give. Both arms moved again and
 in opposite directions, 0.466 lexical and 0.176 semantic, which is the widest spread of the fifteen
 in both directions at once and still not a finding.
@@ -230,8 +233,11 @@ came from a producer written *beside* the engine rather than inside it.
 
 That is the same seam under a new shape. A file added to `scripts/` is in the corpus by the rule at
 the top of this concept, and the ten names it happens to call are the ten the corpus asks about.
-Eight of the ten runs since this concept was written have found a real caller the table lacked, and
-the direction has not once reversed: the graph has never invented one. The truth is 92 entries.
+Three runs since this concept was written have needed no repair -- `3ca2c9d`, `7957b6d` and
+`0f6520c` -- and every other one found a real caller the table lacked. No repair has run the other way
+since `D-27`: the graph has not returned a file that was not a caller. It did once, before that fix
+and after this concept was written -- twenty false positives in the `collides` class from the empty
+receiver, recorded above. The truth is 92 entries.
 
 The arms read 0.424 lexical and 0.183 semantic, both inside the spread the sixteen before them
 describe.
