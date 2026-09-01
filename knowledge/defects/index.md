@@ -62,3 +62,7 @@
   one store holds 28.7% of every reference row in the fleet. A `.min.js` suffix test refuses none of
   the six bundles measured, because two of them are pretty-printed. The rule that holds it is
   distinct-trigram diversity over the bytes.
+* [The plan pair described a gate that was gone](the-plan-pair-described-a-gate-that-was-gone.md) -
+  `832b1bb` cut the plan-pair block from the pre-push hook and both `docs/test-plan.md` and `ci.yml`
+  kept describing it. Three days later 6 `done` rows named tests that no longer exist, 4 owned paths
+  named deleted files, 26 tests no row names, and 1 dev row covered nothing. The gate is now a test.

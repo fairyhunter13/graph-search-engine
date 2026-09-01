@@ -1,5 +1,6 @@
-# The pre-push hook checks the plan pair and the bundle. It never runs the
-# suite or the linter, so a push that skipped the hook was ungated until here.
+# The pre-push hook checks public hygiene and the knowledge bundle. The plan pair is checked by
+# `tests/test_plan_pair.py`, which the hook does not run, so a push that skipped it is ungated
+# until here -- as are the rest of the suite and the linter.
 name: ci
 
 on:

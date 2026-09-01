@@ -110,6 +110,12 @@ Precondition: two scratch packages outside the fleet repos, one earning a plan p
 Action: a headless session is asked for a test plan, with no skill named.
 Expected: the earning repo dispatches the skill, and the one-file service does not.
 
+**S-18 The plan pair is graded by something that runs.**
+Precondition: the two plan documents, and the tracked tree they anchor into.
+Action: the suite runs.
+Expected: every `done` row resolves to a test that exists, every owned path to a file that is
+tracked, and every test to a row that names it.
+
 **S-11 The bundle carries its own guarantees.**
 Precondition: a concept declaring an attested computation.
 Action: the pre-push gate runs.
@@ -150,7 +156,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-29 | The attester accepts a sound receipt | S-11 | D-13 | done | tests/test_attester.py::test_sound_receipt_is_accepted |
 | T-30 | The attester rejects a changed number | S-11 | D-13 | done | tests/test_attester.py::test_changed_number_is_rejected |
 | T-31 | An offset-free stale date is rejected | S-11 | D-14 | done | tests/test_bundle.py::test_offset_free_stale_after_is_rejected |
-| T-32 | A dropped receipt field fails the check | S-11 | D-14 | done | tests/test_bundle.py::test_dropped_receipt_field_fails |
+| T-32 | A dropped receipt field fails the check -- dropped: the attester-contract gate went with `scripts/check_attester_contract.py` in `832b1bb` | S-11 | D-14 | dropped | tests/test_bundle.py::test_dropped_receipt_field_fails |
 | T-33 | TypeScript and PHP golden counts hold | S-01 | D-02 | done | tests/test_extract.py::test_typescript_golden_symbol_counts |
 | T-34 | A PHP static call needs the repair layer | S-01 | D-02 | done | tests/test_extract.py::test_a_php_static_call_needs_the_repair_layer |
 | T-35 | One import row per import statement | S-01 | D-02 | done | tests/test_extract.py::test_one_import_row_per_statement |
@@ -166,7 +172,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-45 | A pass writes nodes and edges | S-12 | D-04 | done | tests/test_index.py::test_a_pass_writes_nodes_and_edges |
 | T-46 | An unchanged tree is not reparsed | S-12 | D-04 | done | tests/test_index.py::test_an_unchanged_tree_is_not_reparsed |
 | T-47 | A changed file makes the pass run | S-12 | D-04 | done | tests/test_index.py::test_a_changed_file_makes_the_pass_run |
-| T-48 | The queue drops a queued job and requeues a running one | S-12 | D-04 | done | tests/test_index.py::test_the_queue_drops_a_queued_job_and_requeues_a_running_one |
+| T-48 | The queue drops a queued job and requeues a running one -- dropped: superseded by `T-284`, which names the same test after `D-48` renamed the verdict `dropped` to `merged` | S-12 | D-04 | dropped | tests/test_index.py::test_the_queue_drops_a_queued_job_and_requeues_a_running_one |
 | T-49 | Callers of a function in the cycle | S-04 | D-04 | done | tests/test_index.py::test_callers_of_a_function_in_the_cycle |
 | T-50 | A depth over the ceiling is refused | S-04 | D-04 | done | tests/test_index.py::test_a_depth_over_the_ceiling_is_refused |
 | T-51 | An unknown question names the valid set | S-03 | D-04 | done | tests/test_index.py::test_an_unknown_question_names_the_valid_set |
@@ -311,7 +317,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-190 | Deleting a file takes its FTS rows with it | S-07 | D-01 | done | tests/test_store.py::test_deleting_a_file_takes_its_fts_rows_with_it |
 | T-191 | The unique key is the identifier range | S-07 | D-01 | done | tests/test_store.py::test_the_unique_key_is_the_identifier_range |
 | T-192 | A bare verified mapping reads as a one-element list | S-11 | D-28 | done | tests/test_bundle.py::test_a_bare_verified_mapping_reads_as_a_one_element_list |
-| T-193 | Every index gloss is the description of its concept | S-11 | D-29 | done | tests/test_bundle.py::test_every_index_gloss_is_its_concepts_description |
+| T-193 | Every index gloss is the description of its concept -- dropped: the check went with `scripts/check_index_gloss.py` in `832b1bb` | S-11 | D-29 | dropped | tests/test_bundle.py::test_every_index_gloss_is_its_concepts_description |
 | T-194 | A concept reads as reviewed only where a human stamped it | S-11 | D-28 | done | tests/test_bundle.py::test_a_concept_reads_as_reviewed_only_where_a_human_stamped_it |
 | T-195 | The trust tier reads the three cases section 5.3 names | S-11 | D-28 | done | tests/test_bundle.py::test_the_trust_tier_reads_the_three_cases_section_5_3_names |
 | T-196 | An unset watchdog interval sends no ping | S-09 | D-11 | done | tests/test_systemd.py::test_no_watchdog_means_no_pings |
@@ -328,12 +334,12 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-207 | A taken port is refused by name | S-10 | D-06, D-09 | done | tests/test_partc.py::test_a_taken_port_is_refused_by_name |
 | T-208 | An expression receiver leaves the repo rather than picking a homonym | S-14 | D-27 | done | tests/test_resolve.py::test_an_expression_receiver_leaves_the_repo_rather_than_picking_a_homonym |
 | T-209 | The receipt on disk is attested | S-11 | D-30 | done | tests/test_attester.py::test_the_receipt_on_disk_is_attested |
-| T-210 | A corrected citation is not a dropped source | S-11 | D-31 | done | tests/test_bundle.py::test_a_corrected_citation_is_not_a_dropped_source |
+| T-210 | A corrected citation is not a dropped source -- dropped: the check went with `scripts/check_no_shrink.py` in `832b1bb` | S-11 | D-31 | dropped | tests/test_bundle.py::test_a_corrected_citation_is_not_a_dropped_source |
 | T-211 | A run on a dirty tree is rejected | S-11 | D-33 | done | tests/test_attester.py::test_a_run_on_a_dirty_tree_is_rejected |
 | T-212 | A run whose assertions never ran is rejected | S-11 | D-33 | done | tests/test_attester.py::test_a_run_whose_assertions_never_ran_is_rejected |
 | T-213 | A second concurrent run refuses rather than clobbers | S-11 | D-33 | done | tests/test_attester.py::test_a_second_concurrent_run_refuses_rather_than_clobbers |
-| T-214 | A further save restarts the quiet window | S-09 | D-32 | done | tests/test_watch.py::test_a_further_save_restarts_the_quiet_window |
-| T-215 | An explicit call pulls a waiting job forward | S-09 | D-32 | done | tests/test_watch.py::test_an_explicit_call_pulls_a_waiting_job_forward |
+| T-214 | A further save restarts the quiet window -- dropped: `D-48` deleted the quiet window in `a7a7884` | S-09 | D-32 | dropped | tests/test_watch.py::test_a_further_save_restarts_the_quiet_window |
+| T-215 | An explicit call pulls a waiting job forward -- dropped: `D-48` deleted the quiet window in `a7a7884` | S-09 | D-32 | dropped | tests/test_watch.py::test_an_explicit_call_pulls_a_waiting_job_forward |
 | T-216 | A hung search raises rather than scoring zero | S-11 | D-33 | done | tests/test_two_engine.py::test_a_hung_search_raises_rather_than_scoring_zero |
 | T-217 | The probe covers every mode the run uses | S-11 | D-33 | done | tests/test_two_engine.py::test_the_probe_covers_every_mode_the_run_uses |
 | T-218 | Prune removes the orphan directory and the count reaches zero | S-07 | D-34 | done | tests/test_registry.py::test_prune_removes_the_directory_so_the_count_reaches_zero |
@@ -422,6 +428,32 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-305 | `doctor` prints the SCIP readiness block | S-01 | D-54 | done | tests/test_tools.py::test_doctor_prints_the_scip_readiness_block |
 | T-306 | A project with no build-unit marker is `unconfigured` | S-01 | D-54 | done | tests/test_scip_run.py::test_a_project_with_no_build_unit_marker_is_unconfigured |
 | T-303 | `doctor` prints the file census, and `by_tier` sums to the file count | S-01 | D-53 | done | tests/test_index.py::test_the_census_counts_every_file_once, tests/test_tools.py::test_doctor_prints_the_file_census |
+| T-307 | Every `done` row names a test that exists | S-18 | D-56 | done | tests/test_plan_pair.py::test_every_done_row_names_a_test_that_exists |
+| T-308 | A foreign node is exempt and the exemption is counted | S-18 | D-56 | done | tests/test_plan_pair.py::test_a_foreign_node_is_exempt_and_the_exemption_is_visible |
+| T-309 | A row naming no test node is `planned` | S-18 | D-56 | done | tests/test_plan_pair.py::test_a_row_with_no_node_is_planned |
+| T-310 | Every test that exists is named by a row | S-18 | D-56 | done | tests/test_plan_pair.py::test_every_test_that_exists_is_named_by_a_row |
+| T-311 | Every path a development row owns is tracked | S-18 | D-56 | done | tests/test_plan_pair.py::test_every_path_a_dev_row_owns_is_tracked |
+| T-312 | Every row names at least one row in the other document | S-18 | D-56 | done | tests/test_plan_pair.py::test_every_row_names_at_least_one_row_in_the_other_document |
+| T-313 | No ID is an orphan in either direction, and a range is expanded first | S-18 | D-56 | done | tests/test_plan_pair.py::test_no_id_is_an_orphan_in_either_direction |
+| T-314 | A populated submodule is enumerated | S-12 | D-58 | done | tests/test_discover.py::test_a_populated_submodule_is_enumerated |
+| T-315 | An empty submodule directory adds nothing | S-12 | D-58 | done | tests/test_discover.py::test_an_empty_submodule_directory_adds_nothing |
+| T-316 | A nested submodule is reached | S-12 | D-58 | done | tests/test_discover.py::test_a_nested_submodule_is_reached |
+| T-317 | An exclude still drops a submodule file | S-12 | D-58 | done | tests/test_discover.py::test_an_exclude_still_drops_a_submodule_file |
+| T-318 | A member inherits the exclude of the root that claims it | S-07 | D-35 | done | tests/test_discovery.py::test_a_member_inherits_the_exclude_of_the_root_that_claims_it |
+| T-319 | A member with its own config inherits nothing | S-07 | D-35 | done | tests/test_discovery.py::test_a_member_with_its_own_config_inherits_nothing |
+| T-320 | An unclaimed project inherits nothing | S-07 | D-35 | done | tests/test_projcfg.py::test_an_unclaimed_project_inherits_nothing |
+| T-321 | A member inherits the SCIP opt-in from the root that claims it | S-06 | D-08 | done | tests/test_projcfg.py::test_a_member_inherits_the_scip_opt_in_from_the_root_that_claims_it |
+| T-322 | A member with its own config inherits no SCIP opt-in | S-06 | D-08 | done | tests/test_projcfg.py::test_a_member_with_its_own_config_inherits_no_scip_opt_in |
+| T-323 | A build unit is every marker directory and never a vendored one | S-06 | D-08 | done | tests/test_scip_run.py::test_a_build_unit_is_every_marker_directory_and_never_a_vendored_one |
+| T-324 | An indexer is skipped before it runs where the language is absent | S-06 | D-08 | done | tests/test_scip_run.py::test_an_indexer_is_skipped_before_it_runs_where_the_language_is_absent |
+| T-325 | A sub-module is graded against its own files and not the whole tree | S-06 | D-08 | done | tests/test_scip_run.py::test_a_sub_module_is_graded_against_its_own_files_and_not_the_whole_tree |
+| T-326 | The overlay writes its index beside the graph and never in the project | S-06 | D-08 | done | tests/test_scip_run.py::test_the_overlay_writes_its_index_beside_the_graph_and_never_in_the_project |
+| T-327 | A unit with no marker has no plan | S-06 | D-54 | done | tests/test_scip_deps.py::test_a_unit_with_no_marker_has_no_plan |
+| T-328 | A bad plan is refused where it is chosen and not where it was written | S-06 | D-54 | done | tests/test_scip_deps.py::test_a_bad_plan_is_refused_where_it_is_chosen_and_not_where_it_was_written |
+| T-329 | The helper resolves nothing a project cannot use | S-06 | D-54 | done | tests/test_scip_deps.py::test_the_helper_resolves_nothing_a_project_cannot_use |
+| T-330 | A progress file outlives its store and the prune sweeps it | S-07 | D-41 | done | tests/test_prune.py::test_a_progress_file_outlives_its_store_and_the_prune_sweeps_it |
+| T-331 | A prune against an empty registry refuses | S-07 | D-41 | done | tests/test_registry.py::test_a_prune_against_an_empty_registry_refuses |
+| T-332 | A prune over half the tree needs force | S-07 | D-41 | done | tests/test_registry.py::test_a_prune_over_half_the_tree_needs_force |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted
@@ -609,78 +641,37 @@ Real, named, and built by `git init` in a temporary directory. No mocks, and no 
 Every `T-nn` names exactly one `S-nn` and at least one `D-nn`. Every `D-nn` names at least one
 `T-nn`. An ID is never reused and never deleted.
 
-Five checks, run by the pre-push gate. Silence is the pass. The hook is the copy that runs, and
-this is its shape.
+Seven checks, and they are a test: `tests/test_plan_pair.py`. A shell copy ran in the pre-push
+gate until 2026-08-29, the six-rule ruling deleted it, and both documents went on describing it.
+What that bought is `knowledge/defects/the-plan-pair-described-a-gate-that-was-gone.md`: six `done`
+rows outliving their tests, three owned paths outliving their files, and 26 tests no row named.
 
-```sh
-# A dead path, per path. A `(ccw)` token marks a row's foreign paths, and the skip is
-# per entry, so an in-repo path beside one is still checked.
-awk -F'|' '/^\| D-[0-9]/ {n = split($5, a, ","); for (i = 1; i <= n; i++) {
-  gsub(/^[ \t]+|[ \t]+$/, "", a[i]); if (a[i] != "") print a[i] }}' docs/development-plan.md \
-  | while IFS= read -r p; do
-      case "$p" in '('*) continue ;; esac
-      [ -n "$(git ls-files -- "$p")" ] || echo "dead path: $p"
-    done
+Collection is an AST walk over `tests/test_*.py` and not `pytest --collect-only`. No row carries a
+`[case]` suffix, so real collection would name nothing the walk does not, and a pytest run inside a
+pytest run costs a second import of the whole suite.
 
-# An uncollected test node ID.
-uv run pytest --collect-only -q -o addopts= | sort > /tmp/collected
-grep -E '^\| T-[0-9]' docs/test-plan.md | while IFS='|' read -r _ id _ _ _ status node; do
-  node="${node//[ |]/}"; status="${status// /}"
-  if [ -z "$node" ]; then
-    [ "$status" = planned ] || echo "${id// /}: no test node ID, and the row is not planned"
-    continue
-  fi
-  [ "${node#'(ccw)'}" != "$node" ] && continue
-  grep -qF "$node" /tmp/collected || echo "uncollected test: $node"
-done
-
-# An orphan ID, both directions. `T-94..T-101` is a range, and the hook expands it
-# before resolving each ID to a row of its own in the other document.
-plan_ids docs/test-plan.md D | while IFS= read -r id
-do
-  grep -qE "^\| $id \|" docs/development-plan.md || echo "orphan $id"
-done
-
-# Coverage. A row that names no ID at all resolves nothing, so the arm above never sees it.
-grep -E '^\| D-[0-9]' docs/development-plan.md | grep -vE 'T-[0-9]'
-grep -E '^\| T-[0-9]' docs/test-plan.md | cut -d'|' -f5 | grep -vE 'D-[0-9]'
-
-# A collected test no row names. The `[case]` suffix goes first, or every
-# parametrised test reads as unrecorded.
-awk -F'|' '/^\| T-[0-9]/ { gsub(/[ \t]/, "", $7); if ($7 != "") print $7 }' \
-  docs/test-plan.md | sort -u > /tmp/rows
-grep '::' /tmp/collected | sed 's/\[.*\]//' | sort -u | comm -23 - /tmp/rows
-```
-
-`-o addopts=` is load-bearing. This repo sets `-q` there, and a second `-q` collapses collection to
-a per-file count with no node ID in it. Every anchored row then reads as uncollected.
-
-The dead-path side is `git ls-files -- "$p"` per path, never `grep -vFx` against one dump. The dump
-form matches a whole line. A directory anchor such as `src/graphrag/queries/imports/` never appears
-in it, so every directory row read as dead.
-
-The match on the test side is `grep -qF` per row rather than `comm -23` over two sorted lists. A
-collected line carries text around the node ID. An exact-line compare therefore reports a row the
-runner does collect.
-
-**A blank node cell is a finding unless the row is `planned`.** It used to be skipped outright. One
+A blank node cell is a finding unless the row is `planned`. It used to be skipped outright, and one
 row of 122 was then the only row the check could not see.
 
-A `(ccw)` node ID is skipped, for the reason a `(ccw)` path is. That test lives in another checkout
-and this runner cannot collect it.
+A `(ccw)` node ID or path is exempt, because that test lives in another checkout and this runner
+cannot reach it. The exemption is counted rather than waved through: a run finding none of them
+fails, because an escape hatch nobody can size is a hole.
 
 The orphan check expands a range before it resolves an ID. Eight dev rows write `T-94..T-101`, and
 a token grep recovers only the two ends of one. The six interior IDs went unchecked.
 
-The fourth check is coverage rather than a dangling reference. A row naming nothing at all passes
-an orphan check, because it has no ID to resolve. It runs in both directions.
+Coverage runs in both directions, because a row naming nothing at all has no ID for an orphan check
+to resolve. `(deletion)` is its one marked exemption, and `D-50` is the only row carrying it: a
+symbol that was written and never read leaves no behaviour to grade, and a test asserting a private
+name stays absent would be a worse liability than the row.
 
-The fifth check runs the anchor check backwards. Part B rule 5 makes a test no row names a finding.
-Only the row-to-test direction was gated, so 63 of 181 collected functions were named by no row.
-The reconciliation pass wrote `T-129` to `T-191` for them.
+The backward direction is Part B rule 5. It found 63 of 181 collected functions named by no row in
+the reconciliation that wrote `T-129` to `T-191`, and 26 more when it was written as a test.
 
-The pattern is `T-[0-9]`, never a bare `T-`, so the vocabulary block above is not read as a row.
-The tree side is `git ls-files` rather than a walk, because the gate is about what a clone gets.
+The dead-path side resolves a directory anchor as well as a file. `src/graphrag/queries/imports/`
+is tracked as the files under it and never as itself, so an exact-set compare read every directory
+row as dead. The tree side is `git ls-files` rather than a walk, because the gate is about what a
+clone gets.
 
 
 # A correction `D-07` forced, 2026-08-27

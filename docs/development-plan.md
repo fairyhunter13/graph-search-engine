@@ -171,7 +171,7 @@ for the callers of a known function and check them by hand.
 | D-11 | systemd units and reach enrolment | done | src/graphrag/systemd.py, src/graphrag/reach.py, tests/test_systemd.py, (ccw) internal/hooks/graphragreach.go | T-26, T-27, T-85..T-89, T-117, T-118, T-119, T-120 |
 | D-12 | The OKF profile record and bundle root | done | knowledge/index.md, knowledge/log.md, knowledge/policies, tests/test_bundle.py | T-28, T-38, T-39, T-40, T-126 |
 | D-13 | The first working attester | done | knowledge/attesters, knowledge/computations, knowledge/skills, tests/test_attester.py | T-29, T-30, T-41, T-42, T-43, T-44 |
-| D-14 | Gate lines and the attester contract check | done | .githooks/pre-push, scripts/check_attester_contract.py, knowledge/constraints, knowledge/decisions | T-31, T-32 |
+| D-14 | Gate lines and the attester contract check | done | .githooks/pre-push, knowledge/constraints, knowledge/decisions | T-31, T-32 |
 | D-15 | Source roots, so a dotted import matches a path | done | src/graphrag/symtab.py, tests/test_resolve.py | T-59 |
 | D-16 | Workspace scope, federation and peer identity | done | src/graphrag/scope.py, src/graphrag/federation.py, src/graphrag/peers.py, tests/test_federation.py | T-65, T-77..T-84 |
 | D-17 | The registry row carries the reach figures | done | src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/index.py, src/graphrag/cli.py | T-90 |
@@ -186,11 +186,11 @@ for the callers of a known function and check them by hand.
 | D-26 | The headless probe, so a selection claim is an artifact of the run | done | scripts/headless_probe.py, tests/test_probe.py | T-127, T-128 |
 | D-27 | An expression receiver names no module, so the call leaves the repo | done | src/graphrag/resolve.py, src/graphrag/config.py, tests/test_resolve.py, tests/test_two_engine.py | T-208 |
 | D-28 | One frontmatter reader, and the trust tier section 5.3 names | done | scripts/okf_frontmatter.py, tests/test_bundle.py | T-192, T-194, T-195 |
-| D-29 | Every index gloss is checked against its concept description | done | scripts/check_index_gloss.py, .githooks/pre-push, tests/test_bundle.py | T-193 |
+| D-29 | Every index gloss is checked against its concept description | done | .githooks/pre-push, tests/test_bundle.py | T-193 |
 | D-30 | The bundle records what it cannot cite, and the shrink-gate deviation | done | knowledge/references, knowledge/decisions, tests/test_attester.py | T-209 |
-| D-31 | A corrected citation is not a dropped source, and the private URL goes | done | scripts/check_no_shrink.py, knowledge/decisions, tests/test_bundle.py | T-210 |
-| D-32 | The quiet window, so a burst of saves buys one pass and not one each | done | src/graphrag/config.py, src/graphrag/index.py, src/graphrag/watch.py, src/graphrag/extract.py, tests/test_watch.py | T-16, T-214, T-215 |
-| D-33 | A receipt carries whether its own run can be read off | done | src/graphrag/config.py, knowledge/attesters, scripts/two_engine_measure.py, tests/test_attester.py, tests/test_two_engine.py, tests/test_resolve.py, scripts/check_attester_contract.py | T-211, T-212, T-213, T-216, T-217 |
+| D-31 | A corrected citation is not a dropped source, and the private URL goes | done | knowledge/decisions, tests/test_bundle.py | T-210 |
+| D-32 | The quiet window, so a burst of saves buys one pass and not one each -- dropped: `D-48` deleted the quiet window in `a7a7884`, and this row asserted the opposite of that one | dropped | src/graphrag/config.py, src/graphrag/index.py, src/graphrag/watch.py, src/graphrag/extract.py, tests/test_watch.py | T-16, T-214, T-215 |
+| D-33 | A receipt carries whether its own run can be read off | done | src/graphrag/config.py, knowledge/attesters, scripts/two_engine_measure.py, tests/test_attester.py, tests/test_two_engine.py, tests/test_resolve.py | T-211, T-212, T-213, T-216, T-217 |
 | D-34 | Prune removes the store directory, so the orphan count reaches zero | done | src/graphrag/cli.py, src/graphrag/registry.py, tests/test_registry.py | T-218 |
 | D-35 | Members are discovered by walking the symlinks, and `federation_exclude` bounds the walk | done | src/graphrag/federation.py, src/graphrag/projcfg.py, src/graphrag/filters.py, tests/test_discovery.py | T-219..T-225 |
 | D-36 | `exclude` and `languages` reach the index pass, which read neither | done | src/graphrag/discover.py, src/graphrag/index.py, tests/test_discovery.py | T-228..T-231 |
@@ -207,12 +207,14 @@ for the callers of a known function and check them by hand.
 | D-47 | An index pass rewrites only the files that changed | done | src/graphrag/index.py, src/graphrag/jobs.py, src/graphrag/indexwrite.py, src/graphrag/discover.py, src/graphrag/filters.py, src/graphrag/store.py, src/graphrag/query.py, src/graphrag/dbread.py | T-256, T-257, T-261, T-262, T-268, T-276, T-277, T-278, T-280, T-282, T-283 |
 | D-48 | The watcher hints which files changed, and the quiet window is deleted | done | src/graphrag/watch.py, src/graphrag/jobs.py, src/graphrag/index.py, src/graphrag/discover.py, src/graphrag/config.py, src/graphrag/systemd.py, tests/test_watch.py, tests/test_perfile.py, tests/test_index.py | T-260, T-270, T-271, T-272, T-273, T-274, T-275, T-290 |
 | D-49 | `grammars.py` reports the digits the live pin produces | done (no change needed) | src/graphrag/grammars.py, tests/test_grammars.py | T-06 |
-| D-50 | `SymbolTable.module_of` is deleted: it was written and never read | done | src/graphrag/symtab.py | |
+| D-50 | `SymbolTable.module_of` is deleted: it was written and never read | done | src/graphrag/symtab.py | (deletion) |
 | D-51 | The SCIP overlay rides the reconciler, because it has no per-file form | done | src/graphrag/index.py, tests/test_perfile.py | T-286 |
 | D-52 | This repository is public, so no tracked file carries a private name or a machine path, and the gate reads the whole tree | done | tests/test_hygiene.py, .githooks/pre-push, .github/workflows/ci.yml, scripts/partc_probe.py, src/graphrag/federation.py, src/graphrag/filters.py, src/graphrag/index.py, src/graphrag/scip/run.py, docs/, knowledge/ | T-295, T-296, T-304 |
 | D-53 | A file that answers nothing says which of five causes it was, and doctor counts them | done | src/graphrag/store.py, src/graphrag/extract.py, src/graphrag/index.py, src/graphrag/indexwrite.py, src/graphrag/cli.py, src/graphrag/config.py, tests/test_store.py, tests/test_extract.py, tests/test_index.py, tests/test_tools.py | T-299, T-300, T-301, T-302, T-303 |
 | D-54 | The SCIP tier reports its readiness in five tiers before anything acts on it, and the install helper is a separate surface | done | src/graphrag/scip/run.py, src/graphrag/scip/deps.py, src/graphrag/cli.py, tests/test_scip_run.py, tests/test_scip_deps.py, tests/test_tools.py | T-265, T-266, T-305, T-306 |
 | D-55 | A SCIP occurrence is believed only while its file is no newer than the artifact | done | src/graphrag/scip/ingest.py, src/graphrag/scip/guard.py, tests/test_scip_ingest.py | T-267 |
+| D-56 | The plan pair is graded by a test, because the shell gate that described itself was deleted and both documents kept describing it | done | tests/test_plan_pair.py, docs/test-plan.md, docs/development-plan.md | T-307..T-313 |
+| D-58 | Discovery descends into a populated submodule, which `git ls-files` at the parent never lists | done | src/graphrag/discover.py, tests/test_discover.py | T-314..T-317 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
