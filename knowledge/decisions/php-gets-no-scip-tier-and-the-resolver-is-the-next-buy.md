@@ -114,7 +114,7 @@ the builtin list taken from `get_defined_functions()` on PHP 8.3.6 rather than f
 
 Every one of those 7,383 in-project calls is the second `external` write site in `resolve.py`, not
 the first. The first site fires when `table.defines(name)` returns nothing, and a name defined in
-the project makes that pool non-empty. So receiver narrowing at `resolve.py:145` emptied the pool,
+the project makes that pool non-empty. So receiver narrowing at `resolve.py:158-160` emptied the pool,
 and each of the 7,383 is a resolver miss by construction.
 
 Attributing each one to the call shape its own file carries:

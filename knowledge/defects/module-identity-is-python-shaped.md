@@ -87,8 +87,8 @@ so a `callers` answer that resolved nothing looks the same as a symbol nothing c
 
 | Site | Condition | Meaning |
 |---|---|---|
-| `resolve.py:131-132` | `table.defines(name)` is empty | the name is defined nowhere here. Honest. |
-| `resolve.py:144-145` | the pool was non-empty, then `_receiver_modules` narrowing emptied it | the name **is** defined here and the resolver missed it. |
+| `resolve.py:145-147` | `table.defines(name)` is empty | the name is defined nowhere here. Honest. |
+| `resolve.py:158-160` | the pool was non-empty, then `_receiver_modules` narrowing emptied it | the name **is** defined here and the resolver missed it. |
 
 A reader cannot tell them apart from the answer, but the store can. An external edge whose callee
 name also exists as a non-external node is the second site. Measured 2026-08-30:

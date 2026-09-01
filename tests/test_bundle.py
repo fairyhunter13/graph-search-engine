@@ -182,3 +182,34 @@ def test_a_concept_reads_as_reviewed_only_where_a_human_stamped_it():
         )
     assert [t == "human-reviewed" for t in tiers] == stamped
     assert "machine-confirmed" in tiers
+
+
+_RUN_WORDS = (  # noqa: SIM905 -- the literal list this asks for costs 21 lines and reads worse
+    "zero one two three four five six seven eight nine ten eleven twelve thirteen "
+    "fourteen fifteen sixteen seventeen eighteen nineteen twenty"
+).split()
+
+
+def test_the_arm_list_counts_agree_with_the_number_it_states():
+    """`T-337`. The tally three audits each corrected by hand, and no gate saw.
+
+    `40690e6` shipped "Ten runs" against eleven figures in each arm. Nothing
+    grades a number written in prose, so a wrong one survives every gate here
+    and is found only by a reader who recounts it.
+
+    The sha list is deliberately not counted: one early run's hex is lost, and
+    the paragraph names other commits inside the same span.
+    """
+    text = (BUNDLE / "computations" / "the-graph-answers-the-caller-question.md").read_text(
+        encoding="utf-8"
+    )
+    stated = re.search(r"\b(\w+) runs span\b", text)
+    assert stated, "the arm paragraph no longer states a run count"
+    said = _RUN_WORDS.index(stated.group(1).lower())
+
+    counts = {}
+    for arm in ("lexical", "semantic"):
+        listed = re.search(rf"gave ([\d.,\s and]+) {arm}", text)
+        assert listed, f"the arm paragraph no longer lists {arm} figures"
+        counts[arm] = len(re.findall(r"\d\.\d+", listed.group(1)))
+    assert counts == {"lexical": said, "semantic": said}

@@ -57,7 +57,8 @@ queue by the project count, and lose the single-writer invariant that keeps the 
 
 The shape is copied from `coderag`, and the code is not.
 
-- Flat package, no subpackages. Every module under 300 lines, enforced by a test.
+- Flat package. `scip/` is the only subpackage, and `test_scip_is_the_only_subpackage` holds it
+  there. Every module under 300 lines, enforced by a test.
 - `config.py` imports no sibling, so a cycle is unresolvable.
 - Module as interface. No ABCs, no protocols, no registry of classes, no DI container.
 - Dataclass contracts between stages, each `@dataclass(slots=True)`.
@@ -71,7 +72,9 @@ a signature change means a grammar pin moved, and `meta.incompatible(conn)` alre
 
 # Components
 
-`src/graphrag/`, flat, about 25 modules.
+`src/graphrag/`, flat, 36 modules and the one `scip/` subpackage. The table names the load-bearing
+ones and not all of them: `dbread.py`, `derive.py`, `jobs.py`, `prune.py`, `quarantine.py`,
+`reach.py` and `resolvedb.py` have no row.
 
 | Module | Role | Invariant it owns |
 |---|---|---|
@@ -169,7 +172,7 @@ for the callers of a known function and check them by hand.
 | D-09 | Fleet registration across five profiles | done | (ccw) internal/policy/shared.go | T-20, T-21 |
 | D-10 | Two-engine gate and the routing rule | done | (ccw) internal/hooks/treesearch.go | T-22, T-23, T-24, T-25 |
 | D-11 | systemd units and reach enrolment | done | src/graphrag/systemd.py, src/graphrag/reach.py, tests/test_systemd.py, (ccw) internal/hooks/graphragreach.go | T-26, T-27, T-85..T-89, T-117, T-118, T-119, T-120 |
-| D-12 | The OKF profile record and bundle root | done | knowledge/index.md, knowledge/log.md, knowledge/policies, tests/test_bundle.py | T-28, T-38, T-39, T-40, T-126 |
+| D-12 | The OKF profile record and bundle root | done | knowledge/index.md, knowledge/log.md, knowledge/policies, tests/test_bundle.py | T-28, T-38, T-39, T-40, T-126 , T-337 |
 | D-13 | The first working attester | done | knowledge/attesters, knowledge/computations, knowledge/skills, tests/test_attester.py | T-29, T-30, T-41, T-42, T-43, T-44 |
 | D-14 | Gate lines and the attester contract check | done | .githooks/pre-push, knowledge/constraints, knowledge/decisions | T-31, T-32 |
 | D-15 | Source roots, so a dotted import matches a path | done | src/graphrag/symtab.py, tests/test_resolve.py | T-59 |
@@ -562,7 +565,7 @@ the receiver names took F1 to 0.795. Refusing a receiver that names nothing the 
 it to 0.913. So the loser was deleted rather than kept behind a switch.
 
 The price is sites, not recall. `T-07` refuses 43.7% of its scoped call sites on CPython, which is
-part A's `expr.method()` share almost exactly, while the collapse ratio rises from 7.3 to 8.7 and
+part A's `expr.method()` share almost exactly, while the collapse ratio rises from 7.4 to 8.7 and
 ambiguity falls from under 25% to 8.9%. Recall on the caller set stays 1.000, so nothing refused
 there was a real call.
 

@@ -70,8 +70,8 @@ gave 0.331, 0.316, 0.316, 0.306, 0.306, 0.306, 0.272, 0.294, 0.291, 0.226, 0.201
 graph scored 1.000 in every one. The retrieval arms rank by an embedding over a live index, so read them
 as the scale of the gap and never as a constant.
 
-The last three agree to three digits, and the fifth ran while the `coderag` daemon was indexing 409
-projects. The CLI stopped loading its own model between them, so the arms no longer compete with
+The fourth, fifth and sixth agree to three digits, and the fifth ran while the `coderag` daemon was
+indexing 409 projects. The CLI stopped loading its own model between them, so the arms no longer compete with
 the daemon for the card. See `references/the-coderag-cli-holds-its-own-gpu-session.md`.
 
 # What the receipt is for
@@ -156,7 +156,7 @@ entries also **moved**: `ledger.append` and `index.index_once` were called from
 moves reads as a false positive and a false negative at once, so it costs twice what a new one does.
 Both diffs were confirmed against the tree before the corpus was touched.
 
-# What `D-48` did not move, and the first run in five that needed no repair, 2026-09-01
+# What `D-48` did not move, and the first clean run since the truth went stale, 2026-09-01
 
 `D-48` made the watcher's paths a hint, so a save hashes the named files and not the tree. The graph
 scored F1 1.000 at `3ca2c9d`, on both classes, against the **unchanged** 84-entry truth.
@@ -185,7 +185,7 @@ truth row, so none of the three is an entry. The truth is 85 entries now.
 The arms read 0.432 lexical and 0.214 semantic, which is inside the spread the twelve runs before
 them describe.
 
-# What `D-40` did not move, and the second run that needed no repair, 2026-09-01
+# What `D-40` did not move, and the second clean run since the truth went stale, 2026-09-01
 
 `D-40` gave every language its own module spelling, and on the read side it is the largest change
 the resolver has taken: across the fleet, resolved-single `CALLS` edges go 433 to 5,346 and the
@@ -193,18 +193,18 @@ external share falls 99.51% to 95.09%. A change that turns four thousand non-edg
 exactly the shape that invents a caller, so this run is the one the concept exists to grade.
 
 The graph scored F1 1.000 at `7957b6d`, on both classes, **on the first run and with no repair to
-the hand truth.** Every run before it but `3ca2c9d` found a real caller the corpus had not
-listed, so a clean first pass is worth stating: the four thousand edges `D-40` adds are Go, PHP and
+the hand truth.** Every run since the truth went stale but `3ca2c9d` found a real caller the corpus
+had not listed, so a clean first pass is worth stating: the four thousand edges `D-40` adds are Go, PHP and
 TypeScript member calls, and this corpus is Python and TypeScript. It confirms the digit rather
 than stressing it, and the stress test is the 8,460-file signature diff that rode with the change
 instead.
 
 The arms read 0.441 lexical and 0.189 semantic. The semantic arm is the lowest of the fourteen runs
-and the lexical arm the highest since `4470719`, which is the spread doing what the section above
-says it does and not a finding.
+and the lexical arm sits mid-range -- `61cbcba` and `3ca2c9d` both read higher -- which is the
+spread doing what the section above says it does and not a finding.
 
 The fifteenth run, at `0f6520c`, holds 1.000 on both classes with no repair to the truth — the second
-such run in a row, and the third since this concept was written. `D-53` adds a column and a reader and touches no
+such run in a row, and the third since the truth went stale. `D-53` adds a column and a reader and touches no
 resolution path, so an unmoved graph figure is the reading it should give. Both arms moved again and
 in opposite directions, 0.466 lexical and 0.176 semantic, which is the widest spread of the fifteen
 in both directions at once and still not a finding.
@@ -233,9 +233,12 @@ came from a producer written *beside* the engine rather than inside it.
 
 That is the same seam under a new shape. A file added to `scripts/` is in the corpus by the rule at
 the top of this concept, and the ten names it happens to call are the ten the corpus asks about.
-Three runs since this concept was written have needed no repair -- `3ca2c9d`, `7957b6d` and
-`0f6520c` -- and every other one found a real caller the table lacked. No repair has run the other way
-since `D-27`: the graph has not returned a file that was not a caller. It did once, before that fix
+Eight of the seventeen runs found a real caller the table lacked -- the seventh through the
+eleventh, the thirteenth, the sixteenth and the seventeenth. The other nine are two unlike
+populations. The first six ran before the truth had gone stale once, so a clean digit there says
+nothing; `3ca2c9d`, `7957b6d` and `0f6520c` each ran after the truth had already gone stale five
+times, and those three are the ones worth stating. The ninth run is narrated in `log.md` and in no section here. No repair has run
+the other way since `D-27`: the graph has not returned a file that was not a caller. It did once, before that fix
 and after this concept was written -- twenty false positives in the `collides` class from the empty
 receiver, recorded above. The truth is 92 entries.
 

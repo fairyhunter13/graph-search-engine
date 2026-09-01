@@ -458,6 +458,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-334 | A root reaches a receipt only as a digest | S-06 | D-57 | done | tests/test_scip_census.py::test_a_root_reaches_a_receipt_only_as_a_digest |
 | T-335 | The overlay arm refuses every root that is not ready | S-06 | D-57 | done | tests/test_scip_census.py::test_the_overlay_arm_refuses_every_root_that_is_not_ready |
 | T-336 | The share arm counts the stores it could not read | S-06 | D-57 | done | tests/test_scip_census.py::test_the_share_arm_counts_the_stores_it_could_not_read |
+| T-337 | The arm list counts agree with the number it states | S-11 | D-12 | done | tests/test_bundle.py::test_the_arm_list_counts_agree_with_the_number_it_states |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted

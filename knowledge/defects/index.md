@@ -68,3 +68,8 @@
   `832b1bb` cut the plan-pair block from the pre-push hook and both `docs/test-plan.md` and `ci.yml`
   kept describing it. Three days later 6 `done` rows named tests that no longer exist, 4 owned paths
   named deleted files, 26 tests no row names, and 1 dev row covered nothing. The gate is now a test.
+* [A tally written in prose had no gate](a-tally-written-in-prose-had-no-gate.md) - three audits in
+  one day each corrected wrong figures in the same records, and each round wrote a new wrong one
+  while fixing the last. Nine false claims. Every gate here passes a sentence that counts wrong,
+  because none of them reads a number written in prose. `T-337` grades the one tally that drifted
+  three times; the rest of the class is held by nothing but a reader who recounts.
