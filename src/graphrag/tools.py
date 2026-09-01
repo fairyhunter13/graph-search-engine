@@ -15,7 +15,7 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from . import config, federation, index, query, registry, store, watch
+from . import config, federation, jobs, query, registry, store, watch
 
 INSTRUCTIONS = """\
 Structural code search over the graph: who calls this, what breaks if I change
@@ -95,9 +95,9 @@ def enroll(root: Path | str) -> dict[str, Any]:
     if not target.is_dir():
         return {"error": f"{target} is not a directory"}
     members = federation.register(target)
-    state = index.QUEUE.submit(target)
+    state = jobs.QUEUE.submit(target)
     for member in members:
-        index.QUEUE.submit(member)
+        jobs.QUEUE.submit(member)
     # The watcher armed over the rows that existed when it started, and inotify
     # has no replay. Without this the new rows are watched only after a restart:
     # no change is indexed, and no deletion is ever seen.
@@ -106,7 +106,7 @@ def enroll(root: Path | str) -> dict[str, Any]:
         "root": str(target),
         "members": [str(member) for member in members],
         "queued": state,
-        "depth": index.QUEUE.depth,
+        "depth": jobs.QUEUE.depth,
     }
     path = config.index_path(target)
     if path.exists():

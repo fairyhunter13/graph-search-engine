@@ -1,21 +1,12 @@
-"""One index pass, and the queue that serializes them.
+"""One index pass: enumerate, diff, parse, resolve and write.
 
-The queue is the write serializer. There is no second write lock, because a
-lock plus a queue is two answers to one question and they drift apart.
-
-Its dedup is asymmetric on purpose. A job already queued is dropped, because
-the queued pass has not read the tree yet and will see the change. A job whose
-root is already *running* is queued again, because the running pass may have
-read the tree before the change landed. Losing that re-queue is a missed edit
-that never heals until the next full pass.
+The pass rewrites the files the diff names and no others. `jobs.py` holds the
+queue that serializes one pass against the next.
 """
 
 from __future__ import annotations
 
 import logging
-import threading
-import time
-from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -25,14 +16,12 @@ from . import (
     extract,
     grammars,
     indexwrite,
-    ledger,
     progress,
     projcfg,
     registry,
     resolve,
     store,
     symtab,
-    trace,
 )
 
 log = logging.getLogger(__name__)
@@ -58,8 +47,13 @@ class IndexReport:
 
 
 def _facts(root: Path, metas: list[discover.FileMeta]) -> dict[str, extract.FileFacts]:
-    """Parse every indexable file. Resolution is global, so a partial parse
-    would price every unparsed file as a repo that does not define the name."""
+    """Parse the files given, and only those.
+
+    A partial parse used to be wrong, because resolution read every definition at
+    once and an unparsed file priced as a repo that does not define the name.
+    Resolution is file-local now, so the set handed in is the set that is
+    rewritten, and a file nobody touched keeps the rows it already has.
+    """
     out: dict[str, extract.FileFacts] = {}
     parsable = [meta for meta in metas if meta.lang]
     progress.begin(root, len(parsable))
@@ -114,14 +108,23 @@ def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
         report.files = len(metas)
         return report
 
-    facts = _facts(root, metas)
+    # A whole-tree rewrite where the graph is being rebuilt from nothing, and the
+    # changed set otherwise. `force` asks for the first by name.
+    whole = force or bool(report.rebuilt)
+    targets = metas if whole else [*changes.added, *changes.changed]
+    stale = sorted({meta.rel_path for meta in targets} | set(changes.removed))
+
+    facts = _facts(root, targets)
     report.parsed = len(facts)
     report.errors = {p: f.error for p, f in facts.items() if f.error}
     table = symtab.build({p: f for p, f in facts.items() if not f.error})
 
+    # One transaction per pass, and never one per file. `store.stamp` is the
+    # witness that the graph matches the algorithm, and there is no such point if
+    # each file commits alone. A reader under WAL sees the before or the after.
     with conn:
-        conn.execute("DELETE FROM files")
-        file_ids = indexwrite.write_files(conn, metas, facts)
+        indexwrite.forget_files(conn, stale)
+        file_ids = indexwrite.write_files(conn, targets, facts)
         nodes = indexwrite.write_nodes(conn, table, file_ids)
 
         # The file-local split. A reference its own file already decides is an
@@ -139,12 +142,21 @@ def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
         for p, rows in decided.items():
             edges += indexwrite.reference_edges(p, rows, nodes)
         indexwrite.write_edges(conn, edges)
+        indexwrite.write_fts(conn, file_ids.values())
         report.scip = _overlay(conn, root, cfg)
-        indexwrite.rebuild_fts(conn)
+        if report.scip:
+            # The overlay updates `qualified_name` and can insert nodes, and
+            # neither reaches an external-content index. It has no per-file
+            # write of its own, so it still pays for the whole rebuild.
+            indexwrite.rebuild_fts(conn)
         store.stamp(conn)
 
     totals = store.counts(conn)
-    store.reclaim(conn)
+    if whole:
+        # A truncating checkpoint is fsync-bound, and after stage 2 a pass runs
+        # on every save. The pages worth reclaiming are the ones a whole-tree
+        # rewrite freed, so the whole-tree pass is where the call belongs.
+        store.reclaim(conn)
     conn.close()
     report.files = totals["files"]
     report.nodes = totals["nodes"]
@@ -165,119 +177,3 @@ def record(report: IndexReport) -> None:
         counts = (report.nodes, report.edges, report.resolved)
         caps = {lang: sorted(grammars.capabilities(lang)) for lang in report.languages}
     registry.mark_indexed(report.root, counts=counts, capabilities=caps)
-
-
-class Queue:
-    """One queue, one worker. The queue is the state, and it is asymmetric."""
-
-    def __init__(self) -> None:
-        self._lock = threading.Lock()
-        self._waiting: deque[str] = deque()
-        self._queued: set[str] = set()
-        self._running: set[str] = set()
-        self._ready: dict[str, float] = {}
-        self._wake = threading.Condition(self._lock)
-
-    def submit(self, root: Path | str, *, delay: float = 0.0) -> str:
-        """Returns `queued`, `dropped` or `requeued`, and the third is the point.
-
-        `delay` holds the job until the project has been quiet that long, and a
-        further submission restarts the countdown. Saves land a median 11 s
-        apart while someone edits, and each one otherwise buys a whole pass.
-        """
-        key = str(Path(root).resolve())
-        with self._wake:
-            ready = time.monotonic() + delay
-            if key in self._queued:
-                # An explicit call pulls a waiting job forward; a further watch
-                # event pushes it back.
-                self._ready[key] = ready if not delay else max(self._ready[key], ready)
-                self._wake.notify()
-                return "dropped"
-            verdict = "requeued" if key in self._running else "queued"
-            self._queued.add(key)
-            self._waiting.append(key)
-            self._ready[key] = ready
-            self._wake.notify()
-            return verdict
-
-    def _pop_ready(self) -> str | None:
-        now = time.monotonic()
-        for key in self._waiting:
-            if self._ready[key] <= now:
-                self._waiting.remove(key)
-                self._queued.discard(key)
-                self._ready.pop(key, None)
-                self._running.add(key)
-                return key
-        return None
-
-    def take(self, timeout: float = 1.0) -> str | None:
-        with self._wake:
-            key = self._pop_ready()
-            if key is not None:
-                return key
-            if self._ready:
-                timeout = min(timeout, max(0.0, min(self._ready.values()) - time.monotonic()))
-            self._wake.wait(timeout)
-            return self._pop_ready()
-
-    def drain(self) -> int:
-        """Discard everything waiting, quiet window included.
-
-        `take` skips a job whose countdown is still running, so a caller that
-        polls `take` until it returns None cannot empty the queue.
-        """
-        with self._wake:
-            dropped = len(self._waiting)
-            self._waiting.clear()
-            self._queued.clear()
-            self._ready.clear()
-            return dropped
-
-    def done(self, key: str) -> None:
-        with self._wake:
-            self._running.discard(key)
-
-    @property
-    def depth(self) -> int:
-        with self._lock:
-            return len(self._waiting)
-
-
-QUEUE = Queue()
-
-
-def run_worker(queue: Queue = QUEUE, *, stop: threading.Event | None = None) -> None:
-    """Drain the queue until told to stop. One thread, so one writer."""
-    stop = stop or threading.Event()
-    while not stop.is_set():
-        key = queue.take()
-        if key is None:
-            continue
-        with trace.span():
-            try:
-                report = index_once(key)
-                record(report)
-                ledger.append(
-                    ledger.RUN,
-                    {
-                        "kind": "index",
-                        "root": key,
-                        "files": report.files,
-                        "parsed": report.parsed,
-                        "edges": report.edges,
-                        "resolved": report.resolved,
-                        "unchanged": report.unchanged,
-                        "rebuilt": report.rebuilt,
-                    },
-                )
-            except Exception as exc:
-                # The row carries the failure, so the health rule can hold it
-                # across two samples. A worker that dies on one project stops
-                # indexing every other one.
-                registry.mark_indexed(key, error=str(exc))
-                ledger.append(ledger.RUN, {"kind": "index", "root": key, "error": str(exc)})
-                log.exception("index pass failed for %s", key)
-            finally:
-                queue.done(key)

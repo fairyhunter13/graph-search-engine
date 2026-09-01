@@ -31,7 +31,7 @@ REF_SCAN_CAP = 200_000
 _POOL = (
     "SELECT n.id, n.file_id, n.name, n.kind, n.qualified_name, n.start_byte, f.path "
     "FROM nodes n JOIN files f ON f.id = n.file_id "
-    "WHERE n.name = ? AND n.kind NOT IN ('module', 'external')"
+    "WHERE n.name = ? AND n.kind != 'module'"
 )
 
 _ENCLOSING = (

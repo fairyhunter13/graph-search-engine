@@ -50,8 +50,24 @@ global*.
 The pass still reparses the tree, for a second reason this record never named. `_facts` parses every
 file the scan reports as moved, and `discover.enumerate_files` reads and SHA-256-hashes every file
 in the tree before that -- 228-252 ms on `go-monorepo`, 2,461 files, measured 2026-09-01. That scan is the
-remaining cost, and it is a separate piece of work. This record stays `stable` until the per-file
-rewrite lands, and it is then superseded rather than amended again.
+remaining cost, and it is a separate piece of work.
+
+# The write is per file since 2026-09-01, and the scan is not
+
+The per-file rewrite landed. See
+[an index pass rewrites only the files that changed](../decisions/an-index-pass-rewrites-only-the-files-that-changed.md).
+So the title is now false about the **write**: a pass parses and rewrites the files the diff names
+and no others, and `T-256` asserts that an untouched file keeps its node ids.
+
+The title stays true about the **scan**, and that is the only claim this record still carries.
+`discover.enumerate_files` reads and SHA-256-hashes every file in the tree before the diff exists --
+228-252 ms on `go-monorepo`, 2,461 files. That is the floor on save-to-searchable today, and it is about
+eight times the per-file parse this work bought. Removing it is `D-48`: the watcher already knows
+which paths changed and throws that answer away.
+
+The whole-tree hash is not deleted when `D-48` lands, and it must not be. The question it answers is
+*does the graph match the disk*, which stays correct after a crash, after a missed inotify event and
+after a week of downtime. The hint buys latency. The scan buys correctness.
 
 [^pass]: `index._facts`, which drives the progress file over the parsable set.
 [^watcher]: `watch._submit`, one `QUEUE.submit` per project the batch touched.

@@ -102,6 +102,17 @@ SKIP_DIRS: frozenset[str] = frozenset(
 # hand-written file in the fleet at about 180 KB.
 MAX_FILE_BYTES = 2 * 1024 * 1024
 
+# zoekt's `TrigramMax`. A document holding more distinct 3-byte sequences than
+# this is machine-written, whatever it is named: a bundle called `app.js` walks
+# straight past a `.min.js` suffix test.
+MAX_DISTINCT_TRIGRAMS = 20_000
+
+# Only a file this large is read for the test above. Measured 2026-09-01: every
+# hand-written source file in this repo holds under 2,800 distinct trigrams, and
+# the scan costs about 0.19 ms per KB, so running it on a whole tree would cost
+# more than the parse it saves.
+CONTENT_SCAN_BYTES = 64 * 1024
+
 # Roots that are somebody's whole disk rather than a project. Indexing one of
 # these enrols every repo on the machine under a single graph, and the registry
 # then holds a row nothing can meaningfully re-index.
@@ -163,3 +174,20 @@ def indexable(path: Path, *, size: int | None = None) -> bool:
         except OSError:
             return False
     return 0 < size <= MAX_FILE_BYTES
+
+
+def generated(data: bytes) -> bool:
+    """Whether this content is machine-written, read from the bytes and not the name.
+
+    Distinct trigrams, which is zoekt's rule. Measured 2026-09-01 over the
+    `web-tree` tree: six real bundles crossed the cap between 173 KB and
+    663 KB in, and `elfinder.full.js` and `shared-ui.js` are pretty-printed, so a
+    line-length test passes both. The cap is what separates them.
+    """
+    seen: set[bytes] = set()
+    add = seen.add
+    for i in range(len(data) - 2):
+        add(data[i : i + 3])
+        if len(seen) > MAX_DISTINCT_TRIGRAMS:
+            return True
+    return False

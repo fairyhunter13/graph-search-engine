@@ -27,7 +27,7 @@ import anyio.to_thread
 import uvicorn
 from starlette.responses import JSONResponse
 
-from . import config, index, ledger, peers, registry, watch
+from . import config, jobs, ledger, peers, registry, watch
 from .tools import enroll, mcp
 
 log = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ def _start_worker() -> None:
         return
     _stop.clear()
     _worker = threading.Thread(
-        target=index.run_worker, kwargs={"stop": _stop}, name="indexer", daemon=True
+        target=jobs.run_worker, kwargs={"stop": _stop}, name="indexer", daemon=True
     )
     _worker.start()
 
@@ -85,7 +85,7 @@ async def lifespan(_app) -> AsyncIterator[None]:
     watch.start()
     rows = registry.load()
     queued = sum(
-        1 for path, row in rows.items() if row.enabled and index.QUEUE.submit(path) == "queued"
+        1 for path, row in rows.items() if row.enabled and jobs.QUEUE.submit(path) == "queued"
     )
     log.info("ready: %d projects queued", queued)
     _notify("READY=1")
@@ -132,7 +132,7 @@ async def healthz(_request) -> JSONResponse:
             # one project failing twice from two failing once each.
             "projects_failing": len(failing),
             "failing": failing,
-            "queue_depth": index.QUEUE.depth,
+            "queue_depth": jobs.QUEUE.depth,
             "worker_alive": bool(_worker and _worker.is_alive()),
             # The watcher is the one failure no project row can carry: it
             # belongs to the thread, not to a project, and a dead one reads as

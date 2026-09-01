@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from graphrag import config, index, query, registry, store, traverse
+from graphrag import config, index, jobs, query, registry, store, traverse
 
 CYCLE = {
     "a.py": ("from b import beta\n\n\ndef alpha():\n    return beta()\n"),
@@ -50,7 +50,7 @@ def test_a_changed_file_makes_the_pass_run(cycle):
     (root / "a.py").write_text(CYCLE["a.py"] + "\n\ndef delta():\n    return alpha()\n")
     again = index.index_once(root)
     assert again.unchanged is False
-    assert again.parsed == 3
+    assert again.parsed == 1
 
 
 def test_callers_of_a_function_in_the_cycle(cycle):
@@ -95,7 +95,7 @@ def test_an_unknown_direction_is_refused():
 
 
 def test_the_queue_drops_a_queued_job_and_requeues_a_running_one(tmp_path):
-    queue = index.Queue()
+    queue = jobs.Queue()
     assert queue.submit(tmp_path) == "queued"
     assert queue.submit(tmp_path) == "dropped"
 

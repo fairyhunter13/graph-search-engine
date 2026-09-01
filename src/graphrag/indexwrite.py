@@ -2,9 +2,9 @@
 
 Nodes before edges, because an edge names two node ids and both have to exist.
 A module node per file carries the imports and owns the top-level definitions,
-so a file with no symbols still has somewhere to hang an edge. External names
-get one synthetic file row: a name the repo never defines is a real node with a
-real id, and it is never folded onto an in-repo homonym.
+so a file with no symbols still has somewhere to hang an edge. A name the repo
+never defines gets no node at all: it is an unresolved `refs` row, which the
+query reports as a fact rather than as a synthetic symbol.
 """
 
 from __future__ import annotations
@@ -75,6 +75,18 @@ def write_files(
     return ids
 
 
+def _overlaps(taken: list[tuple[int, int]], start: int, end: int) -> bool:
+    """Whether an identifier range already claimed covers part of this one.
+
+    `UNIQUE(file_id, start_byte, end_byte)` catches an exact repeat only, and two
+    symbol sources naming one identifier rarely agree to the byte. The module
+    node is zero-width at 0, so it claims nothing and collides with nothing.
+    """
+    if end <= start:
+        return False
+    return any(start < taken_end and taken_start < end for taken_start, taken_end in taken)
+
+
 def write_nodes(
     conn: sqlite3.Connection, table: SymbolTable, file_ids: dict[str, int]
 ) -> dict[Key, int]:
@@ -87,7 +99,11 @@ def write_nodes(
         rows: list[tuple] = [
             (MODULE_INDEX, "module", table.path_module.get(path, path), "", 0, 0, 0, 0, 0)
         ]
+        taken: list[tuple[int, int]] = []
         for i, d in enumerate(facts.definitions):
+            if _overlaps(taken, d.start_byte, d.end_byte):
+                continue
+            taken.append((d.start_byte, d.end_byte))
             rows.append(
                 (
                     i,
@@ -226,11 +242,49 @@ def write_edges(conn: sqlite3.Connection, rows: Iterable[tuple]) -> int:
     return len(rows)
 
 
-def rebuild_fts(conn: sqlite3.Connection) -> None:
-    """Called after the pass has replaced `files` wholesale.
+def forget_files(conn: sqlite3.Connection, paths: Iterable[str]) -> int:
+    """Drop each named file, its FTS postings first. Returns the rows deleted.
 
-    There is no incremental delete here and the rebuild is why: `nodes_fts` is
-    external-content, so the cascade from `files` never reaches it and a search
-    would keep answering with symbols the graph no longer holds.
+    The order is the whole function. `nodes_fts` is external-content and takes no
+    cascade, so the postings have to go before the rows they were built from. An
+    external-content `'delete'` is given the **old** column values, and giving it
+    anything else leaves the old postings in place: `find_symbol` then answers a
+    renamed symbol under its former name, at a location that no longer exists.
+    """
+    gone = 0
+    for path in paths:
+        row = conn.execute("SELECT id FROM files WHERE path = ?", (path,)).fetchone()
+        if row is None:
+            continue
+        old = conn.execute(
+            "SELECT id, name, qualified_name, signature FROM nodes WHERE file_id = ?",
+            (row["id"],),
+        ).fetchall()
+        conn.executemany(
+            "INSERT INTO nodes_fts(nodes_fts, rowid, name, qualified_name, signature) "
+            "VALUES('delete', ?, ?, ?, ?)",
+            [tuple(r) for r in old],
+        )
+        conn.execute("DELETE FROM files WHERE id = ?", (row["id"],))
+        gone += 1
+    return gone
+
+
+def write_fts(conn: sqlite3.Connection, file_ids: Iterable[int]) -> None:
+    """Index the nodes of each rewritten file. The delete above is the other half."""
+    for file_id in file_ids:
+        conn.execute(
+            "INSERT INTO nodes_fts(rowid, name, qualified_name, signature) "
+            "SELECT id, name, qualified_name, signature FROM nodes WHERE file_id = ?",
+            (file_id,),
+        )
+
+
+def rebuild_fts(conn: sqlite3.Connection) -> None:
+    """Rebuild every posting from `nodes`. The SCIP overlay's half of the contract.
+
+    The pass itself no longer calls this, because rebuilding every posting is the
+    cost a per-file rewrite exists to remove. The overlay still needs it: it
+    updates `qualified_name` and can insert nodes, and neither reaches the index.
     """
     conn.execute("INSERT INTO nodes_fts(nodes_fts) VALUES('rebuild')")

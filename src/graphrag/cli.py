@@ -19,6 +19,7 @@ from . import (
     federation,
     grammars,
     index,
+    jobs,
     progress,
     prune,
     quarantine,
@@ -117,7 +118,7 @@ def cmd_status(_args: argparse.Namespace) -> int:
             "projects": len(rows),
             "enabled": sum(1 for e in rows.values() if e.enabled),
             "failing": sorted(k for k, e in rows.items() if e.enabled and e.last_error),
-            "queue_depth": index.QUEUE.depth,
+            "queue_depth": jobs.QUEUE.depth,
             "fleet_digest": registry.fleet_digest(rows),
             "unclaimed_stores": [str(p) for p in registry.unclaimed_stores()],
             # A row whose directory is gone was reported nowhere before. Only

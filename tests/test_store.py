@@ -78,20 +78,32 @@ def test_deleting_a_file_takes_its_fts_rows_with_it(graph):
 
     `nodes_fts` is external-content, so the cascade from `files` does not reach
     it. A search would keep answering with a symbol the graph no longer holds.
-    Exercised through the pass's own two statements: the incremental delete this
-    used to call had no caller outside this test.
+    Exercised through the per-file delete the pass runs, which replaced the
+    wholesale rebuild this case used to call by hand.
     """
     _one_node(graph)
     assert graph.execute("SELECT count(*) c FROM nodes_fts").fetchone()["c"] == 1
 
     from graphrag import indexwrite
 
-    graph.execute("DELETE FROM files")
-    indexwrite.rebuild_fts(graph)
+    assert indexwrite.forget_files(graph, ["a.py"]) == 1
 
     assert graph.execute("SELECT count(*) c FROM nodes").fetchone()["c"] == 0
     hits = graph.execute("SELECT count(*) c FROM nodes_fts WHERE nodes_fts MATCH 'retry'")
     assert hits.fetchone()["c"] == 0
+
+
+def test_a_kind_no_writer_produces_is_not_declared():
+    """T-262. `file` and `external` were in the set and nothing ever wrote them.
+
+    A declared-only kind is worse than a missing one. `query` filtered on
+    `kind != 'external'` for rows no writer had produced since the external node
+    left, and that filter reads exactly like a working guard.
+    """
+    from graphrag import queries
+
+    written = set(queries.DEFINITION_KINDS.values()) | {"module"}
+    assert written == store.NODE_KINDS
 
 
 def test_the_unique_key_is_the_identifier_range(graph):

@@ -57,6 +57,19 @@ def sha256_of(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _hash_and_body(path: Path, size: int) -> tuple[str, bytes | None]:
+    """The digest, plus the bytes where the content test is going to want them.
+
+    A small file is streamed and never held, because the test does not run on
+    one. A large file is read once and serves both, because reading it twice is
+    the whole cost of the test.
+    """
+    if size < filters.CONTENT_SCAN_BYTES:
+        return sha256_of(path), None
+    data = path.read_bytes()
+    return hashlib.sha256(data).hexdigest(), data
+
+
 GITLINK_MODE = "160000"
 MAX_SUBMODULE_DEPTH = 4
 
@@ -197,8 +210,14 @@ def enumerate_files(root: Path | str, *, exclude=(), languages=()) -> list[FileM
         if keep and lang not in keep:
             continue
         try:
-            digest = sha256_of(path)
+            digest, body = _hash_and_body(path, stat.st_size)
         except OSError:
+            continue
+        # A generated bundle is one node with ten thousand edges that resolve
+        # nothing, and one such tree held 28.7% of every reference row in the
+        # fleet. The watcher still wakes for it, and the pass then finds no
+        # change, which is cheaper than keeping the file.
+        if body is not None and filters.generated(body):
             continue
         metas.append(
             FileMeta(

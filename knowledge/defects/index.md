@@ -43,3 +43,8 @@
   `qualified_name`, which `nodes_fts` indexes, and there is no trigger. It is correct today only
   because the pass runs the overlay one line before `rebuild_fts`. Recorded, not fixed: the per-file
   rewrite is what exposes it.
+* [A generated bundle was indexed as source](a-generated-bundle-was-indexed-as-source.md) -
+  `web-tree`'s hottest callee name is the single character `n`, at 90,156 CALLS edges, and that
+  one store holds 28.7% of every reference row in the fleet. A `.min.js` suffix test refuses none of
+  the six bundles measured, because two of them are pretty-printed. The rule that holds it is
+  distinct-trigram diversity over the bytes.

@@ -33,7 +33,7 @@ QUESTIONS: dict[str, tuple[str, tuple[str, ...], str]] = {
 _FTS = (
     "SELECT n.id, n.name, n.qualified_name, n.kind, n.start_line, n.end_line, f.path, f.lang "
     "FROM nodes_fts JOIN nodes n ON n.id = nodes_fts.rowid JOIN files f ON f.id = n.file_id "
-    "WHERE nodes_fts MATCH ? AND n.kind != 'external' ORDER BY rank LIMIT ?"
+    "WHERE nodes_fts MATCH ? ORDER BY rank LIMIT ?"
 )
 
 

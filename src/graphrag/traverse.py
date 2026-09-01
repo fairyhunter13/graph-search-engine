@@ -54,8 +54,8 @@ class Reached:
     kind: str
     line: int
     path: str
-    # What the edge was resolved by: same_file, import, package, global,
-    # external, scip. A caller reading confidence alone cannot tell a same-file
+    # What the edge was resolved by: same_class, same_file, import, package,
+    # global, scip. A caller reading confidence alone cannot tell a same-file
     # call from a repo-global guess that happens to have one candidate.
     evidence: str = ""
     # How many definitions the reference matched. This is what ambiguity means,

@@ -3,7 +3,7 @@
 Two things this shares rather than reimplements. The filter is
 `filters.indexable`, the same predicate the indexer uses: a watcher that decides
 differently wakes the indexer for files it will then refuse. And the queue is
-`index.QUEUE`, so a change lands as a job the one worker serialises.
+`jobs.QUEUE`, so a change lands as a job the one worker serialises.
 
 The re-arm is conditional, and that is the load-bearing part. Re-arming tears
 down every inotify watch and rebuilds it. inotify has no replay, so every change
@@ -19,7 +19,7 @@ from pathlib import Path
 
 from watchfiles import watch as _watch
 
-from . import config, federation, filters, index, ledger, prune, registry
+from . import config, federation, filters, jobs, ledger, prune, registry
 
 log = logging.getLogger(__name__)
 
@@ -143,7 +143,7 @@ def _submit(batch: set[tuple[int, str]], roots: tuple[Path, ...]) -> dict[str, i
             continue
         touched[str(owner)] = touched.get(str(owner), 0) + 1
     for root in touched:
-        index.QUEUE.submit(root, delay=config.WATCH_QUIET_MS / 1000)
+        jobs.QUEUE.submit(root, delay=config.WATCH_QUIET_MS / 1000)
     return touched
 
 

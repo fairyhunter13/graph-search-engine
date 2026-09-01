@@ -95,6 +95,7 @@ TRUTH: list[dict] = [
             "tests/test_tools.py",
             "tests/test_prune.py",
             "tests/test_resolvedb.py",
+            "tests/test_perfile.py",
             "src/graphrag/scip/__init__.py",
         ],
     },
@@ -120,7 +121,7 @@ TRUTH: list[dict] = [
         "class": COLLIDES,  # every list in the tree
         "defined_in": "src/graphrag/ledger.py",
         "callers": [
-            "src/graphrag/index.py",
+            "src/graphrag/jobs.py",
             "src/graphrag/server.py",
             "src/graphrag/watch.py",
             "tests/test_watch.py",
@@ -179,6 +180,7 @@ TRUTH: list[dict] = [
             "tests/test_scip_run.py",
             "tests/test_tools.py",
             "tests/test_resolvedb.py",
+            "tests/test_perfile.py",
         ],
     },
     {
@@ -196,7 +198,7 @@ TRUTH: list[dict] = [
         "class": DISTINCTIVE,
         "defined_in": "src/graphrag/index.py",
         "callers": [
-            "src/graphrag/index.py",
+            "src/graphrag/jobs.py",
             "src/graphrag/cli.py",
             "tests/test_index.py",
             "tests/test_tools.py",
@@ -207,6 +209,7 @@ TRUTH: list[dict] = [
             "tests/test_scip_run.py",
             "tests/test_discovery.py",
             "tests/test_resolvedb.py",
+            "tests/test_perfile.py",
         ],
     },
 ]

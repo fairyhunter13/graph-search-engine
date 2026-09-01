@@ -68,3 +68,9 @@
   questions](tree-sitter-is-declined-for-chunking-and-adopted-for-graphs.md) - The semantic engine
   rejected tree-sitter for chunking and dropped a graph tool with it, and that drop stands because
   this engine asks a different question.
+* [An index pass rewrites only the files that changed](an-index-pass-rewrites-only-the-files-that-changed.md) -
+  the whole-tree `DELETE FROM files` is gone, and the cascade from one file row now takes exactly the
+  rows that pass writes back. It depends on query-time resolution: while a cross-file edge was
+  stored, deleting one file destroyed edges pointing into it that the pass could not rebuild.
+  `nodes_fts` takes no cascade, so the rewrite issues an external-content `'delete'` carrying the
+  **old** column values before it drops the rows.

@@ -8,7 +8,7 @@ import time
 
 import pytest
 
-from graphrag import config, index, ledger, progress, prune, registry, trace, watch
+from graphrag import config, index, jobs, ledger, progress, prune, registry, trace, watch
 
 TWO = {
     "a.py": "def alpha():\n    return 1\n",
@@ -17,7 +17,7 @@ TWO = {
 
 
 def _drain() -> None:
-    index.QUEUE.drain()
+    jobs.QUEUE.drain()
 
 
 @pytest.fixture
@@ -45,10 +45,10 @@ def watching(repo):
 def _wait_for_depth(target: int, seconds: float = 10.0) -> int:
     deadline = time.time() + seconds
     while time.time() < deadline:
-        if index.QUEUE.depth >= target:
+        if jobs.QUEUE.depth >= target:
             break
         time.sleep(0.05)
-    return index.QUEUE.depth
+    return jobs.QUEUE.depth
 
 
 def test_single_edit_reparses_one_file(watching):
@@ -68,7 +68,7 @@ def test_single_edit_reparses_one_file(watching):
 
 def test_a_further_save_restarts_the_quiet_window(tmp_path):
     """`T-214`: a pass runs once the person stops typing, never once per save."""
-    queue = index.Queue()
+    queue = jobs.Queue()
     queue.submit(tmp_path, delay=0.3)
     time.sleep(0.2)
     queue.submit(tmp_path, delay=0.3)
@@ -80,7 +80,7 @@ def test_a_further_save_restarts_the_quiet_window(tmp_path):
 
 def test_an_explicit_call_pulls_a_waiting_job_forward(tmp_path):
     """`T-215`: a caller wanting the tree now is not held by someone else's countdown."""
-    queue = index.Queue()
+    queue = jobs.Queue()
     assert queue.submit(tmp_path, delay=30) == "queued"
     assert queue.take(timeout=0.05) is None
     assert queue.submit(tmp_path) == "dropped"
@@ -93,7 +93,7 @@ def test_a_file_the_indexer_would_refuse_never_wakes_it(watching):
     (watching / "node_modules").mkdir()
     (watching / "node_modules" / "c.py").write_text("def gamma():\n    return 3\n")
     time.sleep(1.5)
-    assert index.QUEUE.depth == 0
+    assert jobs.QUEUE.depth == 0
 
 
 def test_rearm_only_when_the_watched_set_moved(watching, repo):
@@ -197,9 +197,9 @@ def test_a_failed_pass_leaves_a_row_and_a_registry_error(repo):
     _drain()
     config.INDEX_DIR.parent.mkdir(parents=True, exist_ok=True)
     config.INDEX_DIR.write_text("not a directory")
-    index.QUEUE.submit(root)
+    jobs.QUEUE.submit(root)
     stop = threading.Event()
-    worker = threading.Thread(target=index.run_worker, kwargs={"stop": stop}, daemon=True)
+    worker = threading.Thread(target=jobs.run_worker, kwargs={"stop": stop}, daemon=True)
     worker.start()
     for _ in range(200):
         entry = registry.get(root)

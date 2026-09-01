@@ -117,17 +117,20 @@ EDGE_KINDS: frozenset[str] = frozenset(
     {"DEFINES", "CONTAINS", "IMPORTS", "CALLS", "REFERENCES", "IMPLEMENTS"}
 )
 
+# Every kind a writer produces, and nothing else. `write_nodes` produces
+# `module`, `queries.DEFINITION_KINDS` produces the rest, and the SCIP overlay
+# maps into the same set. `file` and `external` were declared and never written,
+# and a declared-only kind is a filter a reader writes against nothing.
 NODE_KINDS: frozenset[str] = frozenset(
-    {"file", "module", "class", "function", "method", "field", "constant", "external"}
+    {"module", "class", "function", "method", "field", "constant"}
 )
 
-# What resolved an edge, closed. `resolve.py` produces the first five, the
-# containment and external writers in `indexwrite.py` produce `external`, and
-# the overlay in `scip/ingest.py` produces `scip`. Three modules write this
-# column and none of them read the others, so the set is graded against a real
-# index rather than trusted.
+# What resolved an edge or a derived hop, closed. `resolve.py` and `resolvedb.py`
+# produce the first five, and the overlay in `scip/ingest.py` produces `scip`.
+# Three modules write this column and none of them read the others, so the set is
+# graded against a real index rather than trusted.
 EVIDENCE: frozenset[str] = frozenset(
-    {"same_class", "same_file", "import", "package", "global", "external", "scip"}
+    {"same_class", "same_file", "import", "package", "global", "scip"}
 )
 
 
@@ -157,11 +160,12 @@ def connect(path: Path | str, *, create: bool = True) -> sqlite3.Connection:
 
 
 def reclaim(conn: sqlite3.Connection) -> None:
-    """Give the pages an index pass freed back to the filesystem.
+    """Give the pages a whole-tree rewrite freed back to the filesystem.
 
-    Every pass runs `DELETE FROM files` and rebuilds, so the freelist after one
-    is most of the old graph. Nothing returned those pages before this: the file
-    only ever grew, whatever the project did. Incremental, because the full
+    A whole-tree pass frees most of the old graph, and nothing returned those
+    pages before this: the file only ever grew, whatever the project did. The
+    per-file pass does not call this, because `wal_checkpoint(TRUNCATE)` is
+    fsync-bound and that pass runs on every save. Incremental, because the full
     `VACUUM` rewrites the whole file and belongs behind a hand-typed command.
     """
     conn.execute("PRAGMA incremental_vacuum")

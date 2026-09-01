@@ -378,6 +378,17 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-264 | No stored edge crosses a file | S-01 | D-46 | done | tests/test_resolvedb.py::test_no_stored_edge_crosses_a_file |
 | T-279 | Rewriting one file destroys no edge that names another file | S-01 | D-46 | done | tests/test_resolvedb.py::test_no_stored_edge_crosses_a_file |
 | T-281 | An upgraded cross-file call is answered once | S-06 | D-46 | done | tests/test_scip_ingest.py::test_an_upgraded_cross_file_call_is_answered_once |
+| T-256 | Editing one file rewrites that file's rows and no other file's | S-01 | D-47 | done | tests/test_perfile.py::test_editing_one_file_rewrites_that_file_and_no_other |
+| T-257 | The FTS row count tracks the node count after a per-file rewrite | S-01 | D-47 | done | tests/test_perfile.py::test_the_fts_row_count_tracks_the_node_count |
+| T-261 | A generated bundle is refused on its content and not its name | S-01 | D-47 | done | tests/test_perfile.py::test_a_generated_bundle_is_refused_on_its_content_and_not_its_name |
+| T-262 | A kind no writer produces is not declared | S-01 | D-47 | done | tests/test_store.py::test_a_kind_no_writer_produces_is_not_declared |
+| T-268 | Two overlapping identifier ranges are not both written | S-01 | D-47 | done | tests/test_perfile.py::test_two_overlapping_identifier_ranges_are_not_both_written |
+| T-276 | A pass that rewrites part of the tree does not checkpoint | S-01 | D-47 | done | tests/test_perfile.py::test_a_pass_that_rewrites_part_of_the_tree_does_not_checkpoint |
+| T-277 | A store an index pass creates can give its pages back | S-01 | D-47 | done | tests/test_perfile.py::test_a_store_this_engine_creates_can_give_its_pages_back |
+| T-278 | A renamed symbol is not findable under its old name | S-01 | D-47 | done | tests/test_perfile.py::test_a_renamed_symbol_is_not_findable_under_its_old_name |
+| T-280 | The file count is the tree's and carries no synthetic row | S-01 | D-47 | done | tests/test_perfile.py::test_the_file_count_is_the_tree_s_and_carries_no_synthetic_row |
+| T-282 | A changed file makes one file parse, and not the tree | S-01 | D-47 | done | tests/test_index.py::test_a_changed_file_makes_the_pass_run |
+| T-283 | Deleting a file takes its FTS rows through the pass path | S-01 | D-47 | done | tests/test_store.py::test_deleting_a_file_takes_its_fts_rows_with_it |
 
 # User journeys
 
