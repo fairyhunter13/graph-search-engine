@@ -17,6 +17,7 @@ The file's bytes and its mode are restored after every sample and again in a
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import sqlite3
@@ -195,3 +196,72 @@ def _write_receipt(
                 "whole_tree_pass_s": whole_tree_pass_s,
             },
         )
+
+
+ATTESTER = Path(__file__).resolve().parent.parent / "knowledge" / "attesters" / "freshness_receipt.py"
+CONCEPT = (
+    Path(__file__).resolve().parent.parent
+    / "knowledge"
+    / "computations"
+    / "a-save-is-searchable-before-the-next-one-lands.md"
+)
+SANCTIONED = {"test_node_id": NODE_ID, "corpus_ref": "go-monorepo"}
+
+
+def _attester():
+    """The attester by path, because it is code in the bundle and not a package."""
+    spec = importlib.util.spec_from_file_location("freshness_receipt", ATTESTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _receipt_on_disk() -> dict:
+    """What the sanctioned run wrote, or a skip. A literal here grades itself."""
+    path = config.receipt_path(NODE_ID)
+    if not path.is_file():
+        pytest.skip(f"no receipt at {path}: run the `slow` case first")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_the_freshness_receipt_is_attested():
+    """T-288. The receipt the run wrote is graded, and a moved number is refused."""
+    receipt = _receipt_on_disk()
+    attester = _attester()
+    names = ("edit_to_queryable_ms_p50", "edit_to_queryable_ms_p99", "misses")
+    claim = {name: receipt[name] for name in names}
+
+    got = attester.attest(sanctioned_computation=SANCTIONED, receipt=receipt, claimed_value=claim)
+    assert got["ok"] is True
+    assert got["details"]["commit_sha"] == receipt["commit_sha"]
+
+    moved = attester.attest(
+        sanctioned_computation=SANCTIONED,
+        receipt=receipt,
+        claimed_value={**claim, "edit_to_queryable_ms_p50": receipt["edit_to_queryable_ms_p50"] + 1},
+    )
+    assert moved["ok"] is False
+    assert "edit_to_queryable_ms_p50" in moved["reason"]
+
+    thin = {k: v for k, v in receipt.items() if k != "misses"}
+    dropped = attester.attest(sanctioned_computation=SANCTIONED, receipt=thin, claimed_value=claim)
+    assert dropped["ok"] is False
+    assert dropped["details"]["missing"] == ["misses"]
+
+
+def test_the_freshness_receipt_agrees_with_the_concept():
+    """T-289. The prose claims digits, and nothing compared them to a run.
+
+    The commit SHA is not compared. The footnote names the run that measured
+    the digits, and the next commit moves HEAD without moving a number. The
+    sibling rule is `T-123`.
+    """
+    receipt = _receipt_on_disk()
+    text = CONCEPT.read_text(encoding="utf-8")
+    assert receipt["corpus_ref"] == SANCTIONED["corpus_ref"]
+    assert f"{receipt['edit_to_queryable_ms_p50']:.1f} ms" in text
+    assert f"{receipt['edit_to_queryable_ms_p99']:.1f} ms" in text
+    assert f"{receipt['misses']} of {receipt['n_samples']}" in text
+    assert f"{receipt['files']:,} files" in text
+    assert f"{receipt['whole_tree_pass_s']:.2f} s" in text

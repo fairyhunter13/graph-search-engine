@@ -30,7 +30,7 @@ sources:
 The routing rule says coderag names the symbol and graphrag walks the edges from it. No record
 measured that, so the rule was argued and never graded.[^two-engine-run] Ten caller questions over
 this repo are scored at file granularity, against a ground truth read by hand. They give the graph
-F1 1.000, against 0.442 for lexical retrieval and 0.202 for semantic. So the second engine earns
+F1 1.000, against 0.432 for lexical retrieval and 0.214 for semantic. So the second engine earns
 its process.
 
 # The finding one number hides
@@ -58,11 +58,11 @@ caller, and scoping it out prices a correct answer as a false positive.
 The test asserts the ordering and the class split, never the digits. A number moves with the corpus,
 and the corpus is the repo under work.
 
-The arm figures also move between runs on one commit. Twelve runs span `d64e8fc`, `396f183`,
-`1443efc`, `75bacf7`, `5f3495c`, `4c89a21`, `57de0b0`, `4470719`, `61cbcba`, `58c8a19` and
-`3ca2c9d`. They
-gave 0.535, 0.510, 0.510, 0.497, 0.497, 0.497, 0.488, 0.454, 0.439, 0.452, 0.407 and 0.442 lexical. They
-gave 0.331, 0.316, 0.316, 0.306, 0.306, 0.306, 0.272, 0.294, 0.291, 0.226, 0.201 and 0.202 semantic. The
+The arm figures also move between runs on one commit. Thirteen runs span `d64e8fc`, `396f183`,
+`1443efc`, `75bacf7`, `5f3495c`, `4c89a21`, `57de0b0`, `4470719`, `61cbcba`, `58c8a19`, `3ca2c9d`
+and `e6f2282`. They
+gave 0.535, 0.510, 0.510, 0.497, 0.497, 0.497, 0.488, 0.454, 0.439, 0.452, 0.407, 0.442 and 0.432 lexical. They
+gave 0.331, 0.316, 0.316, 0.306, 0.306, 0.306, 0.272, 0.294, 0.291, 0.226, 0.201, 0.202 and 0.214 semantic. The
 graph scored 1.000 in every one. The retrieval arms rank by an embedding over a live index, so read them
 as the scale of the gap and never as a constant.
 
@@ -166,5 +166,20 @@ property of change itself.
 The arms read 0.442 lexical and 0.202 semantic, which is inside the spread the eleven runs before
 them describe. Neither arm is a gate. The graph digit is.
 
+# What `D-51` did not move, and the truth grew by one caller, 2026-09-01
+
+`D-51` took the SCIP overlay off the hinted pass. The graph scored F1 1.000 at `e6f2282`, on both
+classes.
+
+The first run of this stage did not. It read precision 0.980 on the distinctive class, and the
+graph was right again: `tests/test_freshness.py` calls `config.index_path`, and the hand truth
+listed no such caller because the file did not exist when the truth was last read. All ten truth
+names were censused over the new file before the entry was added. `Path.resolve`, `list.append` and
+`sqlite3.connect` also appear there, and each one belongs to a different defining module than its
+truth row, so none of the three is an entry. The truth is 85 entries now.
+
+The arms read 0.432 lexical and 0.214 semantic, which is inside the spread the twelve runs before
+them describe.
+
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 84 ground-truth caller entries, measured 2026-09-01 at commit `3ca2c9d`.
+[^two-engine-run]: Ten caller questions over this repo, 85 ground-truth caller entries, measured 2026-09-01 at commit `e6f2282`.

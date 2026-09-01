@@ -394,6 +394,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-285 | A hinted pass hashes the named paths and not the tree | S-01 | D-48 | done | tests/test_perfile.py::test_a_hinted_pass_hashes_the_named_paths_and_not_the_tree |
 | T-286 | A hinted pass does not run the SCIP overlay, and an unhinted one does | S-01 | D-51 | done | tests/test_perfile.py::test_a_hinted_pass_does_not_run_the_scip_overlay |
 | T-287 | A save is searchable before the next one lands, timed through the daemon | S-01 | D-48 | done | tests/test_freshness.py::test_a_save_is_searchable_before_the_next_one_lands |
+| T-288 | The save-to-searchable receipt is attested, and a moved digit is refused | S-01 | D-48 | done | tests/test_freshness.py::test_the_freshness_receipt_is_attested |
+| T-289 | The save-to-searchable concept renders every digit its receipt carries | S-01 | D-48 | done | tests/test_freshness.py::test_the_freshness_receipt_agrees_with_the_concept |
 | T-271 | Two hinted submissions merge their paths | S-01 | D-48 | done | tests/test_watch.py::test_two_hinted_submissions_merge_their_paths |
 | T-272 | A hint merged with a whole-tree job runs whole-tree | S-01 | D-48 | done | tests/test_watch.py::test_a_hint_merged_with_a_whole_tree_job_runs_whole_tree |
 | T-273 | A hint over the cap falls back to the whole tree | S-01 | D-48 | done | tests/test_watch.py::test_a_hint_over_the_cap_falls_back_to_the_whole_tree |
@@ -417,6 +419,11 @@ a hinted pass. The reading behind it is in `defects/the-overlay-ran-on-every-sav
 `T-287` is opt-in and skips by default, because it needs a real repository, an editor-shaped save
 and the daemon holding the writer lock. Name the root and the file in the environment. A fixture
 would grade a different code path from the one a save takes, and the claim is about the save.
+
+`T-288` and `T-289` grade the receipt `T-287` writes, and they are not opt-in. They skip only where
+no receipt is on disk. `T-289` is the sibling of `T-123`: it holds every digit the concept prints
+to the run that produced it, so a prose figure cannot drift away from a measurement. Neither case
+can pass on the predecessor commit, which carries no attester and no concept file.
 
 `T-284` records an edited test rather than a new one. The queue verdict `dropped` became `merged`,
 because dropping a second submission was correct only while a job meant *reindex everything*.
