@@ -106,12 +106,7 @@ def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
 
     metas = discover.enumerate_files(root, exclude=cfg.exclude, languages=cfg.languages)
     report.languages = discover.languages(metas)
-    stored = {
-        row["path"]: row["sha256"]
-        for row in conn.execute(
-            "SELECT path, sha256 FROM files WHERE path != ?", (indexwrite.EXTERNAL_PATH,)
-        )
-    }
+    stored = {row["path"]: row["sha256"] for row in conn.execute("SELECT path, sha256 FROM files")}
     changes = discover.diff(metas, stored)
     if not changes and not force and not report.rebuilt:
         conn.close()
@@ -128,17 +123,21 @@ def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
         conn.execute("DELETE FROM files")
         file_ids = indexwrite.write_files(conn, metas, facts)
         nodes = indexwrite.write_nodes(conn, table, file_ids)
-        indexwrite.write_refs(conn, facts, file_ids)
+
+        # The file-local split. A reference its own file already decides is an
+        # edge, and every other one is a `refs` row the query resolves on read.
+        # Neither branch reads a second file, which is the whole invariant.
+        progress.phase("resolving")
+        decided: dict[str, list[resolve.Resolution]] = {}
+        deferred: dict[str, list[extract.Reference]] = {}
+        for p, file_facts in table.files.items():
+            decided[p], deferred[p] = resolve.resolve_file_local(p, file_facts)
+        indexwrite.write_refs(conn, deferred, file_ids)
         indexwrite.write_imports(conn, facts, file_ids)
 
-        progress.phase("resolving")
-        resolutions = {p: resolve.resolve_file(table, p) for p in table.files}
-        external = {r.reference.name for rows in resolutions.values() for r in rows if r.external}
-        externals = indexwrite.write_externals(conn, external)
-
-        edges = indexwrite.structural_edges(table, nodes) + indexwrite.import_edges(table, nodes)
-        for p, rows in resolutions.items():
-            edges += indexwrite.reference_edges(p, rows, nodes, externals)
+        edges = indexwrite.structural_edges(table, nodes)
+        for p, rows in decided.items():
+            edges += indexwrite.reference_edges(p, rows, nodes)
         indexwrite.write_edges(conn, edges)
         report.scip = _overlay(conn, root, cfg)
         indexwrite.rebuild_fts(conn)

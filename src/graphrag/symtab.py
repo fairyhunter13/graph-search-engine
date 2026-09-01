@@ -133,22 +133,24 @@ def _symbol(path: str, index: int, definition) -> Symbol:
     )
 
 
-def imported_names(table: SymbolTable, path: str) -> dict[str, str]:
-    """The names this file imported, each mapped to the module it came from.
+def names_from_imports(path: str, rows) -> dict[str, str]:
+    """The names one file imported, each mapped to the module it came from.
 
     An alias is the name the body actually uses, so it wins over the symbol.
     """
     out: dict[str, str] = {}
-    facts = table.files.get(path)
-    if facts is None:
-        return out
-    for row in facts.imports:
+    for row in rows:
         module = resolve_module(path, row.module)
         if row.symbol:
             out[row.alias or row.symbol] = module
         elif row.alias:
             out[row.alias] = module
     return out
+
+
+def imported_names(table: SymbolTable, path: str) -> dict[str, str]:
+    facts = table.files.get(path)
+    return names_from_imports(path, facts.imports) if facts else {}
 
 
 def imported_modules(table: SymbolTable, path: str) -> set[str]:

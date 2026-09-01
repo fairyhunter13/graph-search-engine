@@ -39,5 +39,19 @@ raise a single job, and a job already queued for that project is dropped rather 
 Persisted per-file facts, plus a resolution phase that reads the stored symbol table rather than
 rebuilding it. Both are real work, and neither is bought by the throughput measured today.
 
+# What changed on 2026-09-01, and what did not
+
+The falsifier above named exactly this change, and half of it is now bought. `refs` and `imports`
+persist every per-file fact, and resolution reads the store rather than a rebuilt symbol table. See
+[a build-free engine resolves at query time](../decisions/a-build-free-engine-resolves-at-query-time.md).
+So the title's stated cause is gone: the pass no longer reparses the tree *because resolution is
+global*.
+
+The pass still reparses the tree, for a second reason this record never named. `_facts` parses every
+file the scan reports as moved, and `discover.enumerate_files` reads and SHA-256-hashes every file
+in the tree before that -- 228-252 ms on `go-monorepo`, 2,461 files, measured 2026-09-01. That scan is the
+remaining cost, and it is a separate piece of work. This record stays `stable` until the per-file
+rewrite lands, and it is then superseded rather than amended again.
+
 [^pass]: `index._facts`, which drives the progress file over the parsable set.
 [^watcher]: `watch._submit`, one `QUEUE.submit` per project the batch touched.

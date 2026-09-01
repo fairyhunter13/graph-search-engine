@@ -94,6 +94,7 @@ TRUTH: list[dict] = [
             "tests/test_scip_run.py",
             "tests/test_tools.py",
             "tests/test_prune.py",
+            "tests/test_resolvedb.py",
             "src/graphrag/scip/__init__.py",
         ],
     },
@@ -177,6 +178,7 @@ TRUTH: list[dict] = [
             "tests/test_scip_ingest.py",
             "tests/test_scip_run.py",
             "tests/test_tools.py",
+            "tests/test_resolvedb.py",
         ],
     },
     {
@@ -204,6 +206,7 @@ TRUTH: list[dict] = [
             "tests/test_scip_ingest.py",
             "tests/test_scip_run.py",
             "tests/test_discovery.py",
+            "tests/test_resolvedb.py",
         ],
     },
 ]

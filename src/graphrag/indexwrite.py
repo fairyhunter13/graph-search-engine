@@ -13,11 +13,9 @@ import sqlite3
 from collections.abc import Iterable
 
 from .discover import FileMeta
-from .extract import FileFacts
+from .extract import FileFacts, Reference
 from .resolve import Resolution
-from .symtab import SymbolTable, resolve_module
-
-EXTERNAL_PATH = "<external>"
+from .symtab import SymbolTable
 
 # `(path, definition index)`, which is what the symbol table hands back. The
 # module node of a file is index `-1`, because a module is not in the list.
@@ -109,38 +107,21 @@ def write_nodes(
     return nodes
 
 
-def write_externals(conn: sqlite3.Connection, names: Iterable[str]) -> dict[str, int]:
-    """A node per name the repo never defines. The byte range is a serial."""
-    names = sorted(set(names))
-    if not names:
-        return {}
-    conn.execute(
-        "INSERT INTO files(path, mtime, size, sha256, lang, n_lines, tier) "
-        "VALUES(?, 0, 0, '', '', 0, 'none') ON CONFLICT(path) DO NOTHING",
-        (EXTERNAL_PATH,),
-    )
-    file_id = conn.execute("SELECT id FROM files WHERE path = ?", (EXTERNAL_PATH,)).fetchone()["id"]
-    ids: dict[str, int] = {}
-    for offset, name in enumerate(names):
-        conn.execute(_NODE_INSERT, (file_id, "external", name, name, offset, offset, 0, 0, 0))
-        ids[name] = _node_id(conn, file_id, offset, offset)
-    return ids
-
-
 def write_refs(
-    conn: sqlite3.Connection, facts_by_path: dict[str, FileFacts], file_ids: dict[str, int]
+    conn: sqlite3.Connection, deferred: dict[str, list[Reference]], file_ids: dict[str, int]
 ) -> int:
-    """One row per reference, exactly as the file wrote it.
+    """One row per reference the file could not decide by itself.
 
     The receiver and `is_member` are what `resolve._receiver_modules` narrows on,
-    and both were consumed into edges and dropped before this.
+    and both were consumed into edges and dropped before this. A reference the
+    file did decide is an edge instead, so no query counts one twice.
     """
     rows: list[tuple] = []
-    for path, facts in facts_by_path.items():
+    for path, refs in deferred.items():
         file_id = file_ids.get(path)
-        if file_id is None or facts.error:
+        if file_id is None:
             continue
-        for ref in facts.references:
+        for ref in refs:
             rows.append(
                 (
                     file_id,
@@ -200,27 +181,10 @@ def structural_edges(table: SymbolTable, nodes: dict[Key, int]) -> list[tuple]:
     return rows
 
 
-def import_edges(table: SymbolTable, nodes: dict[Key, int]) -> list[tuple]:
-    """A module to module edge per import that names a file this repo holds."""
-    by_module = {module: path for path, module in table.path_module.items()}
-    rows: list[tuple] = []
-    for path, facts in table.files.items():
-        src = nodes.get((path, MODULE_INDEX))
-        if src is None:
-            continue
-        for row in facts.imports:
-            target = by_module.get(resolve_module(path, row.module))
-            dst = nodes.get((target, MODULE_INDEX)) if target else None
-            if dst is not None and dst != src:
-                rows.append((src, dst, "IMPORTS", 1.0, 1, 1, "import", 0, "treesitter"))
-    return rows
-
-
 def reference_edges(
     path: str,
     resolutions: Iterable[Resolution],
     nodes: dict[Key, int],
-    externals: dict[str, int],
 ) -> list[tuple]:
     """One edge per surviving candidate, never one edge per reference."""
     rows: list[tuple] = []
@@ -229,12 +193,6 @@ def reference_edges(
         ref = res.reference
         src = nodes.get((path, ref.scope)) if ref.scope is not None else module
         if src is None:
-            continue
-        if res.external:
-            dst = externals.get(ref.name)
-            if dst is not None:
-                site = ref.call_site_byte
-                rows.append((src, dst, ref.kind, 1.0, 1, 1, "external", site, "treesitter"))
             continue
         count = res.candidate_count
         for hit in res.candidates:

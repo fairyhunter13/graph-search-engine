@@ -9,7 +9,7 @@ relationship is the one fact no syntactic rule reaches.
 from __future__ import annotations
 
 import scipwrite as w
-from graphrag import config, index, store
+from graphrag import config, dbread, index, query, resolvedb, store
 from graphrag.scip import ingest
 
 # Byte offsets computed by hand from the `\n` split. `Café` starts at line 4
@@ -215,12 +215,15 @@ def test_the_tier_raises_the_resolved_share_and_agrees_with_the_parse(repo, tmp_
         ).fetchone()
         return row["n"]
 
-    candidates = conn.execute(
-        "SELECT f.path AS path FROM edges e"
-        " JOIN nodes n ON n.id = e.dst JOIN files f ON f.id = n.file_id"
-        " WHERE e.kind = 'CALLS' AND n.name = 'alpha'"
-    ).fetchall()
-    assert {row["path"] for row in candidates} == {"a.py", "b.py"}
+    # The parse's own candidates. A call that leaves its file is a `refs` row
+    # and never a stored edge, so the ranked pool is read the way a query reads
+    # it. Both files still have to be in it, or the tier is naming a third one.
+    ctx = dbread.Context(conn)
+    rows = conn.execute("SELECT * FROM refs WHERE name = 'alpha' AND kind = 'CALLS'").fetchall()
+    assert len(rows) == 1
+    parsed = resolvedb.resolve_ref(ctx, dbread.row_to_ref(ctx, rows[0]))
+    assert {c.symbol.path for c in parsed.candidates} == {"a.py", "b.py"}
+    assert parsed.resolved is False
     before = resolved()
     assert before == 0
 
@@ -278,4 +281,50 @@ def test_a_definition_at_a_byte_no_node_holds_is_dropped(repo, tmp_path):
     before = conn.execute("SELECT count(*) AS n FROM nodes").fetchone()["n"]
     assert ingest.ingest(conn, path, root).nodes == 3
     assert conn.execute("SELECT count(*) AS n FROM nodes").fetchone()["n"] == before
+    conn.close()
+
+
+def test_an_upgraded_cross_file_call_is_answered_once(repo, tmp_path):
+    """T-281. The overlay and the derived hop read the same call, and the answer
+    holds it once.
+
+    A call that leaves its file is a `refs` row, and the overlay upgrades it in
+    place rather than deleting it. Both halves would otherwise report the call:
+    the compiler's edge, and the ranked guess over the row it left behind.
+    """
+    root, conn = _store(repo, AMBIGUOUS)
+    path = tmp_path / "index.scip"
+    w.write(
+        path,
+        "scip-python",
+        [
+            w.document(
+                "a.py", occurrences=[w.occurrence(ALPHA_A, roles=DEFINITION, span=(0, 4, 0, 9))]
+            ),
+            w.document(
+                "b.py", occurrences=[w.occurrence(ALPHA_B, roles=DEFINITION, span=(0, 4, 0, 9))]
+            ),
+            w.document(
+                "c.py",
+                occurrences=[
+                    w.occurrence(GAMMA, roles=DEFINITION, span=(0, 4, 0, 9)),
+                    w.occurrence(ALPHA_A, span=(1, 11, 1, 16)),
+                ],
+            ),
+        ],
+    )
+    assert ingest.ingest(conn, path, root).calls == 1
+
+    target = query.find_symbol(conn, "alpha")
+    winner = next(hit for hit in target if hit.path == "a.py")
+    answer = query.neighbors(conn, winner.node_id, question="callers", include_ambiguous=True)
+    callers = [row for row in answer.results if row.name == "gamma"]
+    assert len(callers) == 1
+    assert callers[0].evidence == "scip"
+
+    # The file SCIP ruled out keeps no caller. The ranked guess that named it is
+    # what the skip removes, and without the skip it survives beside the edge.
+    other = next(hit for hit in target if hit.path == "b.py")
+    beaten = query.neighbors(conn, other.node_id, question="callers", include_ambiguous=True)
+    assert [row.name for row in beaten.results] == []
     conn.close()

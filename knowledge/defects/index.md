@@ -33,3 +33,13 @@
   `prune --apply` called `store.wipe`, which unlinks graph.db and its WAL sidecars but leaves the
   directory. `unclaimed_stores` counts a directory, so the count never reached zero and every run
   listed the same orphans.
+* [The overlay had nothing left to upgrade](the-overlay-had-nothing-left-to-upgrade.md) -
+  `_rewrite_call` upgraded a call site only where a stored `CALLS` edge sat at that byte. Query-time
+  resolution stopped storing cross-file call edges, so the tier could upgrade only the same-file
+  calls it adds least to. The guard now reads `refs` too, and the derived hop skips a site the tier
+  already decided.
+* [The overlay writes an FTS column and never the
+  index](the-overlay-writes-an-fts-column-and-never-the-index.md) - `_upgrade_node` writes
+  `qualified_name`, which `nodes_fts` indexes, and there is no trigger. It is correct today only
+  because the pass runs the overlay one line before `rebuild_fts`. Recorded, not fixed: the per-file
+  rewrite is what exposes it.

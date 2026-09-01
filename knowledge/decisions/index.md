@@ -1,5 +1,11 @@
 # Decision
 
+* [A build-free engine resolves at query time, and stores only what one file
+  decides](a-build-free-engine-resolves-at-query-time.md) - No work that depends on more than
+  one file may happen at index time. A same-file and a same-class reference is decided by its
+  own file and stored as an edge; every reference that leaves its file is a `refs` row, scored
+  on read. The memoized alternative was tested against the fleet and rejected: its
+  invalidation input, the `IMPORTS` edge, exists in 7 of 375 stores.
 * [A dead row takes its graph, and the delete is a move](a-dead-row-takes-its-graph-and-the-delete-is-a-move.md) - Dropping a row freed no disk: the graph directory waited for a hand-typed prune. The reaper now takes it, behind an idle floor `GRAPHRAG_PRUNE_MIN_IDLE_S` declared but never implemented, and the removal is a move into a week-long quarantine.
 * [A load-bearing number is an Attested Computation, and its receipt carries the test node and the
   commit](a-measurement-is-an-attested-computation.md) - A passing test proves nothing on its own,

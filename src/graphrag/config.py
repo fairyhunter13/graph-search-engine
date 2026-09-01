@@ -83,7 +83,7 @@ def index_path(project: Path | str) -> Path:
 # the edges produced from unchanged input. `store.incompatible` compares it and
 # the indexer wipes: there is no ALTER path, because a half-migrated graph
 # answers a structural question with a mix of two algorithms and says nothing.
-EXTRACTION_ALGORITHM = 3
+EXTRACTION_ALGORITHM = 4
 
 # -------------------------------------------------------------------- serving
 

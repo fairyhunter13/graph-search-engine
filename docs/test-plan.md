@@ -370,6 +370,14 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-251 | A new graph can give its pages back | S-01 | D-44 | done | tests/test_store.py::test_a_new_graph_can_give_its_pages_back |
 | T-252 | A reference survives a pass as a row carrying `receiver` and `is_member` | S-01 | D-45 | done | tests/test_resolvedb.py::test_a_reference_survives_a_pass_as_a_row |
 | T-253 | An import survives a pass carrying its symbol, alias and raw module string | S-01 | D-45 | done | tests/test_resolvedb.py::test_an_import_survives_a_pass_as_a_row |
+| T-254 | The two resolvers return identical candidates over this repo | S-01 | D-46 | done | tests/test_resolvedb.py::test_the_two_resolvers_agree_over_this_repo |
+| T-255 | The enclosing query agrees with the extractor | S-01 | D-46 | done | tests/test_resolvedb.py::test_the_enclosing_query_agrees_with_the_extractor |
+| T-258 | A name the other file defines still resolves | S-01 | D-46 | done | tests/test_resolvedb.py::test_a_name_the_other_file_defines_still_resolves |
+| T-259 | A wider pool is ranked and never forced | S-01 | D-46 | done | tests/test_resolvedb.py::test_a_wider_pool_is_ranked_and_never_forced |
+| T-263 | A file-local reference is an edge and a crossing one is a row | S-01 | D-46 | done | tests/test_resolvedb.py::test_a_file_local_reference_is_an_edge_and_a_crossing_one_is_a_row |
+| T-264 | No stored edge crosses a file | S-01 | D-46 | done | tests/test_resolvedb.py::test_no_stored_edge_crosses_a_file |
+| T-279 | Rewriting one file destroys no edge that names another file | S-01 | D-46 | done | tests/test_resolvedb.py::test_no_stored_edge_crosses_a_file |
+| T-281 | An upgraded cross-file call is answered once | S-06 | D-46 | done | tests/test_scip_ingest.py::test_an_upgraded_cross_file_call_is_answered_once |
 
 # User journeys
 

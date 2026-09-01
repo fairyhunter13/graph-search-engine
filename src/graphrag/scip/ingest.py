@@ -18,7 +18,7 @@ import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .. import config
+from .. import config, dbread
 from . import offsets, read, run, symbol
 
 
@@ -172,25 +172,44 @@ def _upgrade_node(
     )
 
 
-def _rewrite_call(conn: sqlite3.Connection, file_id: int, site: int, dst: int, tool: str) -> bool:
+def _ref_caller(ctx: dbread.Context, file_id: int, site: int) -> int | None:
+    """The node a deferred reference belongs to, or None where there is no such
+    reference. A call that leaves its file is a `refs` row and never an edge."""
+    row = ctx.conn.execute(
+        "SELECT 1 FROM refs WHERE file_id = ? AND call_site_byte = ? AND kind = 'CALLS'",
+        (file_id, site),
+    ).fetchone()
+    if row is None:
+        return None
+    return ctx.enclosing(file_id, site) or dbread.module_node(ctx, file_id)
+
+
+def _rewrite_call(ctx: dbread.Context, file_id: int, site: int, dst: int, tool: str) -> bool:
     """Replace the ranked candidates at one call site with the one SCIP names.
 
     Only where tree-sitter already recorded a call at this byte. A SCIP
     occurrence alone is a name mention, and treating one as a call is how this
     tier would start inventing edges instead of upgrading them.
+
+    The parse records a call in one of two places. A call its own file decides
+    is a stored edge, and a call that leaves the file is a `refs` row. Both are
+    the parse's own record, so the tier upgrades either one. The `refs` row
+    stays where it is, and `derive` skips a site this tier already decided, so
+    an answer carries one edge and never two.
     """
-    rows = conn.execute(
+    rows = ctx.conn.execute(
         "SELECT e.id AS id, e.src AS src FROM edges e JOIN nodes n ON n.id = e.src "
         "WHERE n.file_id = ? AND e.call_site_byte = ? AND e.kind = 'CALLS'",
         (file_id, site),
     ).fetchall()
-    if not rows:
+    src = rows[0]["src"] if rows else _ref_caller(ctx, file_id, site)
+    if src is None:
         return False
-    conn.executemany("DELETE FROM edges WHERE id = ?", [(r["id"],) for r in rows])
-    conn.execute(
+    ctx.conn.executemany("DELETE FROM edges WHERE id = ?", [(r["id"],) for r in rows])
+    ctx.conn.execute(
         "INSERT INTO edges(src, dst, kind, confidence, candidate_count, resolved, evidence, "
         "call_site_byte, producer) VALUES(?, ?, 'CALLS', 1.0, 1, 1, 'scip', ?, ?)",
-        (rows[0]["src"], dst, site, tool),
+        (src, dst, site, tool),
     )
     return True
 
@@ -256,9 +275,10 @@ def ingest(
                 if rel.is_implementation
             ]
 
+    ctx = dbread.Context(conn)
     for file_id, site, name in references:
         dst = nodes.get(name)
-        if dst is not None and _rewrite_call(conn, file_id, site, dst, meta.tool_name):
+        if dst is not None and _rewrite_call(ctx, file_id, site, dst, meta.tool_name):
             report.calls += 1
 
     # This producer's own implements edges, dropped before they are written again.

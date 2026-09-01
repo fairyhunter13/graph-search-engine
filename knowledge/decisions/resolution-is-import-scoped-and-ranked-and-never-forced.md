@@ -55,6 +55,26 @@ relaxed.
 A second reversal is open on the other side. If the ranked set collapses to one candidate almost
 everywhere, the ranking earns nothing, and the confidence field becomes a cost with no reader.
 
+# Where the scoring runs, since 2026-09-01
+
+The tiers, `_rank` and the confidence floor are unchanged, and this decision is unchanged with them.
+What moved is where the inputs come from. A same-file and a same-class reference is scored at index
+time and stored as an edge. Every reference that leaves its file is scored on read, against rows
+rather than a `SymbolTable`. `test_the_two_resolvers_agree_over_this_repo` compares both halves
+against the original resolver over this repo's own source, so the ranking is asserted to be the same
+ranking and not a second one.
+
+# No surveyed engine ranks, which makes this a contribution and not a debt
+
+The 2026-09-01 survey covered Glean, Kythe, SCIP and each `scip-*` indexer, stack-graphs, CodeQL,
+Joern, Sourcegraph, zoekt and ast-grep. Kythe, CodeQL and SCIP push ambiguity to the compiler.
+stack-graphs returns every candidate unranked, by stated design. ctags has no resolution model at
+all. ast-grep states plainly that it does no cross-file resolution.
+
+So the confidence tiers and `candidate_count` are what this engine has that the field does not. The
+second reversal above still stands on its own terms, and it is now the only one open: a ranked set
+that collapses to one candidate almost everywhere earns nothing.
+
 # What this decision does not cover
 
 The share of call sites the receiver rule refuses. That is a separate fact about syntax, and

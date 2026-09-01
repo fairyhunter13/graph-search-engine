@@ -1,5 +1,10 @@
 """The query surface behind the MCP tools. Locations and edges, never bodies.
 
+An edge that crosses a file is not stored. It is derived here, from the `refs`
+and `imports` rows one file wrote alone, because index time may not read a
+second file. A same-file and a same-class edge is stored, so the two sources are
+disjoint and no answer counts a reference twice.
+
 Every answer carries the capability of the languages it touched. A language with
 no call capture answers a caller question with a gap, and the gap is written
 into the answer rather than left as an empty list. An empty list here reads as
@@ -12,7 +17,7 @@ from __future__ import annotations
 import sqlite3
 from dataclasses import dataclass, field
 
-from . import config, grammars, store, traverse
+from . import config, dbread, derive, grammars, store, traverse
 
 # The edge kinds each question walks. A question outside this map is an error
 # naming the valid set, never a widened corpus.
@@ -29,6 +34,14 @@ _FTS = (
     "SELECT n.id, n.name, n.qualified_name, n.kind, n.start_line, n.end_line, f.path, f.lang "
     "FROM nodes_fts JOIN nodes n ON n.id = nodes_fts.rowid JOIN files f ON f.id = n.file_id "
     "WHERE nodes_fts MATCH ? AND n.kind != 'external' ORDER BY rank LIMIT ?"
+)
+
+
+# What a partial answer says about itself. A scan that stopped and did not say so
+# reads as complete, which is the confidently wrong answer this engine avoids.
+_TRUNCATED = (
+    f"more than {dbread.REF_SCAN_CAP} references spell a name on this walk, so the scan "
+    "stopped and this answer is partial"
 )
 
 
@@ -126,9 +139,16 @@ def neighbors(
         answer.gaps.insert(0, f"no symbol named {symbol!r} is indexed in this project")
         return answer
 
-    answer.results = traverse.one_hop(
+    stored = traverse.one_hop(
         conn, start, direction=direction, kinds=kinds, include_ambiguous=include_ambiguous
     )
+    ctx = dbread.Context(conn)
+    derived, truncated = derive.hop(
+        ctx, start, direction=direction, kinds=kinds, include_ambiguous=include_ambiguous
+    )
+    if truncated:
+        answer.gaps.append(_TRUNCATED)
+    answer.results = derive.merge(stored, derived)
     # Ambiguity is the candidate count, never the confidence. A same-file call
     # scores 0.95 with exactly one candidate, so a confidence test reported
     # every one of them as a guess and the number meant nothing.
@@ -154,14 +174,11 @@ def blast_radius(
         answer.gaps.insert(0, f"no symbol named {symbol!r} is indexed in this project")
         return answer
 
-    answer.results = traverse.walk(
-        conn,
-        start,
-        direction=traverse.UPSTREAM,
-        depth=depth,
-        kinds=("CALLS", "REFERENCES", "IMPORTS", "IMPLEMENTS"),
-        include_ambiguous=include_ambiguous,
+    answer.results, truncated = derive.radius(
+        conn, start, depth=depth, include_ambiguous=include_ambiguous
     )
+    if truncated:
+        answer.gaps.append(_TRUNCATED)
     # Ambiguity is the candidate count, never the confidence. A same-file call
     # scores 0.95 with exactly one candidate, so a confidence test reported
     # every one of them as a guess and the number meant nothing.

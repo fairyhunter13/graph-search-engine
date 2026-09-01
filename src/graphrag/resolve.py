@@ -17,8 +17,17 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 
 from . import config
-from .extract import Reference
-from .symtab import Symbol, SymbolTable, imported_modules, imported_names
+from .extract import FileFacts, Reference
+from .symtab import (
+    Symbol,
+    SymbolTable,
+    _symbol,
+    imported_modules,
+    imported_names,
+    module_name,
+    names_from_imports,
+    resolve_module,
+)
 
 # The scored tiers, highest first. `evidence` is what the answer prints, so a
 # reader can tell a fact from a guess without reading this file.
@@ -56,10 +65,9 @@ class Resolution:
         return len(self.candidates)
 
 
-def _enclosing_class(table: SymbolTable, path: str, scope: int | None) -> int | None:
+def _enclosing_class_in(facts: FileFacts, scope: int | None) -> int | None:
     """The class a call site sits in, or None. Walks the containment chain."""
-    facts = table.files.get(path)
-    if facts is None or scope is None:
+    if scope is None:
         return None
     seen: set[int] = set()
     cursor: int | None = scope
@@ -69,6 +77,11 @@ def _enclosing_class(table: SymbolTable, path: str, scope: int | None) -> int | 
             return cursor
         cursor = facts.definitions[cursor].parent
     return None
+
+
+def _enclosing_class(table: SymbolTable, path: str, scope: int | None) -> int | None:
+    facts = table.files.get(path)
+    return _enclosing_class_in(facts, scope) if facts is not None else None
 
 
 def _package(path: str) -> str:
@@ -174,6 +187,54 @@ def _rank(candidates: list[Candidate]) -> list[Candidate]:
     best = max(c.confidence for c in candidates)
     kept = [c for c in candidates if c.confidence >= best]
     return sorted(kept, key=lambda c: (-c.confidence, c.symbol.path, c.symbol.index))
+
+
+def resolve_file_local(path: str, facts: FileFacts) -> tuple[list[Resolution], list[Reference]]:
+    """Split one file's references into the ones it decides alone, and the rest.
+
+    The invariant this engine is built on says no index-time work may read a
+    second file. A reference whose callee its own file defines is still decided
+    here, and the reason is that it cannot be out-argued:
+
+    1. `SAME_CLASS` and `SAME_FILE` are the top two tiers, and `_rank` keeps only
+       the best. Nothing outside the file can beat a same-file candidate.
+    2. The one thing that drops a same-file candidate before it is tiered is the
+       receiver, and that reads this file's imports and this file's own module.
+    3. An empty pool means external, and only the whole tree proves a pool empty.
+       This never asserts that. It asserts a positive, so it never needs the tree.
+
+    Everything else is returned unresolved, and becomes a `refs` row the query
+    resolves on read.
+    """
+    module = module_name(path)
+    names = names_from_imports(path, facts.imports)
+    modules = {resolve_module(path, row.module) for row in facts.imports}
+
+    by_name: dict[str, list[Symbol]] = {}
+    for i, definition in enumerate(facts.definitions):
+        by_name.setdefault(definition.name, []).append(_symbol(path, i, definition))
+
+    decided: list[Resolution] = []
+    deferred: list[Reference] = []
+    for ref in facts.references:
+        pool = by_name.get(ref.name)
+        targets = _receiver_modules(ref, names, modules)
+        if not pool or (targets is not None and module not in targets):
+            deferred.append(ref)
+            continue
+        holder = _enclosing_class_in(facts, ref.scope)
+        scoped = [
+            Candidate(
+                symbol=symbol,
+                confidence=SAME_CLASS if symbol.parent == holder else SAME_FILE,
+                evidence="same_class" if symbol.parent == holder else "same_file",
+            )
+            if holder is not None
+            else Candidate(symbol=symbol, confidence=SAME_FILE, evidence="same_file")
+            for symbol in pool
+        ]
+        decided.append(Resolution(reference=ref, candidates=_rank(scoped)))
+    return decided, deferred
 
 
 def resolve_file(table: SymbolTable, path: str) -> list[Resolution]:
