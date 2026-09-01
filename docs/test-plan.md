@@ -454,6 +454,10 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-330 | A progress file outlives its store and the prune sweeps it | S-07 | D-41 | done | tests/test_prune.py::test_a_progress_file_outlives_its_store_and_the_prune_sweeps_it |
 | T-331 | A prune against an empty registry refuses | S-07 | D-41 | done | tests/test_registry.py::test_a_prune_against_an_empty_registry_refuses |
 | T-332 | A prune over half the tree needs force | S-07 | D-41 | done | tests/test_registry.py::test_a_prune_over_half_the_tree_needs_force |
+| T-333 | A worktree groups under the repository it belongs to | S-06 | D-57 | done | tests/test_scip_census.py::test_a_worktree_groups_under_the_repository_it_belongs_to |
+| T-334 | A root reaches a receipt only as a digest | S-06 | D-57 | done | tests/test_scip_census.py::test_a_root_reaches_a_receipt_only_as_a_digest |
+| T-335 | The overlay arm refuses every root that is not ready | S-06 | D-57 | done | tests/test_scip_census.py::test_the_overlay_arm_refuses_every_root_that_is_not_ready |
+| T-336 | The share arm counts the stores it could not read | S-06 | D-57 | done | tests/test_scip_census.py::test_the_share_arm_counts_the_stores_it_could_not_read |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted

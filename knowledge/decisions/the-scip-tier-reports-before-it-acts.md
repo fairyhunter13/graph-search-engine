@@ -2,8 +2,8 @@
 type: Decision
 resource: src/graphrag/scip/run.py
 title: The SCIP tier reports its readiness before anything acts on it
-description: "Five tiers -- ready, installable, unconfigured, manual, absent -- named per root by `run.readiness` and printed by `doctor`. Over 375 enrolled roots the estate reads 338 manual, 120 unconfigured, 21 absent, 9 installable and 2 ready, so the population an install helper serves is 9 roots and not the 16 estimated. The tier that had to be invented is `unconfigured`: without it a build-unit fallback read as a build unit and 121 TypeScript roots stood as installable when 119 hold no tsconfig at all."
-tags: [scip, readiness, fleet, census, install]
+description: "Five tiers -- ready, installable, unconfigured, manual, absent -- named per root by `run.readiness` and printed by `doctor`. Over 375 enrolled roots the estate reads 338 manual, 120 unconfigured, 21 absent, 9 installable and 2 ready as indexer/root pairs, and 330/114/21/9/2 once worktrees are grouped under the repository they belong to -- the two actionable tiers do not move. The population an install helper serves is 9 roots and not the 16 estimated. The tier that had to be invented is `unconfigured`: without it a build-unit fallback read as a build unit and 121 TypeScript roots stood as installable when 119 hold no tsconfig at all."
+tags: [scip, readiness, fleet, census, install, overlay]
 status: stable
 generated: { by: claude/opus-5, at: 2026-09-01T00:00:00Z }
 sources:
@@ -13,6 +13,8 @@ sources:
     resource: src/graphrag/scip/deps.py
   - id: doctor
     resource: src/graphrag/cli.py
+  - id: census
+    resource: scripts/scip_census.py
 ---
 
 # What a tier says
@@ -51,6 +53,14 @@ worse than no report, because the number it produces is the one an operator woul
 
 # The estate, measured over 375 enrolled roots
 
+The producer is `scripts/scip_census.py tiers`[^census], and it calls the shipped `readiness` in a
+loop. The figures below were a loop nobody committed until 2026-09-01; the arm reproduces them
+exactly, so a reader can re-run rather than believe.
+
+The column is **indexer/root pairs** and it always was. The count is 490, over 375 roots, because a
+root holding two languages stands twice. That denominator was never stated, which is the only thing
+wrong with the table.
+
 | tier | indexer/root pairs | |
 |---|---|---|
 | `manual` | 338 | 333 php, 3 java, 1 rust, 1 c |
@@ -65,6 +75,51 @@ Two thirds of the pairs are `manual`, and 333 of those are PHP -- see
 whose refusal this measurement re-confirms over a population five times the size it was taken on.
 Of the languages that can be served, the gap is a missing `tsconfig.json` in 119 roots, which no
 helper this engine ships can supply.
+
+# The second denominator, and why it changes almost nothing
+
+A repository and its worktrees are one repository to install into. Grouping on the main `.git`
+directory -- one file read per root, because a worktree's `.git` is a file holding a `gitdir:`
+line -- the 375 roots are **355 families** and the 490 pairs are 476:
+
+| tier | pairs | family pairs |
+|---|---|---|
+| `manual` | 338 | 330 |
+| `unconfigured` | 120 | 114 |
+| `absent` | 21 | 21 |
+| `installable` | 9 | 9 |
+| `ready` | 2 | 2 |
+
+`installable` and `ready` are identical under both. The actionable population was never overstated
+by the missing denominator, and 14 of the 20 worktrees sit in `manual` and `unconfigured` -- the two
+tiers nothing acts on. A family stands at the best tier any of its roots reaches, which is the rule
+an operator uses: install once, and every worktree of that repository is served.
+
+# What a compiler decides, fleet-wide
+
+`scripts/scip_census.py share` counts `evidence` over every `CALLS` edge in every store, which no
+committed query did -- `dbread.decided_by_scip` answers it per file and returns a bool. It reads
+375 of 375 stores and states the number it skipped, which is zero.
+
+Before the overlay ran, 2026-09-01: **41,244 of 295,753** CALLS edges carried `evidence: scip`,
+**13.9454%**. This is the first such figure in this repository. It is not a movement from an earlier
+one, and no earlier one exists.
+
+# The overlay applied where it needed no install
+
+`scripts/scip_census.py overlay` refuses any root that is not already at `ready`, and that refusal
+is the reason the arm is committed rather than run by hand. It applied to **2** roots and refused
+**366**, both `scip-typescript`: 3,412 nodes / 14,288 calls / 30 implementations, and 2,483 / 4,549
+/ 17. Each root's working tree was counted with `git status --porcelain` before and after, and both
+counts were 0 -- `scip.overlay` writes its index beside the graph, never into a project.
+
+The fleet share after: **60,081 of 307,472**, **19.5403%**. The 18,837 new `scip` edges are exactly
+the 14,288 + 4,549 the two roots reported, so the arithmetic closes.
+
+Cut: the 9 `installable` roots. Six are Go and reach that tier only because Go resolves outside the
+tree; three are TypeScript and need a package-manager install that deletes and reinstalls the
+dependency tree of a repository this engine does not own. That is the operator's call and not this
+engine's, so the arm cannot reach them at all.
 
 # The helper is a separate surface, and that is the decision
 
@@ -96,5 +151,6 @@ Cut: inferring a `tsconfig.json` for the 119 roots that lack one. `scip-typescri
 infer one, and an inferred build is a build this engine invented -- the coverage guard would then
 be grading a project against a configuration its own authors never wrote.
 
+[^census]: `scripts/scip_census.py` -- the arms `tiers`, `share` and `overlay`.
 [^readiness]: `src/graphrag/scip/run.py`, `readiness` and `_standing`.
 [^helper]: `src/graphrag/scip/deps.py`, `check` and `plan`.

@@ -30,10 +30,12 @@
 * [An absent directory is three answers and only one is a deletion](an-absent-directory-is-three-answers-and-only-one-is-a-deletion.md) - inotify has no replay, so a repository deleted while the daemon was down reaches no event. The cold-start reconciliation answers `deleted`, `unmounted` or `unknown` from the `st_dev` recorded at enrolment, reports by default, and acts on `deleted` alone.
 * [The SCIP tier reports its readiness before anything acts on it](the-scip-tier-reports-before-it-acts.md) -
   Five tiers per root, printed by `doctor`. Over 375 enrolled roots: 338 `manual`, 120
-  `unconfigured`, 21 `absent`, 9 `installable`, 2 `ready`. `unconfigured` had to be invented -- a
+  `unconfigured`, 21 `absent`, 9 `installable`, 2 `ready` as indexer/root pairs, and 330/114/21/9/2
+  by family -- the two actionable tiers do not move. `unconfigured` had to be invented -- a
   build-unit fallback read as a build unit, and 121 TypeScript roots stood as installable when 119
-  hold no `tsconfig.json` at all. The install helper is a separate surface that refuses a package
-  manager carrying no script-suppressing flag.
+  hold no `tsconfig.json` at all. The overlay ran on the 2 `ready` roots and took the fleet's SCIP
+  share of CALLS edges from 13.9454% to 19.5403%, writing nothing into either tree. The install
+  helper is a separate surface that refuses a package manager carrying no script-suppressing flag.
 * [Go and TypeScript get a SCIP tier, and every other language in this estate gets
   none](which-languages-get-a-scip-tier.md) - Nine indexers are registered and three carry a
   command, but an operator can feed any of the nine by hand, so this is a decision and not a code
