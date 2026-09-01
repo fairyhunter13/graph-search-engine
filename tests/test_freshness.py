@@ -62,6 +62,17 @@ def _hit(store: Path, name: str) -> bool:
         conn.close()
 
 
+@pytest.fixture(autouse=True)
+def state_dir():
+    """Shadow the conftest fixture, which points `config` at a per-test tmp tree.
+
+    That tree is the right answer for every other case here and the wrong one
+    for this case. The claim is about the store the running daemon writes, so
+    the paths have to stay the real ones.
+    """
+    return None
+
+
 @pytest.mark.slow
 def test_a_save_is_searchable_before_the_next_one_lands():
     """The property the watcher hint buys, timed end to end through the daemon.
