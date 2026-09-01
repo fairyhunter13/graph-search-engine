@@ -2,7 +2,7 @@
 type: Defect
 resource: src/graphrag/store.py
 title: Reclaim never reclaimed a page
-description: "`PRAGMA auto_vacuum` read 0 on 373 of 375 stores, so `PRAGMA incremental_vacuum` did nothing on any of them. `gen2-php-app` held 151 MB over about 9.7 MB of live data. The pragma takes only on a database whose header is not yet written, and every store older than the line ignored it."
+description: "`PRAGMA auto_vacuum` read 0 on 373 of 375 stores, so `PRAGMA incremental_vacuum` did nothing on any of them. The Gen-2 PHP app held 151 MB over about 9.7 MB of live data. The pragma takes only on a database whose header is not yet written, and every store older than the line ignored it."
 tags: [sqlite, storage, vacuum]
 status: stable
 generated: { by: claude/opus-5, at: 2026-09-01T00:00:00Z }
@@ -32,8 +32,8 @@ Read over the whole store directory, 2026-09-01:
 | `PRAGMA auto_vacuum` reads 0 | 373 |
 | `PRAGMA auto_vacuum` reads 2 | 2 |
 
-`gen2-php-app` was 151 MB holding about 9.7 MB of live data, which is 93.6% free.
-`largest-enrolled-project` was 87.5% free. So `reclaim` had never returned a page on any of the 373.
+The Gen-2 PHP app was 151 MB holding about 9.7 MB of live data, which is 93.6% free.
+The largest enrolled project was 87.5% free. So `reclaim` had never returned a page on any of the 373.
 
 # What fixed it, and why no code changed
 

@@ -205,10 +205,11 @@ for the callers of a known function and check them by hand.
 | D-45 | Every fact one file answers alone survives the pass: `refs` and `imports` are stored | done | src/graphrag/store.py, src/graphrag/indexwrite.py, src/graphrag/index.py, tests/test_resolvedb.py | T-252, T-253 |
 | D-46 | Resolution moves to query time, and only a file-local reference resolves at index time | done | src/graphrag/dbread.py, src/graphrag/resolvedb.py, src/graphrag/derive.py, src/graphrag/query.py, src/graphrag/indexwrite.py, src/graphrag/index.py, src/graphrag/config.py, src/graphrag/scip/ingest.py, tests/test_resolvedb.py, tests/test_scip_ingest.py | T-254, T-255, T-258, T-259, T-263, T-264, T-279, T-281 |
 | D-47 | An index pass rewrites only the files that changed | done | src/graphrag/index.py, src/graphrag/jobs.py, src/graphrag/indexwrite.py, src/graphrag/discover.py, src/graphrag/filters.py, src/graphrag/store.py, src/graphrag/query.py, src/graphrag/dbread.py | T-256, T-257, T-261, T-262, T-268, T-276, T-277, T-278, T-280, T-282, T-283 |
-| D-48 | The watcher hints which files changed, and the quiet window is deleted | done | src/graphrag/watch.py, src/graphrag/jobs.py, src/graphrag/index.py, src/graphrag/discover.py, src/graphrag/config.py, tests/test_watch.py, tests/test_perfile.py, tests/test_index.py | T-260, T-270, T-271, T-272, T-273, T-274, T-275 |
+| D-48 | The watcher hints which files changed, and the quiet window is deleted | done | src/graphrag/watch.py, src/graphrag/jobs.py, src/graphrag/index.py, src/graphrag/discover.py, src/graphrag/config.py, src/graphrag/systemd.py, tests/test_watch.py, tests/test_perfile.py, tests/test_index.py | T-260, T-270, T-271, T-272, T-273, T-274, T-275, T-290 |
 | D-49 | `grammars.py` reports the digits the live pin produces | done (no change needed) | src/graphrag/grammars.py, tests/test_grammars.py | T-06 |
 | D-50 | `SymbolTable.module_of` is deleted: it was written and never read | done | src/graphrag/symtab.py | |
 | D-51 | The SCIP overlay rides the reconciler, because it has no per-file form | done | src/graphrag/index.py, tests/test_perfile.py | T-286 |
+| D-52 | This repository is public, so no tracked file carries a private name or a machine path, and the gate reads the whole tree | done | tests/test_hygiene.py, .githooks/pre-push, .github/workflows/ci.yml, scripts/partc_probe.py, src/graphrag/federation.py, src/graphrag/filters.py, src/graphrag/index.py, src/graphrag/scip/run.py, docs/, knowledge/ | T-295, T-296 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -337,8 +338,8 @@ per project rather than one per file.
 
 # What `D-35` to `D-38` settled, 2026-08-30
 
-The maintainer deleted the encyclopedia in `largest-enrolled-project` and ruled that the two search engines answer in
-its place. That holds only if both reach the code. This one reached zero Acme repositories:
+The maintainer deleted the encyclopedia in the largest enrolled project and ruled that the two search engines answer in
+its place. That holds only if both reach the code. This one reached zero repositories in the fleet:
 its federation was declared, and the workspace declared nothing.
 
 So `federation.links` walks the root with `os.walk(followlinks=False)`, bounded at four levels, and
@@ -353,7 +354,7 @@ alone re-admits every second checkout of a repository already reached under its 
 `exclude` and `languages` were parsed, type-checked and read by nothing, which is the exact failure
 `projcfg.py` says it refuses. Both reach `discover.enumerate_files` now, and the walk prunes an
 excluded directory rather than walking it to discard each file. It is load-bearing at fleet scale:
-`gen2-php-app` indexes 5,994 files with no excludes, and about 1,400 once CodeIgniter's `system/`,
+The Gen-2 PHP app indexes 5,994 files with no excludes, and about 1,400 once CodeIgniter's `system/`,
 `application/third_party/` and the vendored `public/js/` are cut.
 
 Removal became automatic, which overturns the registry rule against pruning a missing path. That
@@ -401,7 +402,7 @@ numbers came back, and both are worse than the capability table reads.
 An IMPORTS edge exists in 7 stores of 367, and every one of the 7 is Python or Java. The fleet holds
 2,435 of them against 3.76 million edges. 67.2% of all 2,784,438 CALLS edges carry
 `evidence: external`, which means the target resolved to nothing. Per generation the external share
-runs 70.0% on Gen-1 `gen1-php-app`, 75.2% on Gen-2 `gen2-php-app`, 90.0% on Gen-4 `go-monorepo` and above 94% on
+runs 70.0% on a Gen-1 PHP app, 75.2% on the Gen-2 PHP app, 90.0% on the Go monorepo and above 94% on
 both Gen-3 samples.
 
 One cause carries both. `module_name` spells a module by dotting a file path. An import row keeps
@@ -634,8 +635,8 @@ session's own tool stream, and `T-128` grades it.
 The design named nine decisions an agent may not take alone. Four of them arrived in this pass.
 
 Decision 9, the fleet enrollment, was put to the user and answered. Six projects are enrolled and
-no others: `graph-search-engine`, `largest-enrolled-project`, `claude-code-workflows`, `rag-search-engine`,
-`device-sync` and `smart-app`. That is 6 of the fleet's 149, so the second indexer carries a
+no others: `graph-search-engine`, the largest enrolled project, `claude-code-workflows`, `rag-search-engine`,
+and two more enrolled projects. That is 6 of the fleet's 149, so the second indexer carries a
 named set rather than the whole disk. `~/.local/share/graphrag/projects.json` holds those six plus
 the two probe fixtures the tests enroll.
 
@@ -711,3 +712,27 @@ could still race. Both now write through a `_write` helper that holds `receipt_l
 
 `check_attester_contract.py` gained the reverse direction. It checked that every receipt field was
 declared. A concept that under-declares ships a run whose artifact its own attester rejects.
+
+`D-52` is a gate that existed and had never run. `GRAPHRAG_NAME_BAN` shipped with `test_hygiene.py`
+and CI set it to `none` (`.github/workflows/ci.yml`), so the ban has never held a name and has
+never rejected anything. Both hygiene checks read `src/graphrag/*.py` only, and the names were in
+`knowledge/`, `docs/`, `tests/` and `scripts/` — a clean corner of a tree the gate was meant to
+grade whole. Arming it over `git ls-files` returned 70 occurrences across 23 files, four of them in
+shipped source.
+
+A measurement keeps its number and loses its name. Every figure in the scrub survives it: "twelve
+saves on a 2,461-file Go monorepo" attests exactly what the client's repository name attested, and
+`knowledge/computations/a-save-is-searchable-before-the-next-one-lands.md` carries `corpus_ref:
+go-monorepo` for the same reason. The list of banned names is the one thing that cannot be
+committed, so it lives in `GRAPHRAG_NAME_BAN` in the environment, and the gate that reads it is
+`.githooks/pre-push`. Unset is the failing state and `none` is the clean-clone declaration, because
+a check that does nothing when its variable is missing has passed on every machine that never set
+it.
+
+CI keeps `none`, and that is not a skip. A repository secret was written here first and reverted:
+the test reports its matches, its matches are the banned names themselves, and an Actions log on a
+public repository is where they would be reported. CI also runs after the push, by which time the
+content is already published. `coderag` reached the same ruling first and this one follows it.
+
+The scrub covers the working tree and not the history. These names are in past commits of an
+already-public repository, and stopping the bleeding is not undoing it.

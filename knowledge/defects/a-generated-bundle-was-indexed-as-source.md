@@ -2,7 +2,7 @@
 type: Defect
 resource: src/graphrag/filters.py
 title: A generated bundle was indexed as source, and one held 28.7% of the fleet's references
-description: "`web-tree`'s hottest callee name is the single character `n`, at 90,156 CALLS edges. No rule refused a machine-written file, and a `.min.js` suffix test refuses none of the six bundles measured."
+description: "The web tree's hottest callee name is the single character `n`, at 90,156 CALLS edges. No rule refused a machine-written file, and a `.min.js` suffix test refuses none of the six bundles measured."
 tags: [indexing, filters, minified, performance]
 status: stable
 generated: { by: claude/opus-5, at: 2026-09-01T00:00:00Z }
@@ -24,11 +24,11 @@ Measured over 375 stores, 2026-09-01:
 
 | Store | `refs` rows | Share of the fleet |
 |---|---|---|
-| `web-tree` | 992,526 | **28.7%** |
-| `go-monorepo` | 304,697 | 8.8% |
+| `web tree` | 992,526 | **28.7%** |
+| `Gen-4 Go monorepo` | 304,697 | 8.8% |
 | whole fleet | 3,461,224 | 100% |
 
-`web-tree`'s hottest callee is `n`, with 90,156 `CALLS` edges -- 9.6% of every call in that
+The web tree's hottest callee is `n`, with 90,156 `CALLS` edges -- 9.6% of every call in that
 store on one character. The next four are `s`, `a`, `isset` and `e`. `refs` is the table a caller
 question reads on every call, so one generated tree owned the fleet's worst query.
 

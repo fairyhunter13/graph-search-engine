@@ -179,10 +179,10 @@ def indexable(path: Path, *, size: int | None = None) -> bool:
 def generated(data: bytes) -> bool:
     """Whether this content is machine-written, read from the bytes and not the name.
 
-    Distinct trigrams, which is zoekt's rule. Measured 2026-09-01 over the
-    `web-tree` tree: six real bundles crossed the cap between 173 KB and
-    663 KB in, and `elfinder.full.js` and `shared-ui.js` are pretty-printed, so a
-    line-length test passes both. The cap is what separates them.
+    Distinct trigrams, which is zoekt's rule. Measured 2026-09-01 over an
+    11,722-file web tree: six real bundles crossed the cap between 173 KB and
+    663 KB in, and two of the six are pretty-printed, so a line-length test
+    passes both. The cap is what separates them.
     """
     seen: set[bytes] = set()
     add = seen.add

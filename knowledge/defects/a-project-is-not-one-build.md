@@ -2,7 +2,7 @@
 type: Defect
 resource: src/graphrag/scip/run.py, src/graphrag/scip/__init__.py, src/graphrag/scip/ingest.py
 title: A project is not one build, so the overlay indexed one module of eight
-description: "`overlay` invoked each indexer once, at the project root. An indexer resolves the build it stands in and no other, so on `go-monorepo` scip-go saw 2 of 2012 Go files, covered 0% and was correctly refused. The tier was unreachable for every multi-module repository, and the refusal named the coverage floor rather than the cause."
+description: "`overlay` invoked each indexer once, at the project root. An indexer resolves the build it stands in and no other, so on the Go monorepo scip-go saw 2 of 2012 Go files, covered 0% and was correctly refused. The tier was unreachable for every multi-module repository, and the refusal named the coverage floor rather than the cause."
 tags: [scip, overlay, go, typescript, monorepo, coverage]
 status: stable
 generated: { by: claude/opus-5, at: 2026-08-30T00:00:00Z }
@@ -10,7 +10,7 @@ generated: { by: claude/opus-5, at: 2026-08-30T00:00:00Z }
 
 # What was measured
 
-`go-monorepo` was indexed with `scip: true` and `scip_indexers: [scip-go, scip-typescript]`. The pass ran
+The Go monorepo was indexed with `scip: true` and `scip_indexers: [scip-go, scip-typescript]`. The pass ran
 in 12.8 s, read 2,425 files, and moved no CALLS edge at all. `overlay` reported:
 
 ```
@@ -19,7 +19,7 @@ scip-go: refused: scip-go covers 2 of 2012 files (0%), under the 60% floor
 
 The build is clean and the guard is right. `find . -name go.mod` returns **8 files**, and
 `go list ./...` at the root returns **1 package**. 2,010 of the 2,012 Go files live under
-`internal/`, in seven sibling modules the root module does not contain. `ts-app` is the same
+`internal/`, in seven sibling modules the root module does not contain. The TypeScript app is the same
 shape: **8 `tsconfig.json` files and none at the root**.
 
 Run by hand inside one of them, the tool works and the prize is large:
@@ -64,7 +64,7 @@ No floor moved. Each unit is graded separately against tree-sitter's own census 
 
 # What it bought
 
-`go-monorepo`, all eight units, 38.9 s wall:
+The Go monorepo, all eight units, 38.9 s wall:
 
 | | before | after |
 |---|---|---|

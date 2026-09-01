@@ -10,7 +10,7 @@ generated: { by: claude/opus-5, at: 2026-08-30T00:00:00Z }
 
 # What was measured
 
-The fleet pass indexed 367 projects, every Acme generation included. Two numbers over those
+The fleet pass indexed 367 projects, every generation in the fleet included. Two numbers over those
 stores:
 
 | Measure | Value |
@@ -25,15 +25,15 @@ The external share per generation:
 
 | Generation | Repository | CALLS | external |
 |---|---|---|---|
-| Gen-1 | `gen1-php-app` | 61,613 | 70.0% |
-| Gen-2 | `gen2-php-app` | 65,153 | 75.2% |
+| Gen-1 | Gen-1 PHP app | 61,613 | 70.0% |
+| Gen-2 | Gen-2 PHP app | 65,153 | 75.2% |
 | Gen-3 | `gen3-app-c` | 9,427 | 97.3% |
-| Gen-3 | `gen2-erp/miti` | 5,488 | 94.5% |
-| Gen-4 | `go-monorepo` | 137,205 | 90.0% |
+| Gen-3 | Gen-3 PHP app | 5,488 | 94.5% |
+| Gen-4 | Gen-4 Go monorepo | 137,205 | 90.0% |
 
 Two concrete answers behind those shares. `neighbors question=importers` on `RateService`
 returns an empty list, while more than ten files carry
-`use App\Services\V1\Projects\Commitment\RateService;`. `neighbors question=callers` on the Go
+`use App\Services\V1\Billing\Rates\RateService;`. `neighbors question=callers` on the Go
 constructor `NewRate` returns one caller, in the same file, and misses the cross-package
 caller at `internal/billing/app/command/add_rate.go:53`.
 
@@ -46,13 +46,13 @@ whenever it has no leading dot. Those two spellings must be equal for an import 
 The extractor reads the real Go file as:
 
 ```
-Import(module='github.com/acme/cx/internal/billing/domain/rates', ...)
+Import(module='example.com/acme/app/internal/billing/domain/rates', ...)
 ```
 
 and names the definition file:
 
 ```
-internal.billing.domain.rates.rate
+internal.billing.domain.rates.rates
 ```
 
 They differ three ways at once. The import carries a repository prefix the path does not. The import
@@ -86,16 +86,16 @@ name also exists as a non-external node is the second site. Measured 2026-08-30:
 
 | Repository | CALLS | external | site 1, honest | site 2, miss |
 |---|---|---|---|---|
-| `go-monorepo` (go) | 137,205 | 123,520 (90.0%) | 77,342 (62.6%) | 46,178 (37.4%) |
-| `ts-app` (typescript) | 31,109 | 25,705 (82.6%) | 21,205 (82.5%) | 4,500 (17.5%) |
+| Gen-4 Go monorepo (go) | 137,205 | 123,520 (90.0%) | 77,342 (62.6%) | 46,178 (37.4%) |
+| TypeScript app (typescript) | 31,109 | 25,705 (82.6%) | 21,205 (82.5%) | 4,500 (17.5%) |
 
-So 62.6% is the floor `go-monorepo` can reach on this resolver, and the 37.4% above it is the prize. The
+So 62.6% is the floor the Go monorepo can reach on this resolver, and the 37.4% above it is the prize. The
 Go prize is more than double the TypeScript one, because TypeScript's own `import` rows already
 carry a relative path that sometimes matches.
 
 # `same_class` never fires for Go
 
-The `go-monorepo` histogram carries no `same_class` row at all: `external` 123,520, `same_file` 7,439,
+The Go monorepo histogram carries no `same_class` row at all: `external` 123,520, `same_file` 7,439,
 `package` 5,858, `global` 388, and no `import` row either. `_enclosing_class` finds the class a
 call sits lexically inside, and a Go method sits beside its type rather than inside it. So the
 0.95 tier is unreachable in Go by construction, and not by a missing query.
@@ -130,8 +130,8 @@ real compiler resolves what a syntactic receiver cannot. It was turned on and me
 
 | Repository | `external` before | `external` after | `evidence: scip` |
 |---|---|---|---|
-| `go-monorepo` (go) | 123,520 (90.0%) | 109,065 (79.5%) | 26,747 (19.5%) |
-| `ts-app` (typescript) | 25,705 (82.6%) | 24,387 (79.0%) | 4,397 (14.2%) |
+| Gen-4 Go monorepo (go) | 123,520 (90.0%) | 109,065 (79.5%) | 26,747 (19.5%) |
+| TypeScript app (typescript) | 25,705 (82.6%) | 24,387 (79.0%) | 4,397 (14.2%) |
 
 Neither crossed its honest floor, which is the check that SCIP invented no edge. Go took about a
 third of its own 37.4% miss and TypeScript about 29% of its 17.5%, so the defect is reduced and not

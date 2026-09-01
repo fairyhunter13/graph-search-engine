@@ -36,7 +36,7 @@
 * [The watcher hints which files changed, and the whole-tree scan
   reconciles](the-watcher-hints-and-the-scan-reconciles.md) - inotify already answers what changed,
   and `_submit` threw the answer away. The paths ride along as a hint now, so a save hashes those
-  files and not the 2,461 of `go-monorepo`. The hint never replaces the scan, because inotify has no
+  files and not the 2,461 of the Go monorepo. The hint never replaces the scan, because inotify has no
   replay and only the unhinted pass heals an event no process saw.
 * [PHP gets no SCIP tier, PHPStan is deferred, and the resolver is the next
   buy](php-gets-no-scip-tier-and-the-resolver-is-the-next-buy.md) - `scip-php` is registered with no

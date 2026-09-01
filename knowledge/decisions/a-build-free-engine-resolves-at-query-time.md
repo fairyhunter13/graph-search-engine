@@ -59,7 +59,7 @@ read from `nodes` on the existing `nodes_name` index[^dbread]. So one reference 
 seeks plus one small per-file read, and `Context` memoizes that read for every reference in the file.
 
 Measured over all 375 stores, 898 MB, on 2026-09-01: a median name resolves in 17-75 µs, `Equal` in
-`go-monorepo` at 8,704 rows in 1 ms, and the fleet worst, `n` in `web-tree` at 90,643 rows, in
+the Go monorepo at 8,704 rows in 1 ms, and the fleet worst, `n` in the web tree at 90,643 rows, in
 10 ms. `nodes.name` is near-unique in the body of the distribution -- median 1 node per name, p90 at
 most 3, in every store.
 
@@ -102,7 +102,7 @@ and the split is then re-argued rather than tuned.
 
 # What this decision does not cover
 
-The scan in front of the pass. `enumerate_files` still hashes every file, at 228-252 ms on `go-monorepo`,
+The scan in front of the pass. `enumerate_files` still hashes every file, at 228-252 ms on the Go monorepo,
 and no part of this record removes it. The reparse and the scan are two separate costs, and
 [the reparse constraint](../constraints/a-pass-reparses-the-tree-because-resolution-is-global.md)
 records which half this commit bought.

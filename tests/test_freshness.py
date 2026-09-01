@@ -142,7 +142,7 @@ def test_a_save_is_searchable_before_the_next_one_lands():
 
     assert p50 <= P50_CEILING_MS, f"p50 {p50:.0f} ms over the {P50_CEILING_MS:.0f} ms criterion"
 
-    _write_receipt(root, files, ordered, misses, p50, p99, whole_tree_pass_s)
+    _write_receipt(files, ordered, misses, p50, p99, whole_tree_pass_s)
 
 
 def _files(store: Path) -> int:
@@ -168,7 +168,6 @@ def _whole_tree_pass_s(root: Path) -> float:
 
 
 def _write_receipt(
-    root: Path,
     files: int,
     samples: list[float],
     misses: int,
@@ -185,7 +184,7 @@ def _write_receipt(
             NODE_ID,
             {
                 "test_node_id": NODE_ID,
-                "corpus_ref": root.name,
+                "corpus_ref": CORPUS_REF,
                 **config.provenance(Path(__file__).resolve().parent.parent),
                 "outcome": "pass",
                 "files": files,
@@ -205,7 +204,10 @@ CONCEPT = (
     / "computations"
     / "a-save-is-searchable-before-the-next-one-lands.md"
 )
-SANCTIONED = {"test_node_id": NODE_ID, "corpus_ref": "go-monorepo"}
+# The corpus is a private repository, and this one is public, so the receipt
+# carries the shape that makes the figure legible and never the name.
+CORPUS_REF = "go-monorepo"
+SANCTIONED = {"test_node_id": NODE_ID, "corpus_ref": CORPUS_REF}
 
 
 def _attester():

@@ -2,7 +2,7 @@
 
 This engine declared its members until 2026-08-30, and the semantic engine
 discovered them. The maintainer ruled that the two must reach the same set, and this
-workspace reaches ~360 Acme repos through a symlink tree that changes
+workspace reaches ~360 repositories through a symlink tree that changes
 whenever a repo is added. A declared list drifts on the first such change, and
 a graph nobody can query is worse than one holding a member nobody named.
 

@@ -402,6 +402,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-274 | An unhinted pass finds a change no event reported | S-01 | D-48 | done | tests/test_perfile.py::test_an_unhinted_pass_finds_a_change_no_event_reported |
 | T-275 | The prune clock still ticks on an empty batch | S-01 | D-48 | done | tests/test_watch.py::test_the_prune_clock_still_ticks_on_an_empty_batch |
 | T-284 | The queue merges a queued job and requeues a running one | S-01 | D-48 | done | tests/test_index.py::test_the_queue_merges_a_queued_job_and_requeues_a_running_one |
+| T-295 | No tracked file carries a banned name | S-01 | D-52 | done | tests/test_hygiene.py::test_no_tracked_file_carries_a_banned_name |
+| T-296 | No tracked file carries a home path | S-01 | D-52 | done | tests/test_hygiene.py::test_no_tracked_file_carries_a_home_path |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted
@@ -412,6 +414,12 @@ seven fail there on the behaviour.
 
 `T-285` is the second half of the plan's `T-270`: the watcher hands the paths over, and the pass
 hashes those and not the tree. Two claims, so two cases, and the plan wrote them as one row.
+
+`T-295` and `T-296` widen the public-hygiene gate from `src/graphrag/*.py` to every tracked file.
+Both fail on the predecessor with the ban populated, and both are unreachable there without it:
+CI set `GRAPHRAG_NAME_BAN` to `none`, so the ban had never held a name and had never rejected
+anything. `T-295` found 70 occurrences across 23 files and `T-296` found one home path in
+`scripts/`, neither of which the old `src/`-only glob could see.
 
 `T-286` fails on the predecessor commit with one failure, on the first assertion: the overlay ran on
 a hinted pass. The reading behind it is in `defects/the-overlay-ran-on-every-save.md`.

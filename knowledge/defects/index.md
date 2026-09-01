@@ -1,7 +1,7 @@
 # Defects
 
 * [A project is not one build](a-project-is-not-one-build.md) - `overlay` invoked each indexer
-  once, at the project root. `go-monorepo` holds eight `go.mod` files, so scip-go saw 2 of 2012 files,
+  once, at the project root. The Go monorepo holds eight `go.mod` files, so scip-go saw 2 of 2012 files,
   covered 0% and was correctly refused. The tier was unreachable for every monorepo.
 * [A submodule is invisible to discovery](a-submodule-is-invisible-to-discovery.md) - `ls-files`
   lists a gitlink as one entry and never descends. 9 submodules were checked out at their pins and
@@ -44,16 +44,17 @@
   because the pass runs the overlay one line before `rebuild_fts`. Recorded, not fixed: the per-file
   rewrite is what exposes it.
 * [Reclaim never reclaimed a page](reclaim-never-reclaimed-a-page.md) - `PRAGMA auto_vacuum` read 0
-  on 373 of 375 stores, so `incremental_vacuum` did nothing on any of them. `gen2-php-app` was 151 MB
+  on 373 of 375 stores, so `incremental_vacuum` did nothing on any of them. The Gen-2 PHP app was 151 MB
   over about 9.7 MB of live data. The algorithm bump rebuilt every store, and the pragma took.
-* [The overlay ran on every save](the-overlay-ran-on-every-save.md) - A one-file save on `go-monorepo` was
+* [The overlay ran on every save](the-overlay-ran-on-every-save.md) - A one-file save on the Go monorepo was
   queryable after 34.7 s against a one-second criterion. The SCIP overlay was 49 s of a 58 s
   profiled pass: it re-ran the indexer and re-read 1.8 M occurrences for one changed file.
-* [The fleet-wide arm loses roots](the-fleet-wide-arm-loses-roots.md) - Two enrolled projects have
-  zero rows in the whole watch-ledger history. Every predicate passes, and both deliver an event in
-  12 s when armed alone. The fault is in arming 375 roots in one call, and it is pre-existing.
+* [The fleet-wide arm loses roots](the-fleet-wide-arm-loses-roots.md) - **Retracted.** All 375
+  roots hold an inotify watch and the descent covers all 60,475 directories. 362 of 375 projects
+  have zero ledger rows because nobody edits them, and the isolation probe used a file the
+  daemon's filter refuses while the bare library run had no filter.
 * [A generated bundle was indexed as source](a-generated-bundle-was-indexed-as-source.md) -
-  `web-tree`'s hottest callee name is the single character `n`, at 90,156 CALLS edges, and that
+  The web tree's hottest callee name is the single character `n`, at 90,156 CALLS edges, and that
   one store holds 28.7% of every reference row in the fleet. A `.min.js` suffix test refuses none of
   the six bundles measured, because two of them are pretty-printed. The rule that holds it is
   distinct-trigram diversity over the bytes.

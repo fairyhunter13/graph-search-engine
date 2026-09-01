@@ -21,7 +21,7 @@ sources:
 
 `D-47` made the write per file and left the scan whole. So the floor on save-to-searchable stayed
 `discover.enumerate_files`, which stats every candidate and then reads and SHA-256-hashes it: 228 to
-252 ms on `go-monorepo`, 2,461 files. That is about eight times the per-file parse `D-47` bought.
+252 ms on the Go monorepo, 2,461 files. That is about eight times the per-file parse `D-47` bought.
 
 The watcher already held the answer that scan rediscovers. `_submit` counted the events per owning
 project and submitted the root string alone[^watcher]. The paths are the hint now, and

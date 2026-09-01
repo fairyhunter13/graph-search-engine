@@ -144,7 +144,7 @@ def test_an_index_that_is_not_there_is_refused_rather_than_invented(repo):
 
 
 def test_a_build_unit_is_every_marker_directory_and_never_a_vendored_one(repo):
-    """`go-monorepo` holds eight `go.mod` files, and a root pass sees only its own."""
+    """The Go monorepo holds eight `go.mod` files, and a root pass sees only its own."""
     root = repo(
         "proj",
         {
@@ -162,7 +162,7 @@ def test_a_build_unit_is_every_marker_directory_and_never_a_vendored_one(repo):
 def test_a_sub_module_is_graded_against_its_own_files_and_not_the_whole_tree(repo):
     """T-107b. The root module of a multi-module repo owns only its own files.
 
-    Graded against the whole tree, `go-monorepo`'s root pass covered 2 of 2012 files
+    Graded against the whole tree, the Go monorepo's root pass covered 2 of 2012 files
     and was refused. Each unit is invoked where it lives, and its index names
     documents relative to that directory, so both are re-based onto the store.
     """

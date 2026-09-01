@@ -20,6 +20,7 @@ Each writes one receipt under the receipt directory and prints its path.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import socket
@@ -36,7 +37,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from graphrag import config  # noqa: E402
 
-CCW = Path("/home/<user>/go/src/github.com/fairyhunter13/claude-code-workflows/bin/ccw")
+CCW = Path(
+    os.environ.get("CCW_BIN")
+    or Path.home() / "go/src/github.com/fairyhunter13/claude-code-workflows/bin/ccw"
+)
 GRAPHRAG_CLI = ROOT / ".venv" / "bin" / "graphrag"
 SERVICE = "graphrag.service"
 

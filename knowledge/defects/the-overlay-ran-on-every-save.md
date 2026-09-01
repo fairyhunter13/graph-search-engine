@@ -2,7 +2,7 @@
 type: Defect
 resource: src/graphrag/index.py
 title: The overlay ran on every save
-description: "A hinted pass on `go-monorepo` took 29.6 s of work for one changed file, and the SCIP overlay was 49 s of a 58 s profiled pass. The overlay re-runs the indexer and re-reads 1.8 M occurrences whatever changed, so it has no per-file form. It now rides the unhinted reconciler, the way `reclaim` does."
+description: "A hinted pass on the Go monorepo took 29.6 s of work for one changed file, and the SCIP overlay was 49 s of a 58 s profiled pass. The overlay re-runs the indexer and re-reads 1.8 M occurrences whatever changed, so it has no per-file form. It now rides the unhinted reconciler, the way `reclaim` does."
 tags: [scip, latency, indexing, watcher]
 status: stable
 generated: { by: claude/opus-5, at: 2026-09-01T00:00:00Z }
@@ -16,7 +16,7 @@ sources:
 # What is wrong
 
 The watcher hint made a pass parse one file instead of the tree. On the bench that pass measured
-15-18 ms. Live, through the daemon, a save on `go-monorepo` was queryable after 34.7 s, and the second
+15-18 ms. Live, through the daemon, a save on the Go monorepo was queryable after 34.7 s, and the second
 sample read 60.8 s. The exit criterion for the stage is one second.
 
 The gap is not the queue. The run ledger shows the watch event at ts 1788249859.4 and the hinted
@@ -24,7 +24,7 @@ index row at 1788249894.1, and the queue was empty at both instants.
 
 # The measurement that found it
 
-The daemon was stopped, and one hinted pass ran under `cProfile` against the live `go-monorepo` store,
+The daemon was stopped, and one hinted pass ran under `cProfile` against the live Go monorepo store,
 2026-09-01. It parsed 1 file and it took 57.8 s:
 
 | Cost | Reading |
@@ -37,7 +37,7 @@ The daemon was stopped, and one hinted pass ran under `cProfile` against the liv
 
 So a one-file save re-ran the SCIP indexer as a subprocess, then re-read the whole artifact.
 
-`go-monorepo` carries no `.graphrag.yaml` of its own. It inherits `scip` and `scip_indexers` from a
+The Go monorepo carries no `.graphrag.yaml` of its own. It inherits `scip` and `scip_indexers` from a
 claiming root, which is why the tier was live on a repository whose own tree does not ask for it.
 
 # What holds it

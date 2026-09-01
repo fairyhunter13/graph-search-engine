@@ -9,6 +9,7 @@ passed on every machine that never set it. A clean clone declares itself with
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -82,3 +83,57 @@ def test_a_banned_name_in_a_module_is_caught():
     assert _banned("acme, widgets") == ["acme", "widgets"]
     hits = [p for p in _modules() for name in _banned("graphrag") if name in p.read_text()]
     assert hits, "the ban matches nothing, so it proves nothing"
+
+
+REPO = Path(__file__).resolve().parent.parent
+# A lock file is a resolver's transcript of public package names, and it is the
+# one tracked file whose contents nobody wrote.
+_UNSCANNED = (".lock",)
+
+
+def _tracked() -> list[Path]:
+    """Every file git would publish. `src/` was the whole gate until 2026-09-01.
+
+    The names that leaked were in `knowledge/`, `docs/` and `scripts/`, none of
+    which a `src/graphrag/*.py` glob reaches, so the gate read a clean corner of
+    a tree it was meant to grade whole.
+    """
+    out = subprocess.run(
+        ["git", "ls-files", "-z"], cwd=REPO, capture_output=True, text=True, check=True
+    )
+    return [REPO / name for name in out.stdout.split("\0") if name]
+
+
+def _lines(path: Path):
+    if path.suffix in _UNSCANNED or not path.is_file():
+        return
+    try:
+        yield from enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
+    except (OSError, UnicodeDecodeError):
+        return
+
+
+def test_no_tracked_file_carries_a_banned_name():
+    """`T-295`. The repository is public, so the whole tracked tree is the gate."""
+    if not config.NAME_BAN.strip():
+        pytest.fail("GRAPHRAG_NAME_BAN is unset, and unset is the failing state")
+    found = [
+        f"{path.relative_to(REPO).as_posix()}:{number} carries {name!r}"
+        for path in _tracked()
+        for number, line in _lines(path)
+        for name in _banned(config.NAME_BAN)
+        if name in line
+    ]
+    assert found == []
+
+
+def test_no_tracked_file_carries_a_home_path():
+    """`T-296`. A home path outside `src/` shipped one machine's layout too."""
+    pattern = re.compile(r"/home/[a-z][\w.-]*/|/Users/[A-Za-z][\w.-]*/")
+    found = [
+        f"{path.relative_to(REPO).as_posix()}:{number}"
+        for path in _tracked()
+        for number, line in _lines(path)
+        if pattern.search(line) and "<user>" not in line
+    ]
+    assert found == []

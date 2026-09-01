@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pre-push gate. One block: the knowledge/ bundle.
+# Pre-push gate. Two blocks: public hygiene, then the knowledge/ bundle.
 #
 # A docs/ plan-pair gate and three bespoke bundle checks ran here until 2026-08-29. The
 # six-rule ruling deleted them, with scripts/check_no_shrink.py, check_attester_contract.py
@@ -12,6 +12,22 @@
 set -uo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# This repository is public, and a name reaches the world on push and not on commit.
+# The ban list is the private names themselves, so it lives in the environment and
+# never in the tree. Unset is the failing state: a gate that passes by not running
+# is what let 70 occurrences across 23 files stand until 2026-09-01.
+PY="$REPO_ROOT/.venv/bin/python"
+[[ -x "$PY" ]] || PY="python3"
+if ! "$PY" -m pytest -q "$REPO_ROOT/tests/test_hygiene.py" >/tmp/graphrag-hygiene.$$ 2>&1; then
+  cat /tmp/graphrag-hygiene.$$
+  rm -f /tmp/graphrag-hygiene.$$
+  echo "[pre-push] x public hygiene failed - push blocked"
+  echo "[pre-push]   set GRAPHRAG_NAME_BAN to the private-name list, or to 'none' for a clean clone"
+  exit 1
+fi
+rm -f /tmp/graphrag-hygiene.$$
+
 if [[ -d "$REPO_ROOT/knowledge" ]]; then
   if ! command -v okfrules >/dev/null 2>&1; then
     echo "[pre-push] x okfrules not installed - knowledge/ cannot be checked, and this hook is its only local gate"

@@ -204,7 +204,7 @@ def test_a_pass_that_rewrites_part_of_the_tree_does_not_checkpoint(tree, monkeyp
 
 def test_a_hinted_pass_does_not_run_the_scip_overlay(tree, monkeypatch):
     """T-286. The overlay re-runs the indexer and re-reads the whole artifact,
-    so it has no per-file form. Measured on `go-monorepo`, 2026-09-01: 49 s of a 58 s
+    so it has no per-file form. Measured on the Go monorepo, 2026-09-01: 49 s of a 58 s
     hinted pass, which is what held edit-to-queryable at 34 s."""
     root, _ = tree
     calls: list[int] = []

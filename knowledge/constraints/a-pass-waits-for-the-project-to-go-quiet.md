@@ -15,7 +15,7 @@ sources:
 
 # What the ledger showed
 
-89 passes an hour for `graph-search-engine` and 55 for `largest-enrolled-project`, from batches carrying one
+89 passes an hour for `graph-search-engine` and 55 for the largest enrolled project, from batches carrying one
 event each.[^run-ledger] They arrived 5 to 20 seconds apart, median 11. `WATCH_DEBOUNCE_MS` is the
 Rust batch window inside `watchfiles` and merges nothing at that spacing: at 400 ms, 95 to 98
 percent of those passes survive it. Raising it to 1500 ms would still have merged almost nothing.

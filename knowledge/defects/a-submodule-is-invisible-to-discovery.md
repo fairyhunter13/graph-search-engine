@@ -10,12 +10,12 @@ generated: { by: claude/opus-5, at: 2026-08-30T00:00:00Z }
 
 # What was measured
 
-`gen3-app-c/submodule-pin-1.7.6` reports 97.3% of its calls as `external`, the worst share in the
+`gen3-app-c/v1.7.6` reports 97.3% of its calls as `external`, the worst share in the
 fleet. Its `.gitmodules` declares 20 submodules, and the callee its calls point at,
-`Domain/Commitment`, is one of the empty directories. So the callee code was physically absent from
+`Domain/Rates`, is one of the empty directories. So the callee code was physically absent from
 the caller's tree, and the obvious remedy was to put it there.
 
-It was put there. 9 of the 20 were checked out at their exact recorded pins, `Domain/Commitment` at
+It was put there. 9 of the 20 were checked out at their exact recorded pins, `Domain/Rates` at
 `29163c191c63` and `Domain/Ledger` at `6e683f4288af` among them. The tree grew from 11 MB to 20 MB
 and gained 979 PHP files. Then the project was re-indexed:
 
@@ -75,7 +75,7 @@ inside a gitlink. Its PHP total is 7,795 rather than 7,773, because it maps the 
 `artisan` as PHP and this engine does not. That is one file per Laravel worktree, and it predates
 both fixes.
 
-One worktree in detail, `gen3-app-a/submodule-pin_2.1`:
+One worktree in detail, `gen3-app-a/v2.1`:
 
 | | before | after |
 |---|---|---|

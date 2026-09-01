@@ -68,7 +68,7 @@ computation is the gate, and a moved digit reverses this rather than relaxing it
 # What this decision does not cover
 
 The scan in front of the pass. `discover.enumerate_files` still reads and hashes every file in the
-tree, 228-252 ms on `go-monorepo`, and no narrowing of the write touches it. See
+tree, 228-252 ms on the Go monorepo, and no narrowing of the write touches it. See
 [a pass reparses the tree](../constraints/a-pass-reparses-the-tree-because-resolution-is-global.md)
 for what remains.
 

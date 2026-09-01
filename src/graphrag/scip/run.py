@@ -93,9 +93,9 @@ def units(name: str, root: Path | str) -> list[str]:
     """Every build root under a project, as posix prefixes relative to it.
 
     An indexer resolves the build it stands in and no other, so a repository
-    holding several is several invocations. `go-monorepo` carries eight `go.mod`
-    files and 2,010 of its 2,012 Go files sit outside the root one, which is
-    why one pass at the top covered 0% and was correctly refused.
+    holding several is several invocations. One measured Go monorepo carries
+    eight `go.mod` files and 2,010 of its 2,012 Go files sit outside the root
+    one, which is why one pass at the top covered 0% and was correctly refused.
 
     The root itself is always a prefix, so an indexer with no unit marker, and
     a project with no marker in it, both return the single empty prefix.

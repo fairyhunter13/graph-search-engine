@@ -23,8 +23,8 @@ Neither is the next buy. The resolver is.
 
 It derives its whole file set from Composer. `src/Composer/Composer.php` hard-requires
 `composer.json`, `composer.lock`, a `vendor/autoload.php` returning a real `ClassLoader`, and
-`vendor/composer/installed.php`. Measured across this estate: **0 of 69** `gen3-app-*` worktrees carry
-`vendor/autoload.php`, and `gen1-php-app`, `gen2-php-app` and `domain-service` carry no `composer.json`
+`vendor/composer/installed.php`. Measured across this estate: **0 of 69** `gen3-*` worktrees carry
+`vendor/autoload.php`, and a Gen-1 PHP app, the Gen-2 PHP app and another PHP app carry no `composer.json`
 at all.
 
 Creating that is not one `composer install`. Each of 296 Gen-3 registry rows is a distinct pin with
@@ -35,13 +35,13 @@ definition in the same project — a generous ceiling, because a name collision 
 
 | Project | `external` CALLS | Ceiling | PHP callers only |
 |---|---:|---:|---:|
-| Gen-1 `gen1-php-app` | 43,115 | 62.0% | 16,878 calls, **43.7%** |
-| Gen-2 `gen2-php-app` | 48,966 | 30.8% | 48,326 calls, 31.0% |
+| Gen-1 PHP app | 43,115 | 62.0% | 16,878 calls, **43.7%** |
+| Gen-2 PHP app | 48,966 | 30.8% | 48,326 calls, 31.0% |
 | Gen-3 `gen3-app-a` | 11,363 | 30.2% | 11,074 calls, 30.1% |
 | Gen-3 `gen3-app-b` | 6,152 | 4.5% | 5,816 calls, 4.5% |
 
 Read the last column, and never the third one, for a PHP ruling. A store holds every language in
-the tree. `gen1-php-app` is two thirds JavaScript by call count, and its JavaScript ceiling is 73.7%, so
+the tree. The Gen-1 PHP app is two thirds JavaScript by call count, and its JavaScript ceiling is 73.7%, so
 the store-wide 62.0% is mostly not a PHP number. The other three rows hold within one point either
 way, measured 2026-08-30.
 
@@ -100,7 +100,7 @@ is cheaper than either indexer.
 
 # What the Gen-1 miss is actually made of
 
-`gen1-php-app` was re-measured on 2026-08-30, read-only against store
+The Gen-1 PHP app was re-measured on 2026-08-30, read-only against store
 `gen1-php-app-1d64d72e801ee75b`. It holds 649 PHP files and 333 JavaScript files, and 61,613 `CALLS`
 edges of which 43,115 read `external`. The rest are `same_file` 8,640, `global` 7,324,
 `package` 1,608 and `same_class` 926. The four-way split of the 16,878 with a PHP caller, with

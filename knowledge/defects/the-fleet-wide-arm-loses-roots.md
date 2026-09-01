@@ -2,60 +2,78 @@
 type: Defect
 resource: src/graphrag/watch.py
 title: The fleet-wide arm loses roots
-description: "Two enrolled projects have zero rows in the whole watch-ledger history, while each has 8 index rows. Every predicate passes for both. Armed alone on two roots, `watchfiles` delivers an event for each in 12 s. So the library and the trees are sound, and the fault is in arming 375 roots in one call."
-tags: [watcher, inotify, daemon]
-status: stable
+description: "Retracted 2026-09-01. Two projects were reported as receiving no watch event when 375 roots are armed in one call. All 375 roots hold an inotify watch, the descent covers every directory, and 362 of 375 projects have zero ledger rows because nobody edits them. The isolation probe wrote a file the daemon's filter refuses and the bare library run had no filter, so the two experiments were not the same experiment."
+tags: [watcher, inotify, daemon, retracted]
+status: deprecated
 generated: { by: claude/opus-5, at: 2026-09-01T00:00:00Z }
 sources:
   - id: loop
     resource: src/graphrag/watch.py
+  - id: keep
+    resource: src/graphrag/watch.py
 ---
 
-# What is wrong
+# What was claimed
 
 `watch._loop` arms every enrolled root in one `watchfiles.watch` call[^loop]. On 2026-09-01 that
-was 375 roots. Two of them never deliver an event:
+was 375 roots. Two of them held zero rows across `watch.jsonl` and `watch.jsonl.1`, against 8
+index rows each. Armed alone in a separate process, `watchfiles` delivered an event for each in
+12 s. The conclusion drawn was that the fault is in arming 375 roots in one call, and the next
+step named was to bisect the root list.
 
-| Project | Watch-ledger rows | Index rows | Directories |
-|---|---|---|---|
-| `gen2-php-app` | 0 | 8 | 1,548 |
-| `web-tree` | 0 | 8 | 4,128 |
+**The conclusion is wrong. Do not bisect.**
 
-Zero across `watch.jsonl` and `watch.jsonl.1` together, which is the whole history the ledger holds.
-A change in either project reaches the graph only through the unhinted reconciler pass.
+# What the retraction measured
 
-# What was ruled out
+Four readings against the live daemon, pid 857813, 2026-09-01.
 
-Every predicate the watcher applies passes for both roots:
-
-1. Both are in `watch._roots()`, which returned 375.
-2. `filters.language_of` returns `php` for one and `javascript` for the other.
-3. No part of either path is a skipped directory.
-4. `watch._owner` returns the right project for a file inside each.
-5. Neither path is a symlink.
-
-A probe wrote a file at the root of each tree and deep inside each tree, then read the ledger. One
-row came back, and it named only `largest-enrolled-project` and `go-monorepo`.
-
-# What isolated it
-
-`watchfiles.watch` was armed on those two roots **alone**, in a separate process, and a probe file
-was written and removed in each. Both events arrived, in 12 s:
+**Every root is armed.** The daemon holds one inotify instance, `/proc/857813/fd/8`, carrying
+68,311 watch descriptors. Each entry in `/proc/857813/fdinfo/8` names the watched inode in its
+`ino:` field. Intersecting those against the directory inode of each of the 375 enrolled roots:
 
 ```
-/home/<user>/git/github.com/Acme/gen2-php-app/zzprobe_wf.txt
-/home/<user>/git/github.com/Acme/web-tree/zzprobe_wf.txt
+watch entries with ino: 68311
+roots armed: 375   roots NOT armed: 0
 ```
 
-So the library delivers, the trees are watchable, and the inotify limits are not reached. The fault
-is in the fleet-wide arm.
+Both of the two reported roots are in the armed set.
 
-# Why it is recorded and not fixed
+**The recursive descent is complete.** `os.walk` over all 375 enabled roots counts 60,475
+directories, against 68,311 live watches. There is no truncation to find.
 
-It is pre-existing. The ledger shows zero rows for both roots across its entire history, including
-every entry written before the watcher gained its path hint, so it is not a regression of that work.
-The engine stays correct without it, because the unhinted reconciler is what heals a change no event
-reported, and `T-274` asserts exactly that. What is lost is latency on two projects, not an answer.
+**No kernel ceiling is near.** `max_user_watches` is 1,048,576 against 217,427 held user-wide.
+`max_user_instances` is 512 against the one instance a single `watchfiles.watch` call opens.
 
-The next step is to bisect the arm: halve the root list until the two roots reappear, and read
-whether the loss is a count, a total directory count, or an ordering.
+**The zero was a population of two, read against a census nobody took.** Across `watch.jsonl`
+and `watch.jsonl.1` — 20,929 rows, the ledger's whole history — exactly **13 distinct projects
+are ever named**. 362 of 375 have zero rows. The 13 are the projects being worked on, and their
+row counts fall off a cliff: 18,162 for the first, 1,013 for the second, 820 for this repo, then
+410, 234, 140, 70 and six more in double or single digits. Two quiet repositories among 362
+quiet repositories is not a defect.
+
+# Why the isolation experiment agreed with the wrong answer
+
+The probe wrote `zzprobe_wf.txt` into each tree. The daemon's watch filter is `watch._keep`[^keep],
+which admits a path only where `filters.language_of(path) != ""`:
+
+```
+zzprobe_wf.txt  ''     indexable=False
+a.php           'php'  indexable=True
+```
+
+So `_keep` refuses that file, correctly, in every project. The isolation run armed
+`watchfiles.watch` with **no `watch_filter`**, and the same file was delivered. The library
+delivering what the daemon's filter is built to refuse is the designed behaviour. The two runs
+differed in the filter, not in the number of roots.
+
+# What holds it
+
+The engine was never wrong here, so nothing is fixed. What was missing is a sentinel: no test
+asserted that arming N roots watches N roots, which is why an arm defect would have looked
+exactly like this one. `T-290` is that test, and it uses an indexable file.
+
+The doctrine line this record broke is the one worth keeping it for: a zero is not an absence,
+and a census states the population it read. This one read two.
+
+[^loop]: `src/graphrag/watch.py` — `_loop`, the single `_watch(*_intent, ...)` arm.
+[^keep]: `src/graphrag/watch.py` — `_keep`, the watcher's filter, which is the indexer's predicate.
