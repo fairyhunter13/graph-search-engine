@@ -18,7 +18,9 @@ index over, which is the only honest default for a tool needing a Gradle run.
 
 from __future__ import annotations
 
+import shutil
 import subprocess
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -44,6 +46,10 @@ class Indexer:
     # The filename that declares an independent build root, where a repository
     # can hold several. Empty means one invocation covers the whole project.
     unit: str = ""
+    # A path inside a build unit whose presence says the dependencies are
+    # resolved. Empty where they resolve outside the tree, as Go's module cache
+    # does, so the tree cannot answer and `readiness` must not claim it can.
+    deps: str = ""
 
 
 INDEXERS: dict[str, Indexer] = {
@@ -57,13 +63,14 @@ INDEXERS: dict[str, Indexer] = {
             True,
             ("scip-typescript", "index", "--output"),
             "tsconfig.json",
+            "node_modules",
         ),
         Indexer("scip-go", ("go",), True, True, ("scip-go", "index", "--output"), "go.mod"),
         Indexer("scip-java", ("java", "scala", "kotlin"), True, True),
         Indexer("scip-clang", ("c", "cpp"), False, True),
         Indexer("scip-ruby", ("ruby",), False, True),
         Indexer("scip-dart", ("dart",), True, True),
-        Indexer("scip-php", ("php",), False, True),
+        Indexer("scip-php", ("php",), False, True, deps="vendor/autoload.php"),
         Indexer("rust-analyzer", ("rust",), True, False),
     )
 }
@@ -115,6 +122,61 @@ def units(name: str, root: Path | str) -> list[str]:
 
 def for_language(lang: str) -> list[Indexer]:
     return [i for i in INDEXERS.values() if lang in i.languages]
+
+
+TIERS = ("ready", "installable", "unconfigured", "manual", "absent")
+
+
+def _standing(got: Indexer, root: Path) -> dict[str, object]:
+    """One indexer's standing over one project: a tier, and the evidence for it.
+
+    `manual` is decided before `absent` because an indexer with no argv has no
+    program to look for. That is not a gap — it means the operator runs their
+    own build and hands the index over.
+
+    `unconfigured` is the tier a fallback would otherwise hide. `units` answers
+    `[""]` both for an indexer needing no marker and for a project holding none,
+    which is right for `overlay` — try the root — and wrong for a report, where
+    it reads as a build unit that is not there.
+
+    An indexer whose dependencies resolve outside the tree reports `deps: ""`
+    and cannot reach `ready` from a filesystem read, so it stands at
+    `installable`. Its install command is idempotent, and running it is what
+    settles a question the tree cannot answer.
+    """
+    prefixes = units(got.name, root)
+    marked = not got.unit or prefixes != [""] or (root / got.unit).exists()
+    missing = [p for p in prefixes if got.deps and not (root / p / got.deps).exists()]
+    if not got.command:
+        tier = "manual"
+    elif shutil.which(got.command[0]) is None:
+        tier = "absent"
+    elif not marked:
+        tier = "unconfigured"
+    elif got.deps and not missing:
+        tier = "ready"
+    else:
+        tier = "installable"
+    return {
+        "indexer": got.name,
+        "tier": tier,
+        "units": prefixes if marked else [],
+        "deps": got.deps,
+        "unresolved": missing,
+    }
+
+
+def readiness(root: Path | str, languages: Iterable[str]) -> list[dict[str, object]]:
+    """Every indexer that would serve a language this project holds.
+
+    A report and never an action: it reads `PATH` and the tree, installs
+    nothing and changes no default. An indexer is listed only where the project
+    holds one of its languages, so the same rule that keeps `overlay` from
+    starting a Go build in a PHP repository decides what appears here.
+    """
+    root = Path(root).resolve()
+    want = set(languages)
+    return [_standing(got, root) for got in INDEXERS.values() if want.intersection(got.languages)]
 
 
 def run(name: str, root: Path | str, out: Path | str = "", timeout: float = 1800.0) -> Path:

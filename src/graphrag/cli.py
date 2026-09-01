@@ -82,6 +82,8 @@ def cmd_index(args: argparse.Namespace) -> int:
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
+    from .scip import run as scip
+
     root = registry.resolve(args.root)
     path, conn = _open(root)
     compacted = None
@@ -98,9 +100,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
             compacted = {"bytes_before": before, "bytes_after": path.stat().st_size}
     finally:
         conn.close()
-    # The gaps ride beside the table rather than being left for the reader to
-    # derive. A language present in the table with no `calls` is exactly the
-    # case that produces a confidently empty caller answer.
+    # Beside the table rather than left for the reader to derive: a language in
+    # the table with no `calls` is what produces a confidently empty answer.
     gaps = [
         grammars.missing(lang, "calls")
         for lang in table
@@ -112,6 +113,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         "files": files,
         "capabilities": table,
         "gaps": gaps,
+        "scip": scip.readiness(root, table),
     }
     if compacted is not None:
         out["compacted"] = compacted

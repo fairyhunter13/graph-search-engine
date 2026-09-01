@@ -14,6 +14,7 @@ import json
 import pytest
 
 from graphrag import cli, config, index, store, tools
+from graphrag.scip import run
 
 CYCLE = {
     "a.py": "from b import beta\n\n\ndef alpha():\n    return beta()\n",
@@ -147,3 +148,21 @@ def test_doctor_prints_the_file_census(repo, capsys):
     files = json.loads(capsys.readouterr().out)["files"]
     assert files["by_tier"] == {"symbols": 1, "none": 1}
     assert files["by_reason"] == {"no_capability": 1}
+
+
+def test_doctor_prints_the_scip_readiness_block(repo, capsys):
+    """`T-305`. The reader that makes `run.readiness` worth having.
+
+    It is the same bar `files.reason` was held to: a report with no operator
+    surface is a column with no reader. An indexer is listed only where this
+    project holds one of its languages, so a Python project must not be told
+    about a Go build.
+    """
+    root = repo("ready", {"a.py": "def alpha():\n    return 1\n"})
+    index.index_once(root)
+    assert cli.main(["doctor", str(root)]) == 0
+    scip = json.loads(capsys.readouterr().out)["scip"]
+
+    assert [row["indexer"] for row in scip] == ["scip-python"]
+    assert {row["tier"] for row in scip} <= set(run.TIERS)
+    assert set(scip[0]) == {"indexer", "tier", "units", "deps", "unresolved"}

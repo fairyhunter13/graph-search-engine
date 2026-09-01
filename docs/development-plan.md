@@ -211,6 +211,8 @@ for the callers of a known function and check them by hand.
 | D-51 | The SCIP overlay rides the reconciler, because it has no per-file form | done | src/graphrag/index.py, tests/test_perfile.py | T-286 |
 | D-52 | This repository is public, so no tracked file carries a private name or a machine path, and the gate reads the whole tree | done | tests/test_hygiene.py, .githooks/pre-push, .github/workflows/ci.yml, scripts/partc_probe.py, src/graphrag/federation.py, src/graphrag/filters.py, src/graphrag/index.py, src/graphrag/scip/run.py, docs/, knowledge/ | T-295, T-296, T-304 |
 | D-53 | A file that answers nothing says which of five causes it was, and doctor counts them | done | src/graphrag/store.py, src/graphrag/extract.py, src/graphrag/index.py, src/graphrag/indexwrite.py, src/graphrag/cli.py, src/graphrag/config.py, tests/test_store.py, tests/test_extract.py, tests/test_index.py, tests/test_tools.py | T-299, T-300, T-301, T-302, T-303 |
+| D-54 | The SCIP tier reports its readiness in five tiers before anything acts on it, and the install helper is a separate surface | done | src/graphrag/scip/run.py, src/graphrag/scip/deps.py, src/graphrag/cli.py, tests/test_scip_run.py, tests/test_scip_deps.py, tests/test_tools.py | T-265, T-266, T-305, T-306 |
+| D-55 | A SCIP occurrence is believed only while its file is no newer than the artifact | done | src/graphrag/scip/ingest.py, src/graphrag/scip/guard.py, tests/test_scip_ingest.py | T-267 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the
@@ -773,3 +775,57 @@ written sum to the `none` count exactly. The 6,301 php, rust, javascript and typ
 row was justified by come back as 6,271 `no_symbols` and 30 `unreadable`, so the silence was a
 clean parse with nothing to record and not a failure. Two `tmp*` stores no registry row claims
 still carry the seven-column table; `prune` is what removes those.
+
+`D-54` reports before it acts, which is the whole shape of stage 6. `run.readiness` names, per
+root, every indexer that would serve a language the project holds, and the tier it stands at:
+`ready`, `installable`, `unconfigured`, `manual` or `absent`. `cli.cmd_doctor` prints it beside
+`gaps` and the file census, and it is held to the same bar `files.reason` was — a report with no
+operator surface is a column with no reader.
+
+The first draft of the tier read too well, and the fleet is what caught it. `run.units` answers
+`[""]` in two different situations: an indexer that needs no build marker, and a project that
+holds none of the marker it needs. That fallback is right for `overlay`, which tries the root and
+lets `ingest.coverage` refuse it, and it is wrong in a report, where it reads as a build unit that
+is not there. Under the first draft 121 TypeScript roots stood at `installable`; measured with
+`unconfigured` separated out, 119 of them carry no `tsconfig.json` anywhere and the true figure is
+**3**. `T-306` holds the distinction.
+
+Measured over the 375 enrolled roots, the tier report reads 338 `manual`, 120 `unconfigured`, 21
+`absent`, 9 `installable` and 2 `ready`. So the population stage 6c was written for is **9 roots**
+and not the 16 the plan estimated, and the ceiling on this tier over this estate is build
+configuration rather than tooling: 333 of the `manual` rows are PHP.
+
+`scip/deps.py` is that helper, and it is deliberately not on the operator surface `cli.py`
+carries. `run.py` invokes an indexer and installs nothing; `deps.py` installs and indexes nothing.
+A package manager executes code it has just downloaded, so `check` refuses any argv whose program
+is one of `npm`, `pnpm`, `yarn` or `bun` and which carries no `--ignore-scripts`, and `plan`
+applies that guard where the command is chosen rather than where it was written — the table is
+data, and data drifts. `go mod download` runs no module's code and needs no suppressor, so the
+guard is keyed on the program and never on the presence of a flag. Each run is recorded in a
+ledger beside the graph, never inside the project, for the reason `config.index_path` already
+keeps the graph out.
+
+**6b is refused, and the plan moves with the finding.** The plan proposed filling `scip-php`'s
+empty command and measuring one PHP repository.
+`knowledge/decisions/php-gets-no-scip-tier-and-the-resolver-is-the-next-buy.md` had already ruled
+against it over 69 worktrees, so the precondition was re-measured over the whole estate instead of
+argued: of 333 PHP roots, **one** carries all four files `scip-php` hard-requires at its build
+root, and it is a 468-file application holding 2,042 calls. 103 more are partial. A first probe
+read 11 by globbing for `vendor/autoload.php` at any depth, which counted bundled plugin vendors
+under trees with no root `composer.json` — a different population than the precondition names.
+One repository decides nothing for an estate, and the recoverable-miss generation the record
+identifies is the one `scip-php` cannot read anyway. The empty command stays, `T-265` is what
+keeps it legible as a ruling rather than a gap, and the `manual` tier is where a reader meets it.
+
+`D-55` is a freshness rule the overlay did not have. An occurrence is a byte range into the text
+the indexer read, and this tier writes at confidence 1.0 — above every ranked candidate it
+replaces. A file edited after the artifact was written holds different bytes at the same range, so
+a stale span is not a missing answer but a wrong one that outranks the right one. `ingest` now
+compares each file's mtime against the artifact's and skips the document, leaving the parse's own
+ranked candidates standing. The predecessor writes that edge; `T-267` reads `calls == 1` there and
+`0` here.
+
+`ingest.py` crossed the 300-line ceiling with that change, and the seam was already named in its
+own docstring: the coverage guard runs before any write and touches no row. `scip/guard.py` holds
+`Coverage`, `coverage` and `check`; `ingest.py` keeps the application and re-imports them, so
+every existing caller and test reads the same names.

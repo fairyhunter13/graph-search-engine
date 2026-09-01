@@ -166,6 +166,28 @@ is installed. A language server answers a definition and a reference inside one 
 edit time. It writes no edge into the graph, so it narrows the daily cost of the gap and it closes
 none of it.
 
+# Re-confirmed 2026-09-01, over five times the population
+
+A later plan proposed reversing this: fill `scip-php`'s command and measure one PHP repository
+whose `vendor/` is already present. The precondition was re-measured over the whole estate rather
+than argued, because this record's own figure was taken on 69 worktrees.
+
+`scip-php` hard-requires four files at the build root: `composer.json`, `composer.lock`,
+`vendor/autoload.php` returning a real `ClassLoader`, and `vendor/composer/installed.php`. Across
+**333 PHP roots**, exactly **one** carries all four. It is a 468-file application holding 2,042
+calls. A further 103 are partial.
+
+A first probe read 11 candidates by globbing `vendor/autoload.php` at any depth. That counted
+bundled plugin vendors under trees carrying no root `composer.json` -- a different population than
+the precondition names, and the reason a census must state what it read. The corrected figure is
+one.
+
+So the plan's exit condition is technically meetable exactly once, on a corpus that decides nothing
+for an estate, while the recoverable-miss generation this record identifies is the one `scip-php`
+cannot read at all. The empty command stays. `T-265` asserts that `readiness` reports it as
+`manual` and never `absent`, which is what keeps the emptiness legible as a ruling rather than as
+a missing download.
+
 Related: [which languages get a SCIP tier](which-languages-get-a-scip-tier.md), which places this
 refusal beside the other eight,
 [scip is an overlay and never the extractor](scip-is-an-overlay-and-never-the-extractor.md),

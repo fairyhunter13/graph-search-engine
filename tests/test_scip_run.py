@@ -205,6 +205,58 @@ def test_a_sub_module_is_graded_against_its_own_files_and_not_the_whole_tree(rep
     conn.close()
 
 
+def test_an_indexer_with_no_command_is_manual_and_never_absent(repo, monkeypatch):
+    """`T-265`. An empty command is a ruling, and `readiness` must not hide it.
+
+    `scip-php` is the row it was written for: it hard-requires a Composer
+    install this engine will not perform, so the operator runs their own build
+    and hands the index over. Reporting that as `absent` would read as a missing
+    download and send someone to install a tool that would still not run here.
+
+    `which` is stubbed to fail for everything, so `manual` is being decided
+    ahead of `absent` and not merely alongside it.
+    """
+    monkeypatch.setattr(run.shutil, "which", lambda _name: None)
+    root, conn = _store(repo, {"Orders.php": "<?php\nclass Orders {}\n"})
+    conn.close()
+
+    stood = {row["indexer"]: row["tier"] for row in run.readiness(root, ["php"])}
+    assert stood["scip-php"] == "manual"
+
+    with pytest.raises(run.RunError) as caught:
+        run.run("scip-php", root)
+    assert "scip-php" in str(caught.value)
+
+    # Read from the table rather than listed here, because a literal and the
+    # table it copies agree about everything.
+    every = [lang for i in run.INDEXERS.values() for lang in i.languages]
+    manual = {row["indexer"] for row in run.readiness(root, every) if row["tier"] == "manual"}
+    assert manual == {i.name for i in run.INDEXERS.values() if not i.command}
+
+
+def test_a_project_with_no_build_unit_marker_is_unconfigured(repo, monkeypatch):
+    """`T-306`. `units` answers `[""]` twice over, and only one is a build unit.
+
+    The fallback is right for `overlay`, which tries the root and lets coverage
+    refuse it. In a report it reads as a build unit that is not there — 119 of
+    124 TypeScript roots in one estate carry no `tsconfig.json` at all, and
+    every one of them would have been listed as installable.
+    """
+    monkeypatch.setattr(run.shutil, "which", lambda name: f"/usr/bin/{name}")
+    root, conn = _store(repo, {"a.ts": "export function alpha() {\n  return 1;\n}\n"})
+    conn.close()
+
+    stood = run.readiness(root, ["typescript"])[0]
+    assert (stood["tier"], stood["units"]) == ("unconfigured", [])
+
+    (root / "tsconfig.json").write_text("{}\n")
+    (root / "node_modules").mkdir()
+    again = run.readiness(root, ["typescript"])[0]
+    assert (again["tier"], again["units"]) == ("ready", [""])
+
+    assert {row["tier"] for row in run.readiness(root, ["typescript"])} <= set(run.TIERS)
+
+
 def test_an_empty_index_is_not_a_scip_index(repo):
     """A zero-byte file parses as an index with no documents, so it is refused."""
     root, conn = _store(repo, {"a.py": SRC, "A.java": "class A {}\n"})

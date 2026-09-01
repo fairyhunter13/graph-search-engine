@@ -416,6 +416,11 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-300 | A language with no capability says so, and an empty file says something else | S-01 | D-53 | done | tests/test_index.py::test_a_language_with_no_capability_says_so |
 | T-301 | A query that raises leaves the file saying so | S-01 | D-53 | done | tests/test_extract.py::test_a_query_that_raises_leaves_the_file_saying_so |
 | T-302 | No file answers `none` without saying why | S-01 | D-53 | done | tests/test_index.py::test_no_file_answers_none_without_saying_why |
+| T-265 | An indexer with no command is `manual` and never `absent` | S-01 | D-54 | done | tests/test_scip_run.py::test_an_indexer_with_no_command_is_manual_and_never_absent |
+| T-266 | A command that runs lifecycle scripts is refused | S-01 | D-54 | done | tests/test_scip_deps.py::test_a_command_that_runs_lifecycle_scripts_is_refused |
+| T-267 | A file edited after the artifact keeps its syntactic edge | S-01 | D-55 | done | tests/test_scip_ingest.py::test_a_file_edited_after_the_artifact_keeps_its_syntactic_edge |
+| T-305 | `doctor` prints the SCIP readiness block | S-01 | D-54 | done | tests/test_tools.py::test_doctor_prints_the_scip_readiness_block |
+| T-306 | A project with no build-unit marker is `unconfigured` | S-01 | D-54 | done | tests/test_scip_run.py::test_a_project_with_no_build_unit_marker_is_unconfigured |
 | T-303 | `doctor` prints the file census, and `by_tier` sums to the file count | S-01 | D-53 | done | tests/test_index.py::test_the_census_counts_every_file_once, tests/test_tools.py::test_doctor_prints_the_file_census |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
@@ -734,3 +739,28 @@ and an uncommitted `extract.py` had gained a call to `grammars.capabilities`. Th
 symbol named six caller files and the tree held seven, so the seventh priced as a false positive.
 The row now names `src/graphrag/extract.py`. `T-211` is what refuses a run over a tree the SHA does
 not describe.
+
+`T-265`, `T-266`, `T-305` and `T-306` grade the report before anything acts on it, and three of the
+four read the shipped table rather than a list beside them. `T-265` asserts that the set of
+indexers `readiness` calls `manual` is exactly the set whose command tuple is empty, with
+`shutil.which` stubbed to fail everywhere so that `manual` is being decided ahead of `absent` and
+not merely alongside it. `T-266` runs its guard over every argv in `deps.PLANS`, so a plan added
+without `--ignore-scripts` fails at collection and not in a subprocess that has already fetched
+and executed something; its second case replaces the shipped row with an unguarded one and asserts
+`plan` refuses it, which is what proves the guard runs where the command is chosen.
+
+`T-306` is the row a fleet measurement bought. The first draft of the tier called 121 TypeScript
+roots `installable`; 119 of them hold no `tsconfig.json` at all, and `run.units` returning `[""]`
+for "no marker found" is indistinguishable from `[""]` for "no marker needed". The case asserts
+both readings from one project, before and after the marker is written.
+
+`T-267` is graded against itself rather than against a literal. The same artifact is ingested
+twice over the same store, with one file's mtime moved past the artifact's between the two runs:
+one call rewritten, then none. On the predecessor the second run rewrites the call as well —
+`calls == 1` where this reads `0` — so the failure is behavioural and not the missing `stale`
+field, which was confirmed by re-running the case with that field's two assertions removed.
+
+The four `T-266` cases fail on the predecessor as one collection error, because
+`graphrag.scip.deps` is the change. The other four rows fail there each for their own reason:
+`run.shutil` is absent for `T-265` and `T-306`, `IngestReport.stale` for `T-267`, and `doctor`
+carries no `scip` key for `T-305`.

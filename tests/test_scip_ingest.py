@@ -8,6 +8,8 @@ relationship is the one fact no syntactic rule reaches.
 
 from __future__ import annotations
 
+import os
+
 import scipwrite as w
 from graphrag import config, dbread, index, query, resolvedb, store
 from graphrag.scip import ingest
@@ -327,4 +329,56 @@ def test_an_upgraded_cross_file_call_is_answered_once(repo, tmp_path):
     other = next(hit for hit in target if hit.path == "b.py")
     beaten = query.neighbors(conn, other.node_id, question="callers", include_ambiguous=True)
     assert [row.name for row in beaten.results] == []
+    conn.close()
+
+
+def test_a_file_edited_after_the_artifact_keeps_its_syntactic_edge(repo, tmp_path):
+    """`T-267`. The same index, ingested twice, with one file touched between.
+
+    An occurrence is a byte range into the text the indexer read, and the tier
+    writes at confidence 1.0 — above every candidate it replaces. So a stale
+    range is not a missing answer, it is a wrong answer that outranks the right
+    one. The run is graded against itself rather than against a literal: the
+    same artifact must move a call when the file is older than it, and move
+    none when the file is newer.
+    """
+    root, conn = _store(repo, AMBIGUOUS)
+    path = tmp_path / "index.scip"
+    w.write(
+        path,
+        "scip-python",
+        [
+            w.document(
+                "a.py", occurrences=[w.occurrence(ALPHA_A, roles=DEFINITION, span=(0, 4, 0, 9))]
+            ),
+            w.document(
+                "b.py", occurrences=[w.occurrence(ALPHA_B, roles=DEFINITION, span=(0, 4, 0, 9))]
+            ),
+            w.document(
+                "c.py",
+                occurrences=[
+                    w.occurrence(GAMMA, roles=DEFINITION, span=(0, 4, 0, 9)),
+                    w.occurrence(ALPHA_A, span=(1, 11, 1, 16)),
+                ],
+            ),
+        ],
+    )
+    built = path.stat().st_mtime
+    for name in AMBIGUOUS:
+        os.utime(root / name, (built - 10, built - 10))
+    fresh = ingest.ingest(conn, path, root)
+    assert (fresh.calls, fresh.stale) == (1, 0)
+
+    os.utime(root / "c.py", (built + 10, built + 10))
+    again = ingest.ingest(conn, path, root)
+    assert again.stale == 1
+    assert again.calls == 0
+
+    # The skip is the whole point only if what it leaves standing is the parse's
+    # own answer, so the ranked candidates are read back rather than assumed.
+    ctx = dbread.Context(conn)
+    conn.execute("DELETE FROM edges WHERE evidence = 'scip'")
+    rows = conn.execute("SELECT * FROM refs WHERE name = 'alpha' AND kind = 'CALLS'").fetchall()
+    parsed = resolvedb.resolve_ref(ctx, dbread.row_to_ref(ctx, rows[0]))
+    assert {c.symbol.path for c in parsed.candidates} == {"a.py", "b.py"}
     conn.close()

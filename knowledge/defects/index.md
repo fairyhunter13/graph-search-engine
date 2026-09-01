@@ -18,6 +18,10 @@
 * [The attester graded a literal](the-attester-graded-a-literal.md) - `D-19` moved mean_scoped
   from 1.49 to 1.24 and one of seven copies was updated. The receipt the attester grades was a
   hand-written dict in test source, so it went stale with the claim and the two still agreed.
+* [The overlay believed a stale artifact](the-overlay-believed-a-stale-artifact.md) - An occurrence
+  is a byte range into the text the indexer read, and this tier writes at confidence 1.0. A file
+  edited after the artifact holds different bytes at that range, so a span that still lands on a
+  node is a wrong answer outranking every right one. A newer file now skips the document.
 * [The overlay doubled its own edges](the-overlay-doubled-its-own-edges.md) - A call edge is keyed
   by its call site byte and replaces itself. An implements edge was keyed by nothing. A second
   ingest of one index inserted every one of them again, and the graph reported one interface twice.
