@@ -402,8 +402,16 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-274 | An unhinted pass finds a change no event reported | S-01 | D-48 | done | tests/test_perfile.py::test_an_unhinted_pass_finds_a_change_no_event_reported |
 | T-275 | The prune clock still ticks on an empty batch | S-01 | D-48 | done | tests/test_watch.py::test_the_prune_clock_still_ticks_on_an_empty_batch |
 | T-284 | The queue merges a queued job and requeues a running one | S-01 | D-48 | done | tests/test_index.py::test_the_queue_merges_a_queued_job_and_requeues_a_running_one |
+| T-290 | Every armed root delivers an event, and not only the first | S-01 | D-48 | done | tests/test_watch.py::test_every_armed_root_delivers_and_not_only_the_first |
+| T-291 | A Go import drops the module path and meets its package directory | S-01 | D-40 | done | tests/test_resolve.py::test_a_go_import_drops_the_module_path_and_names_the_package_directory |
+| T-292 | A PHP namespace meets the PSR-4 directory it maps to | S-01 | D-40 | done | tests/test_resolve.py::test_a_php_namespace_meets_the_psr4_directory_it_maps_to |
+| T-293 | A TypeScript relative import meets the file it names | S-01 | D-40 | done | tests/test_resolve.py::test_a_typescript_relative_import_meets_the_file_it_names |
+| T-294 | Two spellings never share one module name | S-01 | D-40 | done | tests/test_resolve.py::test_two_spellings_never_share_one_module_name |
 | T-295 | No tracked file carries a banned name | S-01 | D-52 | done | tests/test_hygiene.py::test_no_tracked_file_carries_a_banned_name |
 | T-296 | No tracked file carries a home path | S-01 | D-52 | done | tests/test_hygiene.py::test_no_tracked_file_carries_a_home_path |
+| T-297 | A Go package receiver narrows to the package it names | S-01 | D-40 | done | tests/test_resolve.py::test_a_go_package_receiver_narrows_to_the_package_it_names |
+| T-298 | A PHP class receiver narrows across the case PSR-4 drops | S-01 | D-40 | done | tests/test_resolve.py::test_a_php_class_receiver_narrows_across_the_case_psr4_drops |
+| T-304 | The ban reads a name and its own capitalisation as one name | S-01 | D-52 | done | tests/test_hygiene.py::test_the_name_ban_folds_case |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted
@@ -415,11 +423,42 @@ seven fail there on the behaviour.
 `T-285` is the second half of the plan's `T-270`: the watcher hands the paths over, and the pass
 hashes those and not the tree. Two claims, so two cases, and the plan wrote them as one row.
 
+`T-290` passes on the predecessor commit and is stated as a sentinel rather than a negative test.
+Every other arm case watches one root, so no case in this suite could distinguish an arm that
+watches all its roots from one that watches the first. That gap is what let
+`defects/the-fleet-wide-arm-loses-roots.md` be filed against a working watcher and stand for a
+day: the engine was right and nothing could say so. The row exists to fail the day the arm really
+does lose a root. Its probe file is a `.py` on purpose — that defect's probe was a `.txt`, which
+`watch._keep` refuses in every project, so it measured the filter and read the result as the arm.
+
+`T-291`, `T-292` and `T-293` fail on the predecessor: both halves of the comparison were dotted
+there, so a Go import path, a PHP namespace and a `./x` specifier each matched nothing a file
+could define. `T-294` is the one of the four that passes on the predecessor and fails on the
+first draft of `D-40`. Untagged, `Orders.php` and `orders.ts` in one directory resolved to the
+same module and each file answered for the other's `Order`. The two-engine receipt read it as
+precision 1.000 to 0.994, which is the only reason the tag exists.
+
+`T-297` and `T-298` are the second half of `D-40`, and they exist because the first half broke
+what it was fixing. A module name is no longer always dotted, and two sites still split one on a
+dot to get its last segment — `resolve._receiver_modules` and `resolvedb.receiver_modules`. On
+`package:internal/billing/rates` that split returns the whole string, so a Go receiver matched no
+module at all and every member call on an imported package resolved `external`. Both fail on the
+predecessor with `external: True` and an empty candidate list, and both pass once the split asks
+the spelling for its own separator. `T-298` carries the case half: `module_name` lowercases a PSR-4
+namespace and a PHP receiver is written in the class's own case, so the two never meet unfolded.
+
 `T-295` and `T-296` widen the public-hygiene gate from `src/graphrag/*.py` to every tracked file.
 Both fail on the predecessor with the ban populated, and both are unreachable there without it:
 CI set `GRAPHRAG_NAME_BAN` to `none`, so the ban had never held a name and had never rejected
 anything. `T-295` found 70 occurrences across 23 files and `T-296` found one home path in
 `scripts/`, neither of which the old `src/`-only glob could see.
+
+`T-304` is the defect in the gate the other two rows arm. Both matched with a case-sensitive
+`in`, which reads a name and its own capitalisation as two different names, so the widened glob
+still shipped two names the list already held — one camel-cased inside a longer identifier, one
+upper-cased as an environment variable. It fails on the predecessor because `_hits` does not exist
+there and the comparison it replaces returns no match on either. The case that grades it names
+neither leak: this file is tracked, and `T-295` reads it.
 
 `T-286` fails on the predecessor commit with one failure, on the first assertion: the overlay ran on
 a hinted pass. The reading behind it is in `defects/the-overlay-ran-on-every-save.md`.

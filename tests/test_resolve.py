@@ -222,6 +222,72 @@ def test_a_source_root_prefix_leaves_the_module_name():
     assert symtab.resolve_module("src/pkg/orders.py", ".rates") == "pkg.rates"
 
 
+def test_a_go_import_drops_the_module_path_and_names_the_package_directory():
+    """`T-291`. On the predecessor both sides were dotted and never met.
+
+    The import writes `host/org/repo/internal/x` and the file lives at
+    `internal/x/`, so a rule that dots either one compares two strings that
+    cannot be equal. The three leading components are the repository, and the
+    first of them is a hostname, which is the one thing a directory is not.
+    """
+    importer = "internal/handler/h.go"
+    module = "example.com/acme/app/internal/billing/domain/rates"
+    assert symtab.resolve_module(importer, module) == symtab.module_name(
+        "internal/billing/domain/rates/rates.go"
+    )
+    # Go names a directory, so every file in one is one module.
+    assert symtab.module_name("internal/x/a.go") == symtab.module_name("internal/x/b.go")
+    # A standard-library import carries no hostname and matches nothing here.
+    assert symtab.resolve_module(importer, "fmt") == "package:fmt"
+
+
+def test_a_php_namespace_meets_the_psr4_directory_it_maps_to():
+    """`T-292`. `App\\Models\\User` and `app/Models/User.php` are one thing."""
+    assert symtab.resolve_module("app/Http/C.php", "App\\Models\\User") == symtab.module_name(
+        "app/Models/User.php"
+    )
+    # Only the root segment differs in case, and PHP class names ignore case.
+    assert (
+        symtab.resolve_module("app/Http/C.php", "\\App\\Models\\User")
+        == "namespace:app/models/user"
+    )
+
+
+def test_a_typescript_relative_import_meets_the_file_it_names():
+    """`T-293`. A `./x` is a path, and dotting it produced `components./x`."""
+    importer = "src/components/Foo.tsx"
+    assert symtab.resolve_module(importer, "./Bar") == symtab.module_name("src/components/Bar.ts")
+    assert symtab.resolve_module(importer, "../models/User") == symtab.module_name(
+        "src/models/User.tsx"
+    )
+    # An extension is optional in the source and never part of the identity.
+    assert symtab.resolve_module(importer, "./Bar.js") == symtab.module_name(
+        "src/components/Bar.ts"
+    )
+    # `dir/index.ts` is imported as `dir`, which is the only reason it exists.
+    assert symtab.resolve_module(importer, "./widgets") == symtab.module_name(
+        "src/components/widgets/index.ts"
+    )
+    # A bare specifier is a package from outside this tree and stays external.
+    assert symtab.resolve_module(importer, "react") == "relative:react"
+
+
+def test_two_spellings_never_share_one_module_name():
+    """`T-294`. `Orders.php` and `orders.ts` in one directory are one path.
+
+    Untagged they resolved to the same module, and each file answered for the
+    other's `Order`. The two-engine receipt caught it as a precision loss, which
+    is the only reason this case exists.
+    """
+    php = symtab.module_name("tests/fixtures/wave1/Orders.php")
+    ts = symtab.module_name("tests/fixtures/wave1/orders.ts")
+    assert php != ts
+
+    # Python and Java are untagged, so `D-40` moved no dotted name.
+    assert symtab.module_name("pkg/rates.py") == "pkg.rates"
+    assert symtab.module_name("src/main/java/com/acme/Rates.java") == "com.acme.Rates"
+
+
 def _corpus_table():
     root = config.corpus_root() / "Lib"
     files = {}
@@ -348,3 +414,78 @@ def test_the_definition_unit_is_higher_than_the_file_unit():
 
     with pytest.raises(ValueError):
         resolve.mean_candidates(table, scoped=False, unit="module")
+
+
+GO_CALLER = """\
+package handler
+
+import "example.com/acme/app/internal/billing/rates"
+
+func Handle() int {
+	return rates.Convert(1)
+}
+"""
+
+GO_RATES = """\
+package rates
+
+func Convert(x int) int {
+	return x
+}
+"""
+
+PHP_CALLER = """\
+<?php
+namespace App\\Http;
+
+use App\\Services\\Rates\\RateService;
+
+class Handler {
+    public function run() {
+        return RateService::compute(1);
+    }
+}
+"""
+
+PHP_SERVICE = """\
+<?php
+namespace App\\Services\\Rates;
+
+class RateService {
+    public static function compute($x) { return $x; }
+}
+"""
+
+
+def _resolved(sources: dict[str, str], language: str, path: str, name: str):
+    table = symtab.build({p: extract.extract(language, t) for p, t in sources.items()})
+    ref = next(r for r in table.files[path].references if r.name == name)
+    return resolve.resolve_reference(table, path, ref)
+
+
+def test_a_go_package_receiver_narrows_to_the_package_it_names():
+    """`T-297`. The receiver is one word, so it meets the module's last segment."""
+    got = _resolved(
+        {"internal/handler/h.go": GO_CALLER, "internal/billing/rates/rates.go": GO_RATES},
+        "go",
+        "internal/handler/h.go",
+        "Convert",
+    )
+    assert not got.external
+    assert [(c.symbol.path, c.evidence) for c in got.candidates] == [
+        ("internal/billing/rates/rates.go", "import")
+    ]
+
+
+def test_a_php_class_receiver_narrows_across_the_case_psr4_drops():
+    """`T-298`. `module_name` lowercases a namespace, and the receiver does not."""
+    got = _resolved(
+        {"app/Http/Handler.php": PHP_CALLER, "app/Services/Rates/RateService.php": PHP_SERVICE},
+        "php",
+        "app/Http/Handler.php",
+        "compute",
+    )
+    assert not got.external
+    assert [(c.symbol.path, c.evidence) for c in got.candidates] == [
+        ("app/Services/Rates/RateService.php", "import")
+    ]

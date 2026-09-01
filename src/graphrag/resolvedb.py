@@ -57,11 +57,11 @@ def receiver_modules(ref: DbRef, names: dict[str, str], modules: set[str]) -> se
         return None
     if not ref.receiver:
         return set()
-    out = {module for module in modules if module.rsplit(".", 1)[-1] == ref.receiver}
+    out = {module for module in modules if symtab.receiver_names(module, ref.receiver)}
     base = names.get(ref.receiver)
     if base is not None:
         out.add(base)
-        out.add(f"{base}.{ref.receiver}" if base else ref.receiver)
+        out.add(symtab.submodule(base, ref.receiver) if base else ref.receiver)
     return out
 
 

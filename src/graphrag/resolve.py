@@ -26,7 +26,9 @@ from .symtab import (
     imported_names,
     module_name,
     names_from_imports,
+    receiver_names,
     resolve_module,
+    submodule,
 )
 
 # The scored tiers, highest first. `evidence` is what the answer prints, so a
@@ -130,11 +132,11 @@ def _receiver_modules(ref: Reference, names: dict[str, str], modules: set[str]) 
         # `Path(x).resolve()`. The receiver is an expression, so it names no
         # module, and reading it as a bare call hands the edge to a homonym.
         return set()
-    out = {module for module in modules if module.rsplit(".", 1)[-1] == ref.receiver}
+    out = {module for module in modules if receiver_names(module, ref.receiver)}
     base = names.get(ref.receiver)
     if base is not None:
         out.add(base)
-        out.add(f"{base}.{ref.receiver}" if base else ref.receiver)
+        out.add(submodule(base, ref.receiver) if base else ref.receiver)
     return out
 
 

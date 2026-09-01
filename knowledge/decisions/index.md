@@ -79,3 +79,8 @@
   stored, deleting one file destroyed edges pointing into it that the pass could not rebuild.
   `nodes_fts` takes no cascade, so the rewrite issues an external-content `'delete'` carrying the
   **old** column values before it drops the rows.
+* [The transitive query buys no cache yet, and the measurement says where one would
+  go](the-transitive-query-buys-no-cache-yet.md) - `blast_radius` at depth 3 measured on two
+  corpora across three builds. The stage-1 redesign moved nothing; `D-40` raised p99 2.8 times
+  against a reach that rose 8.5 times, so cost per reached node fell 8.9 times. No cache is
+  written, and the one the plan drafted is the wrong instrument for what was measured.

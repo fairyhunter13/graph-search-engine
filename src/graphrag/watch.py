@@ -204,7 +204,9 @@ def _loop() -> None:
             # restarted: `start()` returns early on a live thread and only
             # `lifespan` calls it. Re-arm on the next pass instead.
             log.warning("watch pass failed on %d project(s): %s", len(_intent), err)
-            ledger.append(ledger.WATCH, {"armed": 0, "error": str(err), "was_watching": len(_intent)})
+            ledger.append(
+                ledger.WATCH, {"armed": 0, "error": str(err), "was_watching": len(_intent)}
+            )
             _intent = ()
             if _stop.wait(1.0):
                 return

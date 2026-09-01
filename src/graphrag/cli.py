@@ -152,7 +152,11 @@ def _orphan_progress() -> list[Path]:
     """Progress files whose store is gone. They survive `forget` and `prune`."""
     if not config.PROGRESS_DIR.is_dir():
         return []
-    live = {p.name for p in config.INDEX_DIR.iterdir() if p.is_dir()} if config.INDEX_DIR.is_dir() else set()
+    live = (
+        {p.name for p in config.INDEX_DIR.iterdir() if p.is_dir()}
+        if config.INDEX_DIR.is_dir()
+        else set()
+    )
     return sorted(p for p in config.PROGRESS_DIR.glob("*.json") if p.stem not in live)
 
 

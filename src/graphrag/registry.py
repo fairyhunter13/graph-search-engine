@@ -260,11 +260,7 @@ def prune_unclaimed(*, force: bool = False) -> list[Path]:
                 "load projects.json before pruning"
             )
         total = len(
-            [
-                p
-                for p in config.INDEX_DIR.iterdir()
-                if p.is_dir() and p.name != quarantine.DIR_NAME
-            ]
+            [p for p in config.INDEX_DIR.iterdir() if p.is_dir() and p.name != quarantine.DIR_NAME]
         )
         if not force and len(stale) * 2 > total:
             raise RuntimeError(

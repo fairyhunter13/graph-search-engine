@@ -57,7 +57,20 @@ def _banned(raw: str) -> list[str]:
     """`none` is a declaration, and it is the only word that empties the list."""
     if raw.strip() == "none":
         return []
-    return [n.strip() for n in raw.split(",") if n.strip()]
+    return [n.strip().lower() for n in raw.split(",") if n.strip()]
+
+
+def _hits(text: str, names: list[str]) -> list[str]:
+    """The names in `text`, case folded.
+
+    A case-sensitive `in` reads a name and its own capitalisation as two
+    different names. Twice on 2026-09-01 that shipped a name the list already
+    held: once camel-cased inside a longer identifier, once upper-cased as an
+    environment variable. Both were found by a scan that matched the shape of a
+    name rather than its spelling, which is the only reason anyone looked.
+    """
+    folded = text.lower()
+    return [n for n in names if n in folded]
 
 
 def test_the_name_ban_fails_closed_when_it_is_unset():
@@ -71,8 +84,7 @@ def test_the_name_ban_fails_closed_when_it_is_unset():
     found = {
         p.relative_to(SRC).as_posix(): name
         for p in _modules()
-        for name in _banned(config.NAME_BAN)
-        if name in p.read_text()
+        for name in _hits(p.read_text(), _banned(config.NAME_BAN))
     }
     assert found == {}
 
@@ -81,7 +93,7 @@ def test_a_banned_name_in_a_module_is_caught():
     """The other half. A ban nobody has seen reject is not a gate."""
     assert _banned("none") == []
     assert _banned("acme, widgets") == ["acme", "widgets"]
-    hits = [p for p in _modules() for name in _banned("graphrag") if name in p.read_text()]
+    hits = [p for p in _modules() if _hits(p.read_text(), _banned("graphrag"))]
     assert hits, "the ban matches nothing, so it proves nothing"
 
 
@@ -117,14 +129,26 @@ def test_no_tracked_file_carries_a_banned_name():
     """`T-295`. The repository is public, so the whole tracked tree is the gate."""
     if not config.NAME_BAN.strip():
         pytest.fail("GRAPHRAG_NAME_BAN is unset, and unset is the failing state")
+    names = _banned(config.NAME_BAN)
     found = [
         f"{path.relative_to(REPO).as_posix()}:{number} carries {name!r}"
         for path in _tracked()
         for number, line in _lines(path)
-        for name in _banned(config.NAME_BAN)
-        if name in line
+        for name in _hits(line, names)
     ]
     assert found == []
+
+
+def test_the_name_ban_folds_case():
+    """`T-304`. The two shapes the case-sensitive rule shipped past.
+
+    Neither is hypothetical. The first stood in a captured fixture and the
+    second in thirty test modules, under a list that already held both names in
+    lower case. The names themselves are not written here, for the reason this
+    file exists.
+    """
+    assert _hits("var WidgetCoreService = 1", _banned("widgetcore")) == ["widgetcore"]
+    assert _hits("WIDGET_ROOT=/tmp/x", _banned("widget_")) == ["widget_"]
 
 
 def test_no_tracked_file_carries_a_home_path():

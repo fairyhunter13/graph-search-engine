@@ -351,3 +351,39 @@ def test_the_watcher_rearms_after_an_error_instead_of_dying(repo):
     with pytest.MonkeyPatch.context() as mp:
         _run_loop(mp, fake)
     assert len(passes) >= 2, "the loop died on the first error instead of re-arming"
+
+
+def test_every_armed_root_delivers_and_not_only_the_first(watching, repo):
+    """T-290. The sentinel a fleet-wide arm never had.
+
+    A defect filed 2026-09-01 said two of 375 roots received no event. It was
+    wrong: all 375 were armed, and the census behind it read a population of
+    two. Nothing in the suite could have said so, because every other arm test
+    watches one root. This one watches two and requires both to deliver.
+
+    The probe file must be indexable. That defect's own probe was a `.txt`,
+    which `_keep` refuses in every project, so it measured the filter and read
+    the result as the arm.
+    """
+    second = repo("armed-too", TWO)
+    registry.claim(second, direct=True)
+    deadline = time.time() + 10.0
+    while time.time() < deadline:
+        if {watching, second} <= set(watch._intent):
+            break
+        time.sleep(0.05)
+    assert {watching, second} <= set(watch._intent), "the second root never reached the watch set"
+
+    (watching / "a.py").write_text("def alpha():\n    return 111\n")
+    (second / "a.py").write_text("def alpha():\n    return 222\n")
+
+    want = {str(watching), str(second)}
+    seen: set[str] = set()
+    deadline = time.time() + 20.0
+    while time.time() < deadline:
+        for row in ledger.read(ledger.WATCH):
+            seen.update(row.get("projects") or ())
+        if want <= seen:
+            break
+        time.sleep(0.1)
+    assert want <= seen, f"an armed root delivered no event: {sorted(seen)}"

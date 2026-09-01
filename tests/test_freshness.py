@@ -197,7 +197,9 @@ def _write_receipt(
         )
 
 
-ATTESTER = Path(__file__).resolve().parent.parent / "knowledge" / "attesters" / "freshness_receipt.py"
+ATTESTER = (
+    Path(__file__).resolve().parent.parent / "knowledge" / "attesters" / "freshness_receipt.py"
+)
 CONCEPT = (
     Path(__file__).resolve().parent.parent
     / "knowledge"
@@ -241,7 +243,10 @@ def test_the_freshness_receipt_is_attested():
     moved = attester.attest(
         sanctioned_computation=SANCTIONED,
         receipt=receipt,
-        claimed_value={**claim, "edit_to_queryable_ms_p50": receipt["edit_to_queryable_ms_p50"] + 1},
+        claimed_value={
+            **claim,
+            "edit_to_queryable_ms_p50": receipt["edit_to_queryable_ms_p50"] + 1,
+        },
     )
     assert moved["ok"] is False
     assert "edit_to_queryable_ms_p50" in moved["reason"]

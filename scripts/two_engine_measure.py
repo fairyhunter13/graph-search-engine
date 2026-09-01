@@ -192,6 +192,9 @@ TRUTH: list[dict] = [
             "src/graphrag/filters.py",
             "src/graphrag/discover.py",
             "src/graphrag/watch.py",
+            # `symtab.spelling_of`, added by `D-40`. The graph found this before
+            # the table did, which is the direction that says the graph is right.
+            "src/graphrag/symtab.py",
         ],
     },
     {

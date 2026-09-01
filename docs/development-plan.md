@@ -197,7 +197,7 @@ for the callers of a known function and check them by hand.
 | D-37 | A deleted project loses its row on the filesystem event, behind a parent test and a grace period | done | src/graphrag/prune.py, src/graphrag/watch.py, tests/test_prune.py | T-232..T-238 |
 | D-38 | `find_symbol` spans the federation and names the project holding each hit | done | src/graphrag/tools.py, tests/test_discovery.py | T-239, T-240 |
 | D-39 | Every writer of the registry re-arms the watcher, including one in another process | done | src/graphrag/watch.py, src/graphrag/tools.py, tests/test_watch.py | T-241, T-242 |
-| D-40 | A module identity per language, so a Go or PHP import names the file it imports | planned | src/graphrag/symtab.py, src/graphrag/resolve.py, src/graphrag/indexwrite.py | |
+| D-40 | A module identity per language, so a Go or PHP import names the file it imports | done | src/graphrag/symtab.py, src/graphrag/resolve.py, src/graphrag/resolvedb.py, tests/test_resolve.py, scripts/two_engine_measure.py | T-291..T-294, T-297, T-298 |
 | D-41 | A dead row takes its graph with it, quarantined for a week and behind an idle floor | done | src/graphrag/prune.py, src/graphrag/quarantine.py, src/graphrag/registry.py, src/graphrag/cli.py | T-243..T-247 |
 | D-42 | The watcher survives a re-arm in the same pass as a deletion, and an error mid-arm | done | src/graphrag/watch.py, tests/test_watch.py | T-248, T-249 |
 | D-43 | A row whose directory is gone is reported, and an unmounted volume is never read as a deletion | done | src/graphrag/prune.py, src/graphrag/entry.py, src/graphrag/registry.py, src/graphrag/cli.py | T-250 |
@@ -209,7 +209,7 @@ for the callers of a known function and check them by hand.
 | D-49 | `grammars.py` reports the digits the live pin produces | done (no change needed) | src/graphrag/grammars.py, tests/test_grammars.py | T-06 |
 | D-50 | `SymbolTable.module_of` is deleted: it was written and never read | done | src/graphrag/symtab.py | |
 | D-51 | The SCIP overlay rides the reconciler, because it has no per-file form | done | src/graphrag/index.py, tests/test_perfile.py | T-286 |
-| D-52 | This repository is public, so no tracked file carries a private name or a machine path, and the gate reads the whole tree | done | tests/test_hygiene.py, .githooks/pre-push, .github/workflows/ci.yml, scripts/partc_probe.py, src/graphrag/federation.py, src/graphrag/filters.py, src/graphrag/index.py, src/graphrag/scip/run.py, docs/, knowledge/ | T-295, T-296 |
+| D-52 | This repository is public, so no tracked file carries a private name or a machine path, and the gate reads the whole tree | done | tests/test_hygiene.py, .githooks/pre-push, .github/workflows/ci.yml, scripts/partc_probe.py, src/graphrag/federation.py, src/graphrag/filters.py, src/graphrag/index.py, src/graphrag/scip/run.py, docs/, knowledge/ | T-295, T-296, T-304 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the

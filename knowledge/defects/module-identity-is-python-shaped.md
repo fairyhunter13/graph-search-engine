@@ -1,6 +1,6 @@
 ---
 type: Defect
-resource: src/graphrag/symtab.py, src/graphrag/resolve.py, src/graphrag/indexwrite.py
+resource: src/graphrag/symtab.py, src/graphrag/resolve.py, src/graphrag/resolvedb.py, src/graphrag/indexwrite.py
 title: Module identity is Python-shaped, so a Go or PHP import names nothing
 description: "`module_name` spells a module by dotting a file path, and an import row keeps whatever the language wrote. The two spellings agree in Python and Java and in no other language, so `import_edges` writes nothing and a receiver-narrowed call resolves external. 7 of 367 stores hold an IMPORTS edge, and 67.2% of every CALLS edge in the fleet lands on external."
 tags: [resolution, imports, go, php, federation, measurement]
@@ -140,6 +140,57 @@ gone. Reaching the tier at all needed a second fix, in
 `scip_indexers` to a federated member, which is the only way the tier can reach a repository
 nobody here owns. PHP keeps the defect whole: `scip-php` has no invocable command, so Gen-1,
 Gen-2 and Gen-3 stay at the measured shares above.
+
+# The fix, and the defect inside the fix
+
+`D-40` gave `module_name` and `resolve_module` a spelling per language: `package` for Go, named by
+its directory with the `go.mod` prefix dropped; `namespace` for PHP, named by its PSR-4 namespace;
+`relative` for TypeScript and JavaScript, named by the path a `./x` specifier resolves to; and the
+dotted form Python and Java already had. Python and Java outputs are byte-identical.
+
+Each name carries its spelling as a prefix — `package:internal/billing/rates`, not
+`internal/billing/rates`. That tag is not decoration. Untagged, `Orders.php` and `orders.ts` in one
+directory are one path with two suffixes, so they became one module and each file answered for the
+other's `Order`. The two-engine receipt read it as distinctive precision falling from 1.000 to
+0.980, which is the only reason the collision was found at all.
+
+Then the tag broke the thing it was added to fix. Two sites read a module's last segment by
+splitting it on a dot — `resolve._receiver_modules` and `resolvedb.receiver_modules`, the index-time
+and query-time halves of the same rule. `rsplit(".", 1)[-1]` over `package:internal/billing/rates`
+returns the whole string, so a Go receiver matched no module, the narrowed pool came back empty,
+and `resolve_reference` wrote `external=True`. Every member call on an imported Go package resolved
+external — worse than the defect this concept records, and invisible to the two-engine receipt,
+whose corpus is Python and TypeScript and holds no Go at all.
+
+`symtab.receiver_names` and `symtab.submodule` ask the spelling for its own separator instead of
+assuming a dot. `receiver_names` folds case for `namespace` alone, because `module_name` lowercases
+PSR-4 to settle `App\` sitting under `app/`, and a PHP receiver is written in the class's own case.
+
+Measured against the predecessor, `rates.Convert(1)` from a Go file importing that package:
+
+| Engine | Result |
+|---|---|
+| Before the fix | `external: True`, no candidates |
+| After | one candidate, the defining file, `evidence: import` |
+
+`T-297` and `T-298` hold the Go and PHP halves, and both fail on the predecessor.
+
+Neither half needed a reindex, and that was measured rather than argued. `resolve_file_local` runs
+at index time, so both engines were run over a 2,461-file Go repository whole and 3,000 files each
+of a 12,697-file PHP application and a 5,156-file TypeScript service, diffing the exact
+`(line, name, receiver)` signature of every decided and deferred reference. Zero of 8,460 files
+differ, and a synthetic positive control proves the harness catches a flip when one exists. The
+guard the tag reaches can only override an already non-empty same-file pool, which needs a file to
+import its own module — a compile error in Go.
+
+The one index-time string that does change is the module node's `name`, written verbatim by
+`indexwrite.write_nodes`. It is a label: `dbread._POOL` matches names under `n.kind != 'module'`
+and `dbread.module_node` selects by `file_id`. No join reads it, so `EXTRACTION_ALGORITHM` stays
+at 4.
+
+The lesson is the one this whole concept is about, arriving a second time. A name is only a name
+inside a spelling, and code that reads a name apart from its spelling is guessing. The first round
+guessed that every module was dotted. The second guessed that every module name split on a dot.
 
 Related: [prune wiped the graph but kept the directory](prune-wiped-the-graph-but-kept-the-directory.md),
 [the daemon never saw a row another process wrote](the-daemon-never-saw-a-row-another-process-wrote.md).

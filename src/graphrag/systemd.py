@@ -60,10 +60,10 @@ WatchdogSec=180
 ExecStart={exe} serve
 Restart=on-failure
 RestartSec=5
-# Measured on 2026-08-30 over 367 projects: 11 open files, and 60,462 inotify
-# watches on a single one of them. A watch is not a file descriptor, so the
-# ceiling that binds is fs.inotify.max_user_watches (1,048,576 here) and it is
-# a sysctl no unit can set. This stays generous rather than tuned.
+# Measured on 2026-09-01 over 375 projects: 11 open files, and 68,311 inotify
+# watches across the whole fleet on one instance. A watch is not a file
+# descriptor, so the ceiling that binds is fs.inotify.max_user_watches
+# (1,048,576 here) and it is a sysctl no unit can set. Generous, not tuned.
 LimitNOFILE=65536
 TimeoutStopSec=20
 Environment=GRAPHRAG_PORT={config.PORT}
