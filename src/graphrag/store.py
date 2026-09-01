@@ -78,6 +78,30 @@ CREATE INDEX IF NOT EXISTS edges_src ON edges(src, kind);
 CREATE INDEX IF NOT EXISTS edges_dst ON edges(dst, kind);
 CREATE INDEX IF NOT EXISTS edges_resolved ON edges(dst, kind) WHERE resolved = 1;
 
+CREATE TABLE IF NOT EXISTS refs (
+  id             INTEGER PRIMARY KEY,
+  file_id        INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+  kind           TEXT NOT NULL,
+  name           TEXT NOT NULL,
+  receiver       TEXT NOT NULL DEFAULT '',
+  is_member      INTEGER NOT NULL DEFAULT 0,
+  call_site_byte INTEGER NOT NULL,
+  line           INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS refs_name ON refs(name, kind);
+CREATE INDEX IF NOT EXISTS refs_file ON refs(file_id);
+
+CREATE TABLE IF NOT EXISTS imports (
+  id      INTEGER PRIMARY KEY,
+  file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+  module  TEXT NOT NULL,
+  symbol  TEXT NOT NULL DEFAULT '',
+  alias   TEXT NOT NULL DEFAULT '',
+  line    INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS imports_file ON imports(file_id);
+CREATE INDEX IF NOT EXISTS imports_module ON imports(module);
+
 CREATE VIRTUAL TABLE IF NOT EXISTS nodes_fts USING fts5(
   name, qualified_name, signature, content='nodes', content_rowid='id',
   tokenize="unicode61 remove_diacritics 0 tokenchars '_$.'"

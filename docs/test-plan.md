@@ -368,6 +368,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-249 | The watcher re-arms after an error instead of dying | S-09 | D-42 | done | tests/test_watch.py::test_the_watcher_rearms_after_an_error_instead_of_dying |
 | T-250 | An unmounted volume is never read as a deletion | S-07 | D-43 | done | tests/test_prune.py::test_an_unmounted_volume_is_never_read_as_a_deletion |
 | T-251 | A new graph can give its pages back | S-01 | D-44 | done | tests/test_store.py::test_a_new_graph_can_give_its_pages_back |
+| T-252 | A reference survives a pass as a row carrying `receiver` and `is_member` | S-01 | D-45 | done | tests/test_resolvedb.py::test_a_reference_survives_a_pass_as_a_row |
+| T-253 | An import survives a pass carrying its symbol, alias and raw module string | S-01 | D-45 | done | tests/test_resolvedb.py::test_an_import_survives_a_pass_as_a_row |
 
 # User journeys
 

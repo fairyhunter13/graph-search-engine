@@ -128,6 +128,8 @@ def index_once(root: Path | str, *, force: bool = False) -> IndexReport:
         conn.execute("DELETE FROM files")
         file_ids = indexwrite.write_files(conn, metas, facts)
         nodes = indexwrite.write_nodes(conn, table, file_ids)
+        indexwrite.write_refs(conn, facts, file_ids)
+        indexwrite.write_imports(conn, facts, file_ids)
 
         progress.phase("resolving")
         resolutions = {p: resolve.resolve_file(table, p) for p in table.files}

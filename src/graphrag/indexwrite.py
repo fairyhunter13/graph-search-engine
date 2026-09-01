@@ -127,6 +127,62 @@ def write_externals(conn: sqlite3.Connection, names: Iterable[str]) -> dict[str,
     return ids
 
 
+def write_refs(
+    conn: sqlite3.Connection, facts_by_path: dict[str, FileFacts], file_ids: dict[str, int]
+) -> int:
+    """One row per reference, exactly as the file wrote it.
+
+    The receiver and `is_member` are what `resolve._receiver_modules` narrows on,
+    and both were consumed into edges and dropped before this.
+    """
+    rows: list[tuple] = []
+    for path, facts in facts_by_path.items():
+        file_id = file_ids.get(path)
+        if file_id is None or facts.error:
+            continue
+        for ref in facts.references:
+            rows.append(
+                (
+                    file_id,
+                    ref.kind,
+                    ref.name,
+                    ref.receiver,
+                    1 if ref.is_member else 0,
+                    ref.call_site_byte,
+                    ref.line,
+                )
+            )
+    conn.executemany(
+        "INSERT INTO refs(file_id, kind, name, receiver, is_member, call_site_byte, line) "
+        "VALUES(?, ?, ?, ?, ?, ?, ?)",
+        rows,
+    )
+    return len(rows)
+
+
+def write_imports(
+    conn: sqlite3.Connection, facts_by_path: dict[str, FileFacts], file_ids: dict[str, int]
+) -> int:
+    """One row per import, carrying the raw module string the source wrote.
+
+    Raw, and not resolved. Module identity is per-language and still wrong in
+    most of them, so a resolved string here would freeze today's answer into the
+    store. The query resolves it on read and improves with no reindex.
+    """
+    rows: list[tuple] = []
+    for path, facts in facts_by_path.items():
+        file_id = file_ids.get(path)
+        if file_id is None or facts.error:
+            continue
+        for row in facts.imports:
+            rows.append((file_id, row.module, row.symbol, row.alias, row.line))
+    conn.executemany(
+        "INSERT INTO imports(file_id, module, symbol, alias, line) VALUES(?, ?, ?, ?, ?)",
+        rows,
+    )
+    return len(rows)
+
+
 def structural_edges(table: SymbolTable, nodes: dict[Key, int]) -> list[tuple]:
     """CONTAINS and DEFINES, which need no resolution: the AST already said so."""
     rows: list[tuple] = []
