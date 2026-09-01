@@ -207,6 +207,8 @@ for the callers of a known function and check them by hand.
 | D-47 | An index pass rewrites only the files that changed | done | src/graphrag/index.py, src/graphrag/jobs.py, src/graphrag/indexwrite.py, src/graphrag/discover.py, src/graphrag/filters.py, src/graphrag/store.py, src/graphrag/query.py, src/graphrag/dbread.py | T-256, T-257, T-261, T-262, T-268, T-276, T-277, T-278, T-280, T-282, T-283 |
 | D-48 | The watcher hints which files changed, and the quiet window is deleted | done | src/graphrag/watch.py, src/graphrag/jobs.py, src/graphrag/index.py, src/graphrag/discover.py, src/graphrag/config.py, tests/test_watch.py, tests/test_perfile.py, tests/test_index.py | T-260, T-270, T-271, T-272, T-273, T-274, T-275 |
 | D-49 | `grammars.py` reports the digits the live pin produces | done (no change needed) | src/graphrag/grammars.py, tests/test_grammars.py | T-06 |
+| D-50 | `SymbolTable.module_of` is deleted: it was written and never read | done | src/graphrag/symtab.py | |
+| D-51 | The SCIP overlay rides the reconciler, because it has no per-file form | done | src/graphrag/index.py, tests/test_perfile.py | T-286 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the

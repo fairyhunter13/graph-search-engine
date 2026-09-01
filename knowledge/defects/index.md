@@ -43,6 +43,15 @@
   `qualified_name`, which `nodes_fts` indexes, and there is no trigger. It is correct today only
   because the pass runs the overlay one line before `rebuild_fts`. Recorded, not fixed: the per-file
   rewrite is what exposes it.
+* [Reclaim never reclaimed a page](reclaim-never-reclaimed-a-page.md) - `PRAGMA auto_vacuum` read 0
+  on 373 of 375 stores, so `incremental_vacuum` did nothing on any of them. `gen2-php-app` was 151 MB
+  over about 9.7 MB of live data. The algorithm bump rebuilt every store, and the pragma took.
+* [The overlay ran on every save](the-overlay-ran-on-every-save.md) - A one-file save on `go-monorepo` was
+  queryable after 34.7 s against a one-second criterion. The SCIP overlay was 49 s of a 58 s
+  profiled pass: it re-ran the indexer and re-read 1.8 M occurrences for one changed file.
+* [The fleet-wide arm loses roots](the-fleet-wide-arm-loses-roots.md) - Two enrolled projects have
+  zero rows in the whole watch-ledger history. Every predicate passes, and both deliver an event in
+  12 s when armed alone. The fault is in arming 375 roots in one call, and it is pre-existing.
 * [A generated bundle was indexed as source](a-generated-bundle-was-indexed-as-source.md) -
   `web-tree`'s hottest callee name is the single character `n`, at 90,156 CALLS edges, and that
   one store holds 28.7% of every reference row in the fleet. A `.min.js` suffix test refuses none of

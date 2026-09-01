@@ -202,6 +202,23 @@ def test_a_pass_that_rewrites_part_of_the_tree_does_not_checkpoint(tree, monkeyp
     assert calls == [1]
 
 
+def test_a_hinted_pass_does_not_run_the_scip_overlay(tree, monkeypatch):
+    """T-286. The overlay re-runs the indexer and re-reads the whole artifact,
+    so it has no per-file form. Measured on `go-monorepo`, 2026-09-01: 49 s of a 58 s
+    hinted pass, which is what held edit-to-queryable at 34 s."""
+    root, _ = tree
+    calls: list[int] = []
+    monkeypatch.setattr(index, "_overlay", lambda conn, root, cfg: calls.append(1) or {})
+
+    (root / "a.py").write_text("def alpha():\n    return 9\n")
+    index.index_once(root, paths=frozenset({"a.py"}))
+    assert calls == []
+
+    (root / "a.py").write_text("def alpha():\n    return 10\n")
+    index.index_once(root)
+    assert calls == [1]
+
+
 def test_a_store_this_engine_creates_can_give_its_pages_back(tree):
     """T-277. 373 of 375 stores read `auto_vacuum` 0 on 2026-09-01, so `reclaim`
     had never reclaimed a page on any of them. `connect` sets the pragma before

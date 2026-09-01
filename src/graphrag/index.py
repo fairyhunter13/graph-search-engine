@@ -167,7 +167,13 @@ def index_once(
             edges += indexwrite.reference_edges(p, rows, nodes)
         indexwrite.write_edges(conn, edges)
         indexwrite.write_fts(conn, file_ids.values())
-        report.scip = _overlay(conn, root, cfg)
+        # Measured on `go-monorepo`, 2026-09-01: the overlay is 49 s of a 58 s hinted
+        # pass, because it re-runs the indexer and re-reads 1.8 M occurrences
+        # whatever changed. It has no per-file form, so it rides the reconciler
+        # the way `reclaim` does, and a hinted save carries no `scip` tier until
+        # the next unhinted pass.
+        if not report.hinted:
+            report.scip = _overlay(conn, root, cfg)
         if report.scip:
             # The overlay updates `qualified_name` and can insert nodes, and
             # neither reaches an external-content index. It has no per-file

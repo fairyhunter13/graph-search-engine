@@ -10,3 +10,6 @@ there, and the gate checks it.
 `two_engine_receipt.py` is the second contract. It declares the two-engine receipt shape and
 delegates the comparison to `grade` in `measurement_equality.py`, because one module declares
 exactly one `RECEIPT_FIELDS` and a union of two shapes would grade neither.
+
+`freshness_receipt.py` is the third contract, and it declares the save-to-searchable shape: the two
+latency arms, the file count, the sample count and the misses. It delegates to the same `grade`.

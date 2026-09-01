@@ -392,6 +392,8 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-260 | A submitted job is takeable at once | S-01 | D-48 | done | tests/test_watch.py::test_a_submitted_job_is_takeable_at_once |
 | T-270 | The watcher hands the changed paths to the queue | S-01 | D-48 | done | tests/test_watch.py::test_the_watcher_hands_the_changed_paths_to_the_queue |
 | T-285 | A hinted pass hashes the named paths and not the tree | S-01 | D-48 | done | tests/test_perfile.py::test_a_hinted_pass_hashes_the_named_paths_and_not_the_tree |
+| T-286 | A hinted pass does not run the SCIP overlay, and an unhinted one does | S-01 | D-51 | done | tests/test_perfile.py::test_a_hinted_pass_does_not_run_the_scip_overlay |
+| T-287 | A save is searchable before the next one lands, timed through the daemon | S-01 | D-48 | done | tests/test_freshness.py::test_a_save_is_searchable_before_the_next_one_lands |
 | T-271 | Two hinted submissions merge their paths | S-01 | D-48 | done | tests/test_watch.py::test_two_hinted_submissions_merge_their_paths |
 | T-272 | A hint merged with a whole-tree job runs whole-tree | S-01 | D-48 | done | tests/test_watch.py::test_a_hint_merged_with_a_whole_tree_job_runs_whole_tree |
 | T-273 | A hint over the cap falls back to the whole tree | S-01 | D-48 | done | tests/test_watch.py::test_a_hint_over_the_cap_falls_back_to_the_whole_tree |
@@ -408,6 +410,13 @@ seven fail there on the behaviour.
 
 `T-285` is the second half of the plan's `T-270`: the watcher hands the paths over, and the pass
 hashes those and not the tree. Two claims, so two cases, and the plan wrote them as one row.
+
+`T-286` fails on the predecessor commit with one failure, on the first assertion: the overlay ran on
+a hinted pass. The reading behind it is in `defects/the-overlay-ran-on-every-save.md`.
+
+`T-287` is opt-in and skips by default, because it needs a real repository, an editor-shaped save
+and the daemon holding the writer lock. Name the root and the file in the environment. A fixture
+would grade a different code path from the one a save takes, and the claim is about the save.
 
 `T-284` records an edited test rather than a new one. The queue verdict `dropped` became `merged`,
 because dropping a second submission was correct only while a job meant *reindex everything*.

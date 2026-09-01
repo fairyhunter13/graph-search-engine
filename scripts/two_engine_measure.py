@@ -96,6 +96,7 @@ TRUTH: list[dict] = [
             "tests/test_prune.py",
             "tests/test_resolvedb.py",
             "tests/test_perfile.py",
+            "tests/test_freshness.py",
             "src/graphrag/scip/__init__.py",
         ],
     },

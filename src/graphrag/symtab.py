@@ -53,7 +53,6 @@ class Symbol:
 class SymbolTable:
     files: dict[str, FileFacts] = field(default_factory=dict)
     by_name: dict[str, list[Symbol]] = field(default_factory=dict)
-    module_of: dict[str, str] = field(default_factory=dict)
     path_module: dict[str, str] = field(default_factory=dict)
 
     def defines(self, name: str) -> list[Symbol]:
@@ -111,12 +110,7 @@ def build(facts_by_path: dict[str, FileFacts]) -> SymbolTable:
     """One pass over every extracted file. No parsing happens here."""
     table = SymbolTable(files=dict(facts_by_path))
     for path, facts in facts_by_path.items():
-        module = module_name(path)
-        table.path_module[path] = module
-        # First writer wins. Two files claiming one module is a layout the
-        # extractor cannot arbitrate, and picking the later one at random would
-        # move edges between runs.
-        table.module_of.setdefault(module, path)
+        table.path_module[path] = module_name(path)
         for i, definition in enumerate(facts.definitions):
             table.by_name.setdefault(definition.name, []).append(_symbol(path, i, definition))
     return table
