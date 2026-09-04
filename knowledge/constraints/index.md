@@ -68,3 +68,7 @@
   use](the-pack-ships-queries-and-downloads-parsers-on-first-use.md) - Query text arrives with the
   install, and a parser arrives over the network on first use, so an air-gapped install needs a
   seeded cache.
+* [A rebuild holds the whole repo, and 374 of 380 stores are too small for that to
+  matter](what-a-rebuild-holds-and-why-spilling-it-was-refused.md) - A pass holds every file's facts
+  at once, 120 MB for 1786 files at about 291 bytes per record. Spilling `SymbolTable.files` to disk
+  was refused: the median store is 131 files, and the lookup fires once per reference.
