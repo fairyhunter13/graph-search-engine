@@ -15,7 +15,7 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from . import config, federation, jobs, query, registry, store, watch
+from . import config, fanout, federation, jobs, query, registry, store, watch
 
 INSTRUCTIONS = """\
 Structural code search over the graph: who calls this, what breaks if I change
@@ -159,37 +159,53 @@ def find_symbol(name: str, root: str, limit: int = 20, federated: bool = True) -
         return {"error": str(exc), "results": []}
     projects = federation.expand(target) if federated else [target]
 
-    results: list[dict[str, Any]] = []
-    capabilities: dict[str, Any] = {}
-    unindexed: list[str] = []
-    for project in projects:
-        if len(results) >= limit:
-            break
+    def read(project: Path) -> tuple[Path, list[Any] | None, dict[str, Any]]:
+        """One project's hits, or `None` where that project has no graph.
+
+        This runs on a fan-out worker, so it raises nothing. A `LookupError`
+        crossing the pool would end the walk at the first unindexed member
+        instead of naming it.
+        """
         try:
             _, conn = _connect(str(project))
         except LookupError:
-            unindexed.append(str(project))
-            continue
+            return project, None, {}
         try:
-            for hit in query.find_symbol(conn, name, limit=limit - len(results)):
-                results.append(
-                    {
-                        # The owning project, because a path alone does not say
-                        # which of 360 graphs the next `neighbors` call names.
-                        "project": str(project),
-                        "name": hit.name,
-                        "qualified_name": hit.qualified_name,
-                        "kind": hit.kind,
-                        "path": hit.path,
-                        "lang": hit.lang,
-                        "line": hit.line,
-                        "end_line": hit.end_line,
-                    }
-                )
-            if project == target:
-                capabilities = query.capability_report(conn)
+            # Every worker asks for the whole `limit`. The shrinking limit the
+            # sequential loop passed needs the count so far, and a worker that
+            # started already cannot have it. The caller truncates instead.
+            hits = query.find_symbol(conn, name, limit=limit)
+            report = query.capability_report(conn) if project == target else {}
+            return project, hits, report
         finally:
             conn.close()
+
+    results: list[dict[str, Any]] = []
+    capabilities: dict[str, Any] = {}
+    unindexed: list[str] = []
+    for project, hits, report in fanout.windowed(read, projects):
+        if hits is None:
+            unindexed.append(str(project))
+            continue
+        capabilities = report or capabilities
+        results.extend(
+            {
+                # The owning project, because a path alone does not say
+                # which of 360 graphs the next `neighbors` call names.
+                "project": str(project),
+                "name": hit.name,
+                "qualified_name": hit.qualified_name,
+                "kind": hit.kind,
+                "path": hit.path,
+                "lang": hit.lang,
+                "line": hit.line,
+                "end_line": hit.end_line,
+            }
+            for hit in hits
+        )
+        if len(results) >= limit:
+            break
+    del results[limit:]
 
     gaps: list[str] = []
     if not results:

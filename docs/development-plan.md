@@ -219,6 +219,7 @@ for the callers of a known function and check them by hand.
 | D-56 | The plan pair is graded by a test, because the shell gate that described itself was deleted and both documents kept describing it | done | tests/test_plan_pair.py, docs/test-plan.md, docs/development-plan.md | T-307..T-313 |
 | D-58 | Discovery descends into a populated submodule, which `git ls-files` at the parent never lists | done | src/graphrag/discover.py, tests/test_discover.py | T-314..T-317 |
 | D-57 | The tier census, the fleet SCIP share and the ready-root overlay each have a producer that re-runs them, and a receipt that names no path | done | scripts/scip_census.py, tests/test_scip_census.py | T-333..T-336 |
+| D-59 | `find_symbol` reads the federation over a small pool, one window at a time, so an absent name stops costing one store at a time and a common name still stops at the first | done | src/graphrag/fanout.py, src/graphrag/tools.py, src/graphrag/config.py, tests/test_fanout.py | T-338..T-341 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the

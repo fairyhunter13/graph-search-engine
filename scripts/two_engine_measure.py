@@ -220,6 +220,10 @@ TRUTH: list[dict] = [
             "tests/test_discovery.py",
             "tests/test_resolvedb.py",
             "tests/test_perfile.py",
+            # The threaded fan-out's own case. The graph found this caller the
+            # hour the file was written and scored it a false positive against
+            # this list, the same direction `language_of` records above.
+            "tests/test_fanout.py",
         ],
     },
 ]

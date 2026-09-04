@@ -93,6 +93,13 @@ EXTRACTION_ALGORITHM = 5
 
 # -------------------------------------------------------------------- serving
 
+# How many stores one federated question reads at a time. `find_symbol` is the
+# only federated tool, and it walks the root plus every member. Four, because
+# the cost is disk and file descriptors and not CPU — the same reason and the
+# same number coderag settled on. 1 restores the plain sequential loop, and that
+# is the arm any regression here is measured against.
+FANOUT_WORKERS = _env_int("FANOUT_WORKERS", 4)
+
 LOG_LEVEL = _env("LOG_LEVEL", "INFO").upper()
 
 HOST = _env("HOST", "127.0.0.1")

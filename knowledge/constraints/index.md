@@ -6,6 +6,11 @@
 * [68 of 371 grammars ship a tags file, so any language means parsing and not
   symbols](sixty-eight-of-371-grammars-ship-a-tags-file.md) - The pack parses 371 languages and only
   68 carry a tags query, so a grammar with no tags file yields a tree and no symbol.
+* [An absent name cost 361 sequential store opens, and a window is what fixes it without losing the
+  early stop](an-absent-name-cost-361-sequential-store-opens.md) - `find_symbol` walked the root
+  plus every member one store at a time, and an absent name over the 361-project unit took a median
+  57.45 s against 24.91 s over four workers. One map over the whole list is the wrong fix, because
+  a common name is answered by the first store.
 * [A member call is about 43% of call sites, and a syntactic rule cannot reach
   it](a-member-call-is-about-43-percent-of-call-sites.md) - About 43% of call sites are member
   calls, and no syntactic rule places the receiver, so the engine refuses those sites rather than
