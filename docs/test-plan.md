@@ -469,6 +469,9 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-345 | blast_radius reports a homonym start too | S-08 | D-60 | done | tests/test_index.py::test_blast_radius_reports_a_homonym_start_too |
 | T-346 | An upstream answer names the references that did not reach the definition | S-08 | D-61 | done | tests/test_index.py::test_an_upstream_answer_names_the_references_that_missed_it |
 | T-347 | A downstream answer carries no unreached-reference gap | S-08 | D-61 | done | tests/test_index.py::test_a_downstream_answer_carries_no_unreached_gap |
+| T-348 | A Go method called on its own receiver resolves in its package | S-08 | D-62 | done | tests/test_resolve.py::test_a_go_method_called_on_its_own_receiver_resolves_in_its_package |
+| T-349 | A call on another variable of the same type stays unresolved | S-08 | D-62 | done | tests/test_resolve.py::test_a_call_on_another_variable_of_the_same_type_stays_unresolved |
+| T-350 | The stored self-receiver flag gives the method a caller | S-08 | D-62 | done | tests/test_index.py::test_a_go_method_called_on_its_own_receiver_has_a_caller |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted

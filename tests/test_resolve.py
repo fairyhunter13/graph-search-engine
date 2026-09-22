@@ -489,3 +489,69 @@ def test_a_php_class_receiver_narrows_across_the_case_psr4_drops():
     assert [(c.symbol.path, c.evidence) for c in got.candidates] == [
         ("app/Services/Rates/RateService.php", "import")
     ]
+
+
+GO_SERVICE = """\
+package billing
+
+type Service struct{}
+
+func (s *Service) Handle() int {
+	return s.Connect()
+}
+
+func (s *Service) Stranger(other *Service) int {
+	return other.Connect()
+}
+"""
+
+GO_CONNECT = """\
+package billing
+
+func (s *Service) Connect() int {
+	return 1
+}
+"""
+
+
+def test_a_go_method_called_on_its_own_receiver_resolves_in_its_package():
+    """`T-348`. `s` is Go's `self` under an arbitrary name.
+
+    The method declaration binds `s`, and Go requires every method of that type
+    to live in the same package. Before this, `receiver_names` compared `s`
+    against the module's last segment, the set came back empty, and the pool
+    was filtered to nothing: an external node, and a caller question that
+    answered with an empty list.
+    """
+    got = _resolved(
+        {"internal/billing/service.go": GO_SERVICE, "internal/billing/connect.go": GO_CONNECT},
+        "go",
+        "internal/billing/service.go",
+        "Connect",
+    )
+    assert not got.external
+    assert [(c.symbol.path, c.evidence) for c in got.candidates] == [
+        ("internal/billing/connect.go", "package")
+    ]
+
+
+def test_a_call_on_another_variable_of_the_same_type_stays_unresolved():
+    """`T-349`. The control, and it is the whole reason the flag is per call.
+
+    `other` is a parameter of the same type in the same package, so a fix that
+    resolved every member call to the package would satisfy the case above and
+    this one too. Its type is not resolved, so the honest answer is external.
+    """
+    table = symtab.build(
+        {
+            p: extract.extract("go", t)
+            for p, t in {
+                "internal/billing/service.go": GO_SERVICE,
+                "internal/billing/connect.go": GO_CONNECT,
+            }.items()
+        }
+    )
+    refs = [r for r in table.files["internal/billing/service.go"].references if r.name == "Connect"]
+    stranger = next(r for r in refs if not r.receiver_self)
+    assert stranger.receiver == "other"
+    assert resolve.resolve_reference(table, "internal/billing/service.go", stranger).external

@@ -125,8 +125,14 @@ def _receiver_modules(ref: Reference, names: dict[str, str], modules: set[str]) 
 
     `from . import registry` maps the name to the package, and the receiver then
     names the submodule under it, so both spellings are candidates.
+
+    `receiver_self` is the same "enclosing object" case under an arbitrary
+    name: the receiver is the one the enclosing Go method binds, as in
+    `func (s *Service) Handle()` calling `s.Connect()`. Go requires every
+    method of that type to live in the package, so the receiver decides
+    nothing here and `SAME_PACKAGE` does the work.
     """
-    if not ref.is_member or ref.receiver in _SELF:
+    if not ref.is_member or ref.receiver in _SELF or ref.receiver_self:
         return None
     if not ref.receiver:
         # `Path(x).resolve()`. The receiver is an expression, so it names no

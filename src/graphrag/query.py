@@ -143,7 +143,9 @@ def _homonyms(pool: list[Hit]) -> str:
     and one clean edge each reports zero.
     """
     chosen, others = pool[0], pool[1:]
-    shown = ", ".join(f"{hit.qualified_name or hit.name} at {hit.path}:{hit.line}" for hit in others[:4])
+    shown = ", ".join(
+        f"{hit.qualified_name or hit.name} at {hit.path}:{hit.line}" for hit in others[:4]
+    )
     more = f", and {len(others) - 4} more" if len(others) > 4 else ""
     return (
         f"{len(pool)} definitions spell this name, so this answer is for "
@@ -177,9 +179,10 @@ def _unreached(conn: sqlite3.Connection, name: str, reached: int) -> str:
     A Go method called through a field receiver is the case that matters: the
     receiver's type is not resolved to the package that declares the method, so
     the definition is never a candidate, and `include_ambiguous` does not reach
-    it either. The count is the whole point. An empty list beside "17 references
-    spell this name" is a gap a reader can act on, where an empty list alone
-    reads as nothing calling it.
+    it either. A call on the method's own receiver is no longer in that set --
+    `refs.receiver_self` resolves it inside the package. The count is the whole
+    point. An empty list beside "17 references spell this name" is a gap a
+    reader can act on, where an empty list alone reads as nothing calling it.
     """
     if not name:
         return ""
@@ -188,9 +191,10 @@ def _unreached(conn: sqlite3.Connection, name: str, reached: int) -> str:
         return ""
     return (
         f"{spelled} references in this project spell {name!r} and {reached} of them resolved "
-        f"to this definition, so this answer understates. A method reached through a field or "
-        f"an expression receiver is not resolved to its declaration, and a reference the "
-        f"resolver cannot place is never counted here."
+        f"to this definition, so this answer understates. A method reached through a field "
+        f"receiver, an expression receiver, or a local variable whose type comes from an "
+        f"assignment is not resolved to its declaration, and a reference the resolver cannot "
+        f"place is never counted here."
     )
 
 

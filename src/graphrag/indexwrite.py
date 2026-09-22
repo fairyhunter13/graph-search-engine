@@ -154,13 +154,14 @@ def write_refs(
                     ref.name,
                     ref.receiver,
                     1 if ref.is_member else 0,
+                    1 if ref.receiver_self else 0,
                     ref.call_site_byte,
                     ref.line,
                 )
             )
+    columns = "file_id, kind, name, receiver, is_member, receiver_self, call_site_byte, line"
     conn.executemany(
-        "INSERT INTO refs(file_id, kind, name, receiver, is_member, call_site_byte, line) "
-        "VALUES(?, ?, ?, ?, ?, ?, ?)",
+        f"INSERT INTO refs({columns}) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
         rows,
     )
     return len(rows)

@@ -52,8 +52,13 @@ def receiver_modules(ref: DbRef, names: dict[str, str], modules: set[str]) -> se
     Not imported, because that one reads `extract.Reference` attributes this row
     does not have. The rule is the same and `_SELF` is shared, so the two agree
     on every case the differential test compares.
+
+    `receiver_self` carries the enclosing-object case for a Go method: the
+    receiver is the name the method itself binds, as in `func (s *Service)
+    Handle()` calling `s.Connect()`, so it names no module and the tiers score
+    the pool with `SAME_PACKAGE`.
     """
-    if not ref.is_member or ref.receiver in _SELF:
+    if not ref.is_member or ref.receiver in _SELF or ref.receiver_self:
         return None
     if not ref.receiver:
         return set()

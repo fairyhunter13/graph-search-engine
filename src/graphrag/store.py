@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS refs (
   name           TEXT NOT NULL,
   receiver       TEXT NOT NULL DEFAULT '',
   is_member      INTEGER NOT NULL DEFAULT 0,
+  receiver_self  INTEGER NOT NULL DEFAULT 0,
   call_site_byte INTEGER NOT NULL,
   line           INTEGER NOT NULL DEFAULT 0
 );

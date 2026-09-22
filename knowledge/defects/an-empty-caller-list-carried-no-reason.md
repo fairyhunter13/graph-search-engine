@@ -56,3 +56,32 @@ to reach a package, which is the same shape as
 `T-346` holds the reporting. Its corpus calls a method on a parameter, so the receiver's type
 is unknown and the reference resolves to nothing. A same-file call would not serve: that is
 stored as an edge and writes no `refs` row, so there would be no unreached reference to count.
+
+# The sound half closed on 2026-09-22
+
+One receiver shape needs no type inference at all. A method declaration binds its own
+receiver name, and Go requires every method of that type to live in one package, so a
+receiver word that matches the enclosing method's receiver parameter is `self` under an
+arbitrary name. `resolve._SELF` already held the rule for the spellings other languages use.
+
+`extract` computes it once per call site, because the fact is local to one file: the
+method's receiver name and the call site are in the same `FileFacts`. It rides to the store
+as `refs.receiver_self`, since resolution is [a query and not an index-time
+decision](../decisions/a-build-free-engine-resolves-at-query-time.md) and a rule confined to
+`resolve.py` would move no caller answer. `EXTRACTION_ALGORITHM` moves with the column: the
+column alone raises `no column named receiver_self` on the next write, and the rule alone
+reads 0 from every stored row and answers exactly as before.
+
+Measured on one private Go clone, 154 Go files of 160, both arms on the same tree with the
+store wiped between them. Under the old algorithm the 154 method names carried **1** caller
+edge in total, on **1** method. Under the new one they carry **141** caller edges on **46**
+methods, from **90** stored `receiver_self` rows. The control holds in the suite rather than
+on the corpus: `T-349` calls the same method on another variable of the same declared type,
+and that call stays external, so the rule cannot be satisfied by resolving every member call
+to its own package. No name from the corpus travels, under
+`policies/private-evidence-is-a-measurement-not-an-identifier.md`.
+
+What remains open is the rest of the gap sentence, and `query._unreached` now states exactly
+that: a field receiver, an expression receiver, and a local variable whose type comes from
+an assignment. Each needs a receiver type to reach a package, which is still
+`defects/module-identity-is-python-shaped.md`'s shape.

@@ -67,6 +67,10 @@ class DbRef:
     name: str
     receiver: str
     is_member: bool
+    # The receiver names the enclosing method's own receiver parameter. Stored
+    # rather than recomputed: resolution runs at query time, and the fact is
+    # only visible in the file the method was extracted from.
+    receiver_self: bool
     call_site_byte: int
     line: int
 
@@ -203,6 +207,7 @@ def row_to_ref(ctx: Context, row: sqlite3.Row) -> DbRef:
         name=row["name"],
         receiver=row["receiver"],
         is_member=bool(row["is_member"]),
+        receiver_self=bool(row["receiver_self"]),
         call_site_byte=row["call_site_byte"],
         line=row["line"],
     )

@@ -14,15 +14,7 @@ from functools import cache
 import tree_sitter as ts
 from tree_sitter_language_pack import get_language
 
-from . import grammars, queries
-
-# The byte that precedes an identifier in a member call. `expr.method()` is about
-# 43% of call sites.
-_MEMBER_BYTES = (b".", b">", b":")
-
-# What a receiver name is spelled with. `$` is here for PHP, where `$this` is
-# the receiver and dropping the sigil would make it a different name.
-_IDENT_BYTES = frozenset(b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$")
+from . import grammars, queries, receivers
 
 
 @dataclass(slots=True)
@@ -36,6 +28,10 @@ class Definition:
     body_end_byte: int
     parent: int | None = None
     qualified_name: str = ""
+    # The name a Go method binds its receiver to, as written: the `s` of
+    # `func (s *Service) Handle()`. In memory only -- it exists to compute
+    # `Reference.receiver_self` in this same pass, and nothing stores it.
+    receiver: str = ""
 
 
 @dataclass(slots=True)
@@ -47,6 +43,10 @@ class Reference:
     scope: int | None = None
     is_member: bool = False
     receiver: str = ""
+    # The receiver names the enclosing method's own receiver parameter, so it
+    # is Go's `self` under an arbitrary name. Computed here because the fact is
+    # local to one file, and stored because resolution happens at query time.
+    receiver_self: bool = False
 
 
 @dataclass(slots=True)
@@ -139,29 +139,6 @@ def _link(defs: list[Definition]) -> None:
         d.qualified_name = ".".join(reversed(chain))
 
 
-def _member(data: bytes, node) -> tuple[bool, str]:
-    """The separator before an identifier, and the receiver that precedes it.
-
-    The receiver is what tells `registry.load()` from `yaml.load()`. Discarding
-    it made the two one name, and `D-18` measured what that costs.
-    """
-    i = node.start_byte - 1
-    while i >= 0 and data[i : i + 1].isspace():
-        i -= 1
-    if i < 0 or data[i : i + 1] not in _MEMBER_BYTES:
-        return False, ""
-    # `->` and `::` are two bytes, and the receiver sits before both of them.
-    if data[i : i + 1] in (b">", b":") and i > 0 and data[i - 1 : i] in (b"-", b":"):
-        i -= 1
-    i -= 1
-    while i >= 0 and data[i : i + 1].isspace():
-        i -= 1
-    end = i + 1
-    while i >= 0 and data[i] in _IDENT_BYTES:
-        i -= 1
-    return True, data[i + 1 : end].decode("utf-8", "replace")
-
-
 def extract(path_lang: str, text: str) -> FileFacts:
     """Parse one file and return its definitions, references and imports."""
     facts = FileFacts(lang=path_lang, n_lines=text.count("\n") + 1)
@@ -198,12 +175,13 @@ def extract(path_lang: str, text: str) -> FileFacts:
                         start_line=whole.start_point[0] + 1,
                         end_line=whole.end_point[0] + 1,
                         body_end_byte=whole.end_byte,
+                        receiver=receivers.go_receiver(data, whole),
                     )
                 )
                 continue
             edge = queries.REFERENCE_KINDS.get(capture)
             if edge:
-                member, receiver = _member(data, ident)
+                member, receiver = receivers.member(data, ident)
                 facts.references.append(
                     Reference(
                         kind=edge,
@@ -218,6 +196,8 @@ def extract(path_lang: str, text: str) -> FileFacts:
     _link(facts.definitions)
     for ref in facts.references:
         ref.scope = _enclosing(facts.definitions, ref.call_site_byte)
+        if ref.receiver:
+            ref.receiver_self = receivers.is_self(facts.definitions, ref.scope, ref.receiver)
 
     facts.references = _dedup(facts.references, lambda r: (r.kind, r.name, r.call_site_byte))
     rows = _dedup(_imports(facts, path_lang, data, tree), lambda i: (i.module, i.symbol, i.alias))

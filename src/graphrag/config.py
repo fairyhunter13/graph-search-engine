@@ -89,7 +89,12 @@ def index_path(project: Path | str) -> Path:
 # `CREATE TABLE IF NOT EXISTS` — so a store built before `files.reason` keeps its
 # eight-column table and the next write raises `no column named reason`. 5 is
 # that column.
-EXTRACTION_ALGORITHM = 5
+# 6 is `refs.receiver_self`, and the receiver rule that reads it: a Go method
+# called on its own receiver now resolves inside its package instead of leaving
+# the repository. Both halves in one bump -- the column alone raises
+# `no column named receiver_self` on the next write, and the rule alone would
+# read 0 from every stored row and answer exactly as before.
+EXTRACTION_ALGORITHM = 6
 
 # -------------------------------------------------------------------- serving
 

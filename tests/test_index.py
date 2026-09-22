@@ -46,6 +46,19 @@ UNRESOLVED = {
 }
 
 
+# Two files, one Go package. `Handle` calls `Connect` on its own receiver, so
+# the call crosses a file and is stored as a `refs` row resolved at query time
+# -- the only shape that grades the stored `receiver_self` flag rather than the
+# in-memory rule.
+GO_SELF = {
+    "service.go": (
+        "package billing\n\ntype Service struct{}\n\n"
+        "func (s *Service) Handle() int {\n\treturn s.Connect()\n}\n"
+    ),
+    "connect.go": "package billing\n\nfunc (s *Service) Connect() int {\n\treturn 1\n}\n",
+}
+
+
 @pytest.fixture
 def cycle(repo):
     root = repo("cycle", CYCLE)
@@ -327,3 +340,22 @@ def test_a_downstream_answer_carries_no_unreached_gap(unresolved):
     """
     answer = query.neighbors(unresolved, "use", question="callees")
     assert not [g for g in answer.gaps if "references in this project spell" in g]
+
+
+def test_a_go_method_called_on_its_own_receiver_has_a_caller(repo):
+    """`T-350`. The stored half of the rule, which the resolve test cannot see.
+
+    Since `D-46` only a same-file reference becomes an edge at index time, and
+    everything else is a `refs` row resolved at query time. So a fix confined
+    to `resolve.py` would move no caller answer at all. This grades the column:
+    `refs.receiver_self` is written by extraction and read by `resolvedb`.
+    """
+    root = repo("goself", GO_SELF)
+    index.index_once(root)
+    conn = store.connect(config.index_path(root))
+    try:
+        hit = next(h for h in query.find_symbol(conn, "Connect") if h.path == "connect.go")
+        answer = query.neighbors(conn, hit.node_id, question="callers")
+        assert [r.name for r in answer.results] == ["Handle"]
+    finally:
+        conn.close()
