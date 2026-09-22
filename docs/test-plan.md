@@ -463,6 +463,12 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-339 | A caller that stops early reads one window | S-08 | D-59 | done | tests/test_fanout.py::test_a_caller_that_stops_early_reads_one_window |
 | T-340 | One worker restores the plain sequential loop | S-08 | D-59 | done | tests/test_fanout.py::test_one_worker_restores_the_plain_loop |
 | T-341 | A member with no graph is named and never raised | S-08 | D-59 | done | tests/test_fanout.py::test_a_member_with_no_graph_is_named_and_not_raised |
+| T-342 | A start with several homonyms names them, and each has its own caller set | S-08 | D-60 | done | tests/test_index.py::test_a_start_with_several_homonyms_names_them |
+| T-343 | A single definition carries no homonym gap | S-08 | D-60 | done | tests/test_index.py::test_a_single_definition_carries_no_homonym_gap |
+| T-344 | An exact name outranks a node that shares an FTS token | S-08 | D-60 | done | tests/test_index.py::test_an_exact_name_outranks_a_node_that_shares_a_token |
+| T-345 | blast_radius reports a homonym start too | S-08 | D-60 | done | tests/test_index.py::test_blast_radius_reports_a_homonym_start_too |
+| T-346 | An upstream answer names the references that did not reach the definition | S-08 | D-61 | done | tests/test_index.py::test_an_upstream_answer_names_the_references_that_missed_it |
+| T-347 | A downstream answer carries no unreached-reference gap | S-08 | D-61 | done | tests/test_index.py::test_a_downstream_answer_carries_no_unreached_gap |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted

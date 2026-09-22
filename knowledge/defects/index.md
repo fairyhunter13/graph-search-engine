@@ -73,3 +73,14 @@
   while fixing the last. Nine false claims. Every gate here passes a sentence that counts wrong,
   because none of them reads a number written in prose. `T-337` grades the one tally that drifted
   three times; the rest of the class is held by nothing but a reader who recounts.
+* [A start with several homonyms answered for one of
+  them](a-start-with-four-homonyms-answered-for-one.md) - `_resolve_start` read `find_symbol` with
+  `limit=1` and took the first row, so a question about a name was answered for whichever
+  definition FTS ranked first. `ambiguous` stayed 0, because it counts the candidates of each edge
+  and not the candidates of the start. FTS also matched 25 `package:` module rows for one query,
+  and the default limit of 20 let them crowd out the 4 methods that carry the name.
+* [An empty caller list carried no reason](an-empty-caller-list-carried-no-reason.md) - a Go method
+  called through a field receiver is never a candidate, so all four declarations of one name
+  returned an empty caller list while the store held 17 `refs` rows spelling it. The only gaps named
+  were the four languages with no call capture. An upstream answer now reports how many references
+  spell the name and how many reached this definition.

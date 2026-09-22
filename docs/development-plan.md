@@ -220,6 +220,8 @@ for the callers of a known function and check them by hand.
 | D-58 | Discovery descends into a populated submodule, which `git ls-files` at the parent never lists | done | src/graphrag/discover.py, tests/test_discover.py | T-314..T-317 |
 | D-57 | The tier census, the fleet SCIP share and the ready-root overlay each have a producer that re-runs them, and a receipt that names no path | done | scripts/scip_census.py, tests/test_scip_census.py | T-333..T-336 |
 | D-59 | `find_symbol` reads the federation over a small pool, one window at a time, so an absent name stops costing one store at a time and a common name still stops at the first | done | src/graphrag/fanout.py, src/graphrag/tools.py, src/graphrag/config.py, tests/test_fanout.py | T-338..T-341 |
+| D-60 | A start resolution names every definition that spells the name, prefers an exact hit over a shared FTS token, and takes a `node_id` so a caller can choose one | done | src/graphrag/query.py, src/graphrag/tools.py, tests/test_index.py | T-342..T-345 |
+| D-61 | An upstream answer counts the references that spell the start's name and reports how many reached this definition, so an empty caller list carries the reason it is empty | done | src/graphrag/query.py, tests/test_index.py | T-346, T-347 |
 
 `D-09` and `D-10` own paths in a different repository, so their rows carry the `(ccw)` prefix and
 the path-anchor check skips them. `git ls-files` here cannot see them. That is a real limit of the

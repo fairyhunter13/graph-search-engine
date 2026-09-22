@@ -28,6 +28,24 @@ MIXED = {
 }
 
 
+# Two definitions spell one name, and only one of them is called. A plain
+# function call resolves, so the caller set of each definition is exact and the
+# only variable left is which definition a start resolution picks.
+HOMONYM = {
+    "one.py": "def handle():\n    return 1\n\n\ndef use():\n    return handle()\n",
+    "two.py": "def handle():\n    return 2\n",
+}
+
+
+# A reference the resolver cannot place: the receiver is a parameter, so its
+# type is unknown and `handle` resolves to no definition. A same-file call would
+# not serve, because that is stored as an edge and writes no `refs` row.
+UNRESOLVED = {
+    "lib.py": "class Svc:\n    def handle(self):\n        return 1\n",
+    "main.py": "def use(svc):\n    return svc.handle()\n",
+}
+
+
 @pytest.fixture
 def cycle(repo):
     root = repo("cycle", CYCLE)
@@ -40,6 +58,24 @@ def cycle(repo):
 @pytest.fixture
 def mixed(repo):
     root = repo("mixed", MIXED)
+    index.index_once(root)
+    conn = store.connect(config.index_path(root))
+    yield conn
+    conn.close()
+
+
+@pytest.fixture
+def homonym(repo):
+    root = repo("homonym", HOMONYM)
+    index.index_once(root)
+    conn = store.connect(config.index_path(root))
+    yield conn
+    conn.close()
+
+
+@pytest.fixture
+def unresolved(repo):
+    root = repo("unresolved", UNRESOLVED)
     index.index_once(root)
     conn = store.connect(config.index_path(root))
     yield conn
@@ -206,3 +242,88 @@ def test_the_registry_row_carries_the_figures_the_reach_hook_reads(cycle):
     kept = registry.get(root).to_json()
     assert kept["node_count"] == row["node_count"]
     assert kept["capabilities"] == row["capabilities"]
+
+
+def test_a_start_with_several_homonyms_names_them(homonym):
+    """`T-342`. The answer belonged to one definition and said nothing.
+
+    `_resolve_start` read `find_symbol(..., limit=1)` and took the first row, so
+    a question about a name was answered for whichever definition FTS ranked
+    first. `ambiguous` could not report it: it counts the candidates of each
+    edge, and each edge here has exactly one. A caller reading
+    `ambiguous: 0, gaps: []` had nothing to distinguish an answer about the
+    name from an answer about one of two definitions that spell it.
+    """
+    conn = homonym
+    ids = [hit.node_id for hit in query.find_symbol(conn, "handle")]
+    assert len(ids) == 2
+
+    answer = query.neighbors(conn, "handle", question="callers")
+    assert [r.name for r in answer.results] == ["use"]
+    gap = next(g for g in answer.gaps if "definitions spell this name" in g)
+    assert "one.py:1" in gap and "two.py:1" in gap
+
+    # The two definitions have different caller sets, which is what makes the
+    # silent pick a wrong answer rather than an arbitrary one.
+    assert [r.name for r in query.neighbors(conn, ids[0], question="callers").results] == ["use"]
+    assert query.neighbors(conn, ids[1], question="callers").results == []
+
+
+def test_a_single_definition_carries_no_homonym_gap(cycle):
+    """`T-343`. The gap is a fact about the start, not a banner on every answer."""
+    _, _, conn = cycle
+    answer = query.neighbors(conn, "alpha", question="callers")
+    assert not [g for g in answer.gaps if "definitions spell this name" in g]
+
+
+def test_an_exact_name_outranks_a_node_that_shares_a_token(homonym):
+    """`T-344`. FTS5 tokenizes a compound node name.
+
+    A module node is stored as `package:<path>`, so the query `one` matched the
+    module beside the function. Where a package node won the start, the answer
+    belonged to a node the caller never named.
+    """
+    conn = homonym
+    pool = query._start_candidates(conn, "one")
+    assert pool, "the name is indexed"
+    assert all(hit.name == "one" or hit.qualified_name == "one" for hit in pool)
+
+
+def test_blast_radius_reports_a_homonym_start_too(homonym):
+    """`T-345`. Both questions resolve a start, so both owe the same fact."""
+    answer = query.blast_radius(homonym, "handle", depth=2)
+    assert any("definitions spell this name" in g for g in answer.gaps)
+
+
+def test_an_upstream_answer_names_the_references_that_missed_it(unresolved):
+    """`T-346`. An empty caller list is the answer this engine refuses to give.
+
+    A caller question walks back through resolution, so a reference the
+    resolver cannot place is never counted. On a real Go corpus 17 references
+    spelled one method name and none reached the declaration, because a method
+    called through a field receiver is not resolved to the package that
+    declares it. The answer was an empty list with no gap, which reads as
+    nothing calling it.
+
+    The receiver here is a parameter, so its type is unknown and the reference
+    resolves to nothing. A same-file call would not do: it is stored as an edge
+    and writes no `refs` row, so there would be no unreached reference to count.
+    """
+    conn = unresolved
+    hit = next(h for h in query.find_symbol(conn, "handle") if h.kind == "method")
+
+    answer = query.neighbors(conn, hit.node_id, question="callers")
+    assert answer.results == []
+    gap = next(g for g in answer.gaps if "references in this project spell" in g)
+    assert "1 references in this project spell 'handle'" in gap
+    assert "0 of them resolved to this definition" in gap
+
+
+def test_a_downstream_answer_carries_no_unreached_gap(unresolved):
+    """`T-347`. The gap is about resolution into a definition, not out of one.
+
+    A callee question reads the references this body makes, so a count of every
+    reference that spells the start's own name says nothing about it.
+    """
+    answer = query.neighbors(unresolved, "use", question="callees")
+    assert not [g for g in answer.gaps if "references in this project spell" in g]

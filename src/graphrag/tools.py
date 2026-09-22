@@ -122,7 +122,10 @@ def enroll(root: Path | str) -> dict[str, Any]:
 @mcp.tool(
     name="index",
     description="Enrol a project and queue a graph pass. Returns immediately; "
-    "the pass runs in the background. Call again to read the counts.",
+    "the pass runs in the background. Calling it again reports the counts, and "
+    "queues the root and every federated member a second time, so it is an "
+    "enrolment and not a status read. To read counts alone, run "
+    "`graphrag doctor <root>`.",
     structured_output=True,
 )
 def index_project(root: str) -> dict[str, Any]:
@@ -131,12 +134,15 @@ def index_project(root: str) -> dict[str, Any]:
 
 @mcp.tool(
     name="find_symbol",
-    description="Find a symbol by exact name across the root and every project "
-    "it federates. Returns locations -- project, path, line range and kind -- "
-    "never bodies. Each hit names its project, and that project is the `root` "
-    "for the `neighbors` or `blast_radius` call after it. No edge crosses a "
-    "project boundary: node ids are per-store, and these services talk over "
-    "gRPC and events rather than calls.",
+    description="Find a symbol by name across the root and every project it "
+    "federates. Matching is full-text over the name and the qualified name, so "
+    "a compound node name that shares a token appears beside the exact hits: "
+    "read `name` before acting. Returns locations -- project, node_id, path, "
+    "line range and kind -- never bodies. Each hit names its project, and that "
+    "project is the `root` for the `neighbors` or `blast_radius` call after it. "
+    "Pass `node_id` as their `symbol` to name one of several definitions that "
+    "spell the same name. No edge crosses a project boundary: node ids are "
+    "per-store, and these services talk over gRPC and events rather than calls.",
     structured_output=True,
 )
 def find_symbol(name: str, root: str, limit: int = 20, federated: bool = True) -> dict[str, Any]:
@@ -193,6 +199,11 @@ def find_symbol(name: str, root: str, limit: int = 20, federated: bool = True) -
                 # The owning project, because a path alone does not say
                 # which of 360 graphs the next `neighbors` call names.
                 "project": str(project),
+                # The id `neighbors` and `blast_radius` take to name one of
+                # several definitions that spell the same name. A qualified
+                # name does not always separate them: a Go method carries its
+                # own name there and not its receiver's.
+                "node_id": hit.node_id,
                 "name": hit.name,
                 "qualified_name": hit.qualified_name,
                 "kind": hit.kind,
@@ -223,6 +234,17 @@ def find_symbol(name: str, root: str, limit: int = 20, federated: bool = True) -
     }
 
 
+def _start(symbol: str) -> str | int:
+    """A node id where the caller passed one, else the name.
+
+    The gap a homonym start prints tells the caller to ask again with a node
+    id, and `find_symbol` returns one. Over MCP every argument arrives as a
+    string, so without this coercion that remedy names something the caller
+    cannot pass.
+    """
+    return int(symbol) if symbol.isdigit() else symbol
+
+
 @mcp.tool(
     name="neighbors",
     description="One hop from a symbol: callers, callees, imports, importers, "
@@ -239,7 +261,9 @@ def neighbors(
         return {"error": str(exc), "results": []}
     try:
         return _answer(
-            query.neighbors(conn, symbol, question=question, include_ambiguous=include_ambiguous)
+            query.neighbors(
+                conn, _start(symbol), question=question, include_ambiguous=include_ambiguous
+            )
         )
     except ValueError as exc:
         # Returned rather than raised. An error naming the valid set is
@@ -265,7 +289,9 @@ def blast_radius(
         return {"error": str(exc), "results": []}
     try:
         return _answer(
-            query.blast_radius(conn, symbol, depth=depth, include_ambiguous=include_ambiguous)
+            query.blast_radius(
+                conn, _start(symbol), depth=depth, include_ambiguous=include_ambiguous
+            )
         )
     except ValueError as exc:
         return {"error": str(exc), "results": []}
