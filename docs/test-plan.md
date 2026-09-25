@@ -481,6 +481,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-357 | An absent binary picks nothing | S-06 | D-63 | done | tests/test_scip_auto.py::test_an_absent_binary_picks_nothing |
 | T-358 | `scip: false` gives no plan even with a ready indexer | S-06 | D-63 | done | tests/test_scip_auto.py::test_scip_false_gives_no_plan_even_with_a_ready_indexer |
 | T-359 | Named indexers win over auto even when not installed | S-06 | D-63 | done | tests/test_scip_auto.py::test_named_indexers_win_over_auto_even_when_not_installed |
+| T-360 | Arming a large tree never stops the daemon's threads | S-09 | D-64 | done | tests/test_watch.py::test_arming_a_large_tree_never_stops_the_daemons_threads |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted

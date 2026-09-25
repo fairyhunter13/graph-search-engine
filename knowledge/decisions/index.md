@@ -1,5 +1,9 @@
 # Decision
 
+* [The watch arms in a child process, because arming holds the
+  GIL](the-watch-arms-in-a-child-process.md) - watchfiles' `RustNotify` holds the GIL while
+  it walks every watched directory, which starves the watchdog pinger. The walk now runs in
+  `graphrag.watchchild`, and `armed()` says when the watches are in place.
 * [A build-free engine resolves at query time, and stores only what one file
   decides](a-build-free-engine-resolves-at-query-time.md) - No work that depends on more than
   one file may happen at index time. A same-file and a same-class reference is decided by its

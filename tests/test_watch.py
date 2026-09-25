@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import itertools
 import shutil
 import threading
 import time
@@ -33,11 +34,12 @@ def watching(repo):
     watch._intent = ()
     watch.start()
     for _ in range(200):
-        if watch._intent == (root,):
+        if watch._intent == (root,) and watch.armed():
             break
         time.sleep(0.05)
     assert watch.alive(), "the watcher thread never came up"
     assert watch._intent == (root,), "the watcher armed on another test's roots"
+    assert watch.armed(), "the watch never armed"
     yield root
     watch.stop()
     _drain()
@@ -369,7 +371,7 @@ def test_every_armed_root_delivers_and_not_only_the_first(watching, repo):
     registry.claim(second, direct=True)
     deadline = time.time() + 10.0
     while time.time() < deadline:
-        if {watching, second} <= set(watch._intent):
+        if {watching, second} <= set(watch._intent) and watch.armed():
             break
         time.sleep(0.05)
     assert {watching, second} <= set(watch._intent), "the second root never reached the watch set"
@@ -387,3 +389,36 @@ def test_every_armed_root_delivers_and_not_only_the_first(watching, repo):
             break
         time.sleep(0.1)
     assert want <= seen, f"an armed root delivered no event: {sorted(seen)}"
+
+
+def test_arming_a_large_tree_never_stops_the_daemons_threads(tmp_path):
+    """`RustNotify` holds the GIL for the whole arming walk, and in-process that
+    stopped every thread, the watchdog pinger among them. Over 60,000 directories
+    an in-process arm stalled a 10 ms heartbeat for 0.55-0.62 s, and the
+    child-process arm for 0.01 s."""
+
+    for i in range(300):
+        for j in range(200):
+            (tmp_path / f"d{i}" / f"e{j}").mkdir(parents=True)
+    beats, done = [], threading.Event()
+
+    def heartbeat():
+        while not done.is_set():
+            beats.append(time.perf_counter())
+            time.sleep(0.01)
+
+    threading.Thread(target=heartbeat, daemon=True).start()
+    time.sleep(0.1)
+    stop = threading.Event()
+    for _batch in watch._watch(
+        tmp_path,
+        watch_filter=lambda *_: True,
+        stop_event=stop,
+        debounce=50,
+        rust_timeout=100,
+        yield_on_timeout=True,
+    ):
+        break
+    done.set()
+
+    assert max(b - a for a, b in itertools.pairwise(beats)) < 0.25

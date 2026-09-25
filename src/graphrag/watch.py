@@ -17,9 +17,8 @@ import logging
 import threading
 from pathlib import Path
 
-from watchfiles import watch as _watch
-
 from . import config, federation, filters, jobs, ledger, prune, registry
+from .watchchild import arm as _watch
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +35,10 @@ _stamp: tuple[int, int] | None = None
 # disk. Both are rebuilt once per arm, beside `_intent`.
 _keys: frozenset[str] = frozenset()
 _links: dict[str, str] = {}
+# Set on the first batch of a pass, which the child only writes once its watches
+# are in place. Arming runs in a child process now, so "decided to arm" and
+# "watching" are a Python start and a directory walk apart.
+_armed = threading.Event()
 
 
 def _roots() -> tuple[Path, ...]:
@@ -159,6 +162,8 @@ def _submit(batch: set[tuple[int, str]], roots: tuple[Path, ...]) -> dict[str, i
 def _loop() -> None:
     global _intent
     while not _stop.is_set():
+        # Before `_intent` moves, so no reader sees the new set beside the old pass's flag.
+        _armed.clear()
         _intent = _roots()
         if not _intent:
             if _stop.wait(1.0):
@@ -177,6 +182,7 @@ def _loop() -> None:
                 rust_timeout=config.WATCH_POLL_MS,
                 yield_on_timeout=True,
             ):
+                _armed.set()
                 # Above the break, because `rearm_if_changed` runs every tick and
                 # the batch it breaks on is the one carrying the root's own
                 # deletion. inotify has no replay to hand that event back.
@@ -208,6 +214,7 @@ def _loop() -> None:
                 ledger.WATCH, {"armed": 0, "error": str(err), "was_watching": len(_intent)}
             )
             _intent = ()
+            _armed.clear()
             if _stop.wait(1.0):
                 return
 
@@ -225,7 +232,13 @@ def stop() -> None:
     _stop.set()
     if _thread is not None:
         _thread.join(timeout=10)
+    _armed.clear()
 
 
 def alive() -> bool:
     return _thread is not None and _thread.is_alive()
+
+
+def armed() -> bool:
+    """Whether this pass's watches are in place, and not only decided on."""
+    return _armed.is_set()
