@@ -63,10 +63,15 @@
   maintainer curates the tags queries, so the capture names drift with the pin, and every name is
   mapped or listed as ignored.
 * [The project config is the SCIP opt-in, and the environment switch only
-  subtracts](the-project-config-is-the-scip-opt-in-and-the-env-only-subtracts.md) - Two switches
-  that both default off make the first one unreachable. The project asks for the overlay in its
-  own config, and the environment variable exists so an operator can disable the tier on one
-  machine.
+  subtracts (deprecated 2026-09-25)](the-project-config-is-the-scip-opt-in-and-the-env-only-subtracts.md) -
+  Two switches that both default off make the first one unreachable. The project asks for the
+  overlay in its own config, and the environment variable exists so an operator can disable the
+  tier on one machine. Superseded by auto-by-language.
+* [The SCIP overlay is auto by language, and a project opts
+  out](the-scip-overlay-is-auto-by-language-and-a-project-opts-out.md) - Opt-in per project never
+  reached a federated member, because writing a `.graphrag.yaml` into somebody else's checkout is
+  not on offer. The overlay now runs for a language whose indexer is installed and needs no build
+  the tree cannot resolve, unless `scip: false` says no.
 * [The SCIP reader is a standard-library wire decoder, graded against
   protoc](the-scip-reader-is-stdlib-and-graded-against-protoc.md) - SCIP ships no Python binding.
   Generated code would add a runtime pin that has to move with it, for a tier that is off by

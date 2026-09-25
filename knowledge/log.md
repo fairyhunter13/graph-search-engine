@@ -5,6 +5,22 @@ title: graphrag knowledge history
 
 # Bundle history
 
+## 2026-09-25
+
+- **Creation**: `decisions/the-scip-overlay-is-auto-by-language-and-a-project-opts-out.md`, and
+  `decisions/the-project-config-is-the-scip-opt-in-and-the-env-only-subtracts.md` deprecated.
+  `ProjectConfig.scip` moves from `bool = False` to `bool | None = None`; `None` is auto and only
+  an explicit `false` opts out, so `scip.enabled` and `effective()`'s member inheritance both read
+  three values instead of two. `scip.plan` and `scip.auto_indexers` are new: a project naming
+  `scip_indexers` keeps that list, and a silent one gets the indexers whose `readiness` tier is
+  `ready`, or `installable` with an empty dependency marker, over the languages tree-sitter found.
+  The unchanged-tree early return in `index.index_once` used to skip the overlay outright, so an
+  already-indexed project could never gain it; it now re-plans and re-runs the overlay there too
+  when the plan differs from the `scip_indexers` meta row `_overlay` stamps after every run. Fixes
+  the gap `defects/an-empty-caller-list-carried-no-reason.md`'s Go case shares with every federated
+  member that never wrote a `.graphrag.yaml`: opt-in per project could not reach a repository
+  nobody here owns.
+
 ## 2026-09-22
 
 - **Creation**: `defects/a-start-with-four-homonyms-answered-for-one.md`. Found from outside, by asking a private Go repository who calls one method and getting an empty list. The corpus and the method are not named, per `policies/private-evidence-is-a-measurement-not-an-identifier.md`; the counts are the evidence. `find_symbol` returned 4 methods spelling that name plus 25 `package:` module rows an FTS token matched, and `_resolve_start` read `limit=1` and took the first. `neighbors` then reported `ambiguous: 0` with no gap, because `ambiguous` counts the candidates of each edge and not the candidates of the start. Reproduced on two same-named functions where only one is called, so the two caller sets differ and the silent pick is a wrong answer rather than an arbitrary one. `D-60` fixes it: the pool is named in a gap, an exact hit on `name` or `qualified_name` outranks a shared token, and `find_symbol` returns a `node_id` that `neighbors` and `blast_radius` accept. A Go method's `qualified_name` is still its own name and not its receiver's, so a qualified name alone cannot separate them; that gap stays open and the concept says so.

@@ -39,8 +39,10 @@ class ProjectConfig:
     languages: list[str] = field(default_factory=list)
     # Other projects this one federates. Expanded one level, never transitively.
     members: list[str] = field(default_factory=list)
-    # The SCIP overlay, off unless a project asks for it and can build.
-    scip: bool = False
+    # The SCIP overlay. `None` (the default) is auto: it turns on for a
+    # language whose indexer is installed. `True` turns it on and `False`
+    # opts a project or its members out.
+    scip: bool | None = None
     scip_indexers: list[str] = field(default_factory=list)
 
 
@@ -117,9 +119,12 @@ def effective(root: Path | str) -> ProjectConfig:
     opt-in to the SCIP overlay, reaches the 360 repositories a workspace
     federates.
 
-    `scip` is true where any claiming root asks for it, and `scip_indexers` is
-    the union over those roots. A root turns the overlay on for its members and
-    for nobody else's.
+    `scip` follows the same rule the effective config leaves for `None`: `True`
+    wins over any other claiming root, `False` wins only where no root sets
+    `True`, and the overlay is left auto where every claiming root is silent.
+    `scip_indexers` is the union over the roots that name one. A root turns
+    the overlay on, off or leaves it to auto for its members and for nobody
+    else's.
 
     A member carrying its own config keeps it whole. Nothing is merged into a
     file somebody wrote, because a half-obeyed config is what `projcfg` refuses.
@@ -138,7 +143,7 @@ def effective(root: Path | str) -> ProjectConfig:
     entry = registry.get(root)
     exclude: list[str] = []
     languages: list[str] = []
-    scip = False
+    scip: bool | None = None
     scip_indexers: list[str] = []
     for parent in entry.roots if entry else []:
         try:
@@ -147,7 +152,10 @@ def effective(root: Path | str) -> ProjectConfig:
             continue
         exclude.extend(pat for pat in inherited.exclude if pat not in exclude)
         languages.extend(name for name in inherited.languages if name not in languages)
-        scip = scip or inherited.scip
+        if inherited.scip is True:
+            scip = True
+        elif inherited.scip is False and scip is None:
+            scip = False
         scip_indexers.extend(name for name in inherited.scip_indexers if name not in scip_indexers)
     own.exclude = exclude
     own.languages = languages

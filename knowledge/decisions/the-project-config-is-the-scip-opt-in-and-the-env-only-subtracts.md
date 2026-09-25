@@ -3,8 +3,8 @@ type: Decision
 resource: knowledge/decisions/the-project-config-is-the-scip-opt-in-and-the-env-only-subtracts.md
 title: The project config is the SCIP opt-in, and the environment switch only subtracts
 description: "Two switches that both default off make the first one unreachable. The project asks for the overlay in its own config, and the environment variable exists so an operator can disable the tier on one machine."
-tags: [scip, config, overlay]
-status: stable
+tags: [scip, config, overlay, auto]
+status: deprecated
 generated: { by: claude/opus-5, at: 2026-08-27T09:15:52Z }
 ---
 
@@ -28,3 +28,10 @@ Every live SCIP indexer needs a resolved build. `scip-python` needs the activate
 `scip-java` runs the project's own Gradle or Maven build. Tree-sitter needs none of that. That
 asymmetry is the reason SCIP is an overlay and never the floor, and a switch that turned it on
 everywhere would make indexing fail in projects that never asked for it.
+
+# Superseded
+
+`scip: false` replaced `scip: true` as the only opt-in on 2026-09-25. A project no longer needs a
+config at all: [the SCIP overlay is auto by language, and a project opts out](the-scip-overlay-is-auto-by-language-and-a-project-opts-out.md)
+is now the rule. "The rule" section above, and the claim that "the overlay stays off in every
+project that does not ask", are both the retired behavior.

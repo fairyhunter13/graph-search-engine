@@ -16,7 +16,7 @@ from . import ingest, read, run
 from .ingest import CoverageError, IngestReport
 from .run import OUTPUT_NAME, RunError
 
-__all__ = ["CoverageError", "IngestReport", "RunError", "overlay"]
+__all__ = ["CoverageError", "IngestReport", "RunError", "auto_indexers", "enabled", "overlay", "plan"]
 
 
 def _languages(conn: sqlite3.Connection) -> frozenset[str]:
@@ -95,6 +95,42 @@ def _unit(
     return f"{report.nodes} nodes, {report.calls} calls, {report.implements} implementations"
 
 
-def enabled(project_scip: bool) -> bool:
-    """Off unless the project asks and the environment has not disabled it."""
-    return project_scip and config.SCIP_ENABLED
+def enabled(project_scip: bool | None) -> bool:
+    """Off only where the project says so, or the environment disables it.
+
+    `None` is auto: the overlay is free to run, and `plan` decides per
+    language whether an installed indexer backs it. `False` opts out.
+    """
+    return project_scip is not False and config.SCIP_ENABLED
+
+
+def auto_indexers(conn: sqlite3.Connection, root: Path | str) -> list[str]:
+    """Every indexer this project can run unattended, with no config at all.
+
+    `ready` needs no help. `installable` needs help only where the indexer's
+    own dependency marker is missing, so an indexer with no such marker
+    (`deps` empty, as `scip-go`'s module cache is) is trusted at
+    `installable` too. `scip-typescript` and `scip-php` name a marker, so
+    they are auto-selected only where it is already on disk: the overlay
+    never runs `npm ci` or `composer install` to manufacture one.
+    """
+    return sorted(
+        row["indexer"]
+        for row in run.readiness(root, _languages(conn))
+        if row["tier"] == "ready" or (row["tier"] == "installable" and not row["deps"])
+    )
+
+
+def plan(conn: sqlite3.Connection, root: Path | str, cfg) -> list[str]:
+    """The indexers one pass should run: named, or worked out, or none.
+
+    Empty where the overlay is off. A project that names `scip_indexers`
+    keeps that list exactly, install state included, because naming a tool
+    is asking for its refusal to be reported rather than silently skipped.
+    Naming none falls back to `auto_indexers`.
+    """
+    if not enabled(cfg.scip):
+        return []
+    if cfg.scip_indexers:
+        return sorted(cfg.scip_indexers)
+    return auto_indexers(conn, root)

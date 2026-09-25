@@ -472,6 +472,15 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-348 | A Go method called on its own receiver resolves in its package | S-08 | D-62 | done | tests/test_resolve.py::test_a_go_method_called_on_its_own_receiver_resolves_in_its_package |
 | T-349 | A call on another variable of the same type stays unresolved | S-08 | D-62 | done | tests/test_resolve.py::test_a_call_on_another_variable_of_the_same_type_stays_unresolved |
 | T-350 | The stored self-receiver flag gives the method a caller | S-08 | D-62 | done | tests/test_index.py::test_a_go_method_called_on_its_own_receiver_has_a_caller |
+| T-351 | No config leaves the SCIP overlay at auto | S-07 | D-63 | done | tests/test_projcfg.py::test_no_config_leaves_scip_auto |
+| T-352 | An inherited `true` wins | S-07 | D-63 | done | tests/test_projcfg.py::test_an_inherited_true_wins |
+| T-353 | An inherited `false` wins over no opinion | S-07 | D-63 | done | tests/test_projcfg.py::test_an_inherited_false_wins_over_no_opinion |
+| T-354 | A Go project with the binary installed picks scip-go | S-06 | D-63 | done | tests/test_scip_auto.py::test_a_go_project_with_the_binary_installed_picks_scip_go |
+| T-355 | A TypeScript project without `node_modules` picks nothing | S-06 | D-63 | done | tests/test_scip_auto.py::test_a_ts_project_without_node_modules_picks_nothing |
+| T-356 | A TypeScript project with `node_modules` picks scip-typescript | S-06 | D-63 | done | tests/test_scip_auto.py::test_a_ts_project_with_node_modules_picks_scip_typescript |
+| T-357 | An absent binary picks nothing | S-06 | D-63 | done | tests/test_scip_auto.py::test_an_absent_binary_picks_nothing |
+| T-358 | `scip: false` gives no plan even with a ready indexer | S-06 | D-63 | done | tests/test_scip_auto.py::test_scip_false_gives_no_plan_even_with_a_ready_indexer |
+| T-359 | Named indexers win over auto even when not installed | S-06 | D-63 | done | tests/test_scip_auto.py::test_named_indexers_win_over_auto_even_when_not_installed |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted

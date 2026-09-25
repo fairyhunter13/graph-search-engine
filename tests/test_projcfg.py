@@ -92,12 +92,40 @@ def test_a_member_with_its_own_config_inherits_no_scip_opt_in(tmp_path):
     registry.claim(member, root=root)
 
     got = projcfg.effective(member)
-    assert got.scip is False
+    assert got.scip is None
     assert got.scip_indexers == []
 
 
 def test_an_unclaimed_project_inherits_nothing(tmp_path):
-    """No root, no opt-in. The default stays off."""
+    """No root, no opt-in. The default stays auto."""
     lone = tmp_path / "lone"
     lone.mkdir()
-    assert projcfg.effective(lone).scip is False
+    assert projcfg.effective(lone).scip is None
+
+
+def test_no_config_leaves_scip_auto(tmp_path):
+    assert projcfg.load(tmp_path).scip is None
+
+
+def test_an_inherited_true_wins(tmp_path):
+    from graphrag import registry
+
+    root, member = tmp_path / "root3", tmp_path / "member3"
+    root.mkdir()
+    member.mkdir()
+    (root / config.PROJECT_CONFIG_NAME).write_text("scip: true\n")
+    registry.claim(root, direct=True)
+    registry.claim(member, root=root)
+    assert projcfg.effective(member).scip is True
+
+
+def test_an_inherited_false_wins_over_no_opinion(tmp_path):
+    from graphrag import registry
+
+    root, member = tmp_path / "root4", tmp_path / "member4"
+    root.mkdir()
+    member.mkdir()
+    (root / config.PROJECT_CONFIG_NAME).write_text("scip: false\n")
+    registry.claim(root, direct=True)
+    registry.claim(member, root=root)
+    assert projcfg.effective(member).scip is False

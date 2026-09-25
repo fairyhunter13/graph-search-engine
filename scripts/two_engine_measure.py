@@ -100,6 +100,7 @@ TRUTH: list[dict] = [
             "src/graphrag/scip/__init__.py",
             "src/graphrag/scip/deps.py",
             "scripts/scip_census.py",
+            "tests/test_scip_auto.py",
         ],
     },
     {
@@ -187,6 +188,7 @@ TRUTH: list[dict] = [
             "tests/test_perfile.py",
             "src/graphrag/scip/deps.py",
             "scripts/scip_census.py",
+            "tests/test_scip_auto.py",
         ],
     },
     {
@@ -224,6 +226,10 @@ TRUTH: list[dict] = [
             # hour the file was written and scored it a false positive against
             # this list, the same direction `language_of` records above.
             "tests/test_fanout.py",
+            # The auto-by-language SCIP overlay's own fixture helper. Same
+            # direction again: `_conn` in `tests/test_scip_auto.py` calls
+            # `index_once` to build a store before asserting on `scip.plan`.
+            "tests/test_scip_auto.py",
         ],
     },
 ]

@@ -75,7 +75,7 @@ def _facts(root: Path, metas: list[discover.FileMeta]) -> dict[str, extract.File
 
 
 def _overlay(conn, root: Path, cfg: projcfg.ProjectConfig) -> dict[str, str]:
-    """The SCIP tier, off unless the project asks for it and names a tool.
+    """The SCIP tier, off unless the project asks for it and a plan names a tool.
 
     Imported here and not at module scope, so a project that never enables the
     overlay never loads it. The tier is deletable in one move, and an
@@ -83,9 +83,12 @@ def _overlay(conn, root: Path, cfg: projcfg.ProjectConfig) -> dict[str, str]:
     """
     from . import scip
 
-    if not scip.enabled(cfg.scip) or not cfg.scip_indexers:
+    names = scip.plan(conn, root, cfg)
+    if not names:
         return {}
-    return scip.overlay(conn, root, cfg.scip_indexers)
+    out = scip.overlay(conn, root, names)
+    store.set_meta(conn, "scip_indexers", ",".join(names))
+    return out
 
 
 def index_once(
@@ -131,6 +134,15 @@ def index_once(
     if not changes and not force and not report.rebuilt:
         report.unchanged = True
         report.files = store.counts(conn)["files"] if report.hinted else len(metas)
+        if not report.hinted:
+            from . import scip
+
+            names = scip.plan(conn, root, cfg)
+            if ",".join(names) != store.get_meta(conn, "scip_indexers"):
+                with conn:
+                    report.scip = _overlay(conn, root, cfg)
+                    if report.scip:
+                        indexwrite.rebuild_fts(conn)
         conn.close()
         return report
 

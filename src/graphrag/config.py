@@ -160,10 +160,11 @@ MAX_DEPTH = _env_int("MAX_DEPTH", 8)
 # Discovery stops here. A member's members are not the root's members.
 FEDERATION_DEPTH = _env_int("FEDERATION_DEPTH", 1)
 
-# The project's `.graphrag.yaml` is the opt-in, and the overlay is off in every
-# project that does not ask, because every indexer needs a resolved build and
-# tree-sitter needs none. This switch only ever subtracts: an operator sets it
-# to 0 to disable the tier on one machine without editing any project.
+# The overlay is auto by default: it runs for a language whose indexer is
+# installed and needs no build the tree cannot resolve, unless a project's
+# `.graphrag.yaml` sets `scip: false`. This switch only ever subtracts: an
+# operator sets it to 0 to disable the tier fleet-wide on one machine without
+# editing any project.
 SCIP_ENABLED = _env_flag("SCIP_ENABLED", True)
 
 # The coverage guard's two floors, as a share of the tree-sitter census. A SCIP
