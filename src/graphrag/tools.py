@@ -15,7 +15,7 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
-from . import config, fanout, federation, jobs, query, registry, store, watch
+from . import answers, config, fanout, federation, jobs, query, registry, store, watch
 
 INSTRUCTIONS = """\
 Structural code search over the graph: who calls this, what breaks if I change
@@ -39,37 +39,6 @@ this, what implements this.
 """
 
 mcp = MCPServer(name=config.APP, version="0.1.0", instructions=INSTRUCTIONS)
-
-
-def _rows(reached) -> list[dict[str, Any]]:
-    return [
-        {
-            "name": r.name,
-            "qualified_name": r.qualified_name,
-            "kind": r.kind,
-            "path": r.path,
-            "line": r.line,
-            "depth": r.depth,
-            "edge_kind": r.edge_kind,
-            "confidence": round(r.confidence, 4),
-            "evidence": r.evidence,
-            # The plan says every tool reports this where it opens the ambiguous
-            # rows. Without it a caller reads one edge and cannot tell whether
-            # nine others were dropped beside it.
-            "candidate_count": r.candidate_count,
-        }
-        for r in reached
-    ]
-
-
-def _answer(answer: query.Answer) -> dict[str, Any]:
-    return {
-        "question": answer.question,
-        "results": _rows(answer.results),
-        "gaps": answer.gaps,
-        "ambiguous": answer.ambiguous,
-        "capabilities": answer.capabilities,
-    }
 
 
 def _connect(root: str) -> tuple[Path, sqlite3.Connection]:
@@ -144,6 +113,7 @@ def index_project(root: str) -> dict[str, Any]:
     "spell the same name. No edge crosses a project boundary: node ids are "
     "per-store, and these services talk over gRPC and events rather than calls.",
     structured_output=True,
+    meta={"anthropic/alwaysLoad": True},
 )
 def find_symbol(name: str, root: str, limit: int = 20, federated: bool = True) -> dict[str, Any]:
     """Search the root, then every project it federates. One store at a time.
@@ -251,6 +221,7 @@ def _start(symbol: str) -> str | int:
     "implementations or references. An edge is a fact, where a ranked mention is "
     "not. A missing capability is reported, never returned as an empty list.",
     structured_output=True,
+    meta={"anthropic/alwaysLoad": True},
 )
 def neighbors(
     symbol: str, root: str, question: str = "callers", include_ambiguous: bool = False
@@ -260,7 +231,7 @@ def neighbors(
     except LookupError as exc:
         return {"error": str(exc), "results": []}
     try:
-        return _answer(
+        return answers.to_answer(
             query.neighbors(
                 conn, _start(symbol), question=question, include_ambiguous=include_ambiguous
             )
@@ -279,6 +250,7 @@ def neighbors(
     "depth. Terminates over a cycle and counts each dependent once. A depth over "
     "the ceiling is refused rather than truncated.",
     structured_output=True,
+    meta={"anthropic/alwaysLoad": True},
 )
 def blast_radius(
     symbol: str, root: str, depth: int = 3, include_ambiguous: bool = False
@@ -288,7 +260,7 @@ def blast_radius(
     except LookupError as exc:
         return {"error": str(exc), "results": []}
     try:
-        return _answer(
+        return answers.to_answer(
             query.blast_radius(
                 conn, _start(symbol), depth=depth, include_ambiguous=include_ambiguous
             )

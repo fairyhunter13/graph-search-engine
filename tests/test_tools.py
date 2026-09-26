@@ -60,6 +60,17 @@ def test_tool_schemas_are_conformant():
         assert tool.output_schema is not None
 
 
+def test_the_three_query_tools_load_at_claude_start():
+    """`T-361`: a client that defers an unlisted tool schema fails its first call.
+    `find_symbol`, `neighbors` and `blast_radius` are the tools a session reaches
+    for on its first turn. `index` stays deferred: a caller reaches it only after
+    one of the three names a root with no graph."""
+    listed = _listed()
+    for name in ("find_symbol", "neighbors", "blast_radius"):
+        assert listed[name].meta == {"anthropic/alwaysLoad": True}, name
+    assert not listed["index"].meta
+
+
 def test_neighbors_carries_confidence(indexed):
     """`T-13`: every result names how sure the edge is and what resolved it."""
     answer = tools.neighbors(symbol="beta", root=str(indexed), question="callers")

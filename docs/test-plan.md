@@ -482,6 +482,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-358 | `scip: false` gives no plan even with a ready indexer | S-06 | D-63 | done | tests/test_scip_auto.py::test_scip_false_gives_no_plan_even_with_a_ready_indexer |
 | T-359 | Named indexers win over auto even when not installed | S-06 | D-63 | done | tests/test_scip_auto.py::test_named_indexers_win_over_auto_even_when_not_installed |
 | T-360 | Arming a large tree never stops the daemon's threads | S-09 | D-64 | done | tests/test_watch.py::test_arming_a_large_tree_never_stops_the_daemons_threads |
+| T-361 | The three query tools load without a `ToolSearch` round trip | S-08 | D-65 | done | tests/test_tools.py::test_the_three_query_tools_load_at_claude_start |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted
@@ -786,3 +787,11 @@ The four `T-266` cases fail on the predecessor as one collection error, because
 `graphrag.scip.deps` is the change. The other four rows fail there each for their own reason:
 `run.shutil` is absent for `T-265` and `T-306`, `IngestReport.stale` for `T-267`, and `doctor`
 carries no `scip` key for `T-305`.
+
+# What `T-361` found, 2026-09-26
+
+A client that defers an unlisted tool schema fails its first call: it pays a `ToolSearch` round
+trip on `select:mcp__graphrag__find_symbol` before it can ask anything. `T-361` fails on the
+predecessor because `find_symbol`, `neighbors` and `blast_radius` carry no `_meta`, and passes once
+each decorator sets `meta={"anthropic/alwaysLoad": True}`. `index` stays deferred on purpose: a
+caller reaches it only after one of the three names a root with no graph, never on a fresh session.
