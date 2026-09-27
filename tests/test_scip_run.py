@@ -137,9 +137,9 @@ def test_the_index_pass_runs_the_overlay_only_where_the_config_asks(repo, tmp_pa
 
 def test_an_index_that_is_not_there_is_refused_rather_than_invented(repo):
     """No file and no runnable tool is a refusal naming the path it wanted."""
-    root, conn = _store(repo, {"a.py": SRC, "A.java": "class A {}\n"})
-    got = scip.overlay(conn, root, ["scip-java"])
-    assert got["scip-java"].startswith("refused: no SCIP index at ")
+    root, conn = _store(repo, {"a.py": SRC, "Orders.rb": "class Orders\nend\n"})
+    got = scip.overlay(conn, root, ["scip-ruby"])
+    assert got["scip-ruby"].startswith("refused: no SCIP index at ")
     conn.close()
 
 
@@ -208,30 +208,86 @@ def test_a_sub_module_is_graded_against_its_own_files_and_not_the_whole_tree(rep
 def test_an_indexer_with_no_command_is_manual_and_never_absent(repo, monkeypatch):
     """`T-265`. An empty command is a ruling, and `readiness` must not hide it.
 
-    `scip-php` is the row it was written for: it hard-requires a Composer
-    install this engine will not perform, so the operator runs their own build
-    and hands the index over. Reporting that as `absent` would read as a missing
-    download and send someone to install a tool that would still not run here.
+    `scip-ruby` is the row it is written for now: `scip-ruby` and `scip-dart` are
+    the only two indexers left with no command, since scip-java, scip-clang and
+    scip-php all gained one on 2026-09-27. Reporting a command-less row as
+    `absent` would read as a missing download and send someone to install a
+    tool that would still not run here.
 
     `which` is stubbed to fail for everything, so `manual` is being decided
     ahead of `absent` and not merely alongside it.
     """
     monkeypatch.setattr(run.shutil, "which", lambda _name: None)
-    root, conn = _store(repo, {"Orders.php": "<?php\nclass Orders {}\n"})
+    root, conn = _store(repo, {"orders.rb": "class Orders\nend\n"})
     conn.close()
 
-    stood = {row["indexer"]: row["tier"] for row in run.readiness(root, ["php"])}
-    assert stood["scip-php"] == "manual"
+    stood = {row["indexer"]: row["tier"] for row in run.readiness(root, ["ruby"])}
+    assert stood["scip-ruby"] == "manual"
 
     with pytest.raises(run.RunError) as caught:
-        run.run("scip-php", root)
-    assert "scip-php" in str(caught.value)
+        run.run("scip-ruby", root)
+    assert "scip-ruby" in str(caught.value)
 
     # Read from the table rather than listed here, because a literal and the
     # table it copies agree about everything.
     every = [lang for i in run.INDEXERS.values() for lang in i.languages]
     manual = {row["indexer"] for row in run.readiness(root, every) if row["tier"] == "manual"}
     assert manual == {i.name for i in run.INDEXERS.values() if not i.command}
+
+
+def test_scip_php_reaches_ready_with_the_binary_and_the_vendor_marker(repo, monkeypatch):
+    """`scip-php` writes a fixed `index.scip` at the build root and takes no
+    output flag, so `readiness` must still call it `ready` once its one
+    dependency marker is on disk.
+    """
+    monkeypatch.setattr(run.shutil, "which", lambda name: f"/usr/bin/{name}")
+    root, conn = _store(repo, {"Orders.php": "<?php\nclass Orders {}\n"})
+    conn.close()
+
+    installable = run.readiness(root, ["php"])[0]
+    assert installable["tier"] == "installable"
+
+    (root / "vendor").mkdir()
+    (root / "vendor" / "autoload.php").write_text("<?php\n")
+    ready = run.readiness(root, ["php"])[0]
+    assert ready["tier"] == "ready"
+
+
+def test_scip_java_and_scip_clang_get_a_command_where_scip_go_already_had_one(repo, monkeypatch):
+    """`scip-java` names no `deps` marker, so it caps at `installable` forever,
+    exactly like `scip-go`'s module cache the tree cannot see. `scip-clang`
+    names `compile_commands.json` and reaches `ready` once that file is there.
+    """
+    monkeypatch.setattr(run.shutil, "which", lambda name: f"/usr/bin/{name}")
+    root, conn = _store(repo, {"Main.java": "class Main {}\n", "foo.c": "int f(void) { return 1; }\n"})
+    conn.close()
+
+    stood = {row["indexer"]: row["tier"] for row in run.readiness(root, ["java", "c"])}
+    assert stood["scip-java"] == "installable"
+    assert stood["scip-clang"] == "installable"
+
+    (root / "compile_commands.json").write_text("[]\n")
+    again = {row["indexer"]: row["tier"] for row in run.readiness(root, ["c"])}
+    assert again["scip-clang"] == "ready"
+
+
+def test_run_moves_a_fixed_output_file_to_the_requested_path(repo, monkeypatch, tmp_path):
+    """`scip-php` writes `index.scip` at the build root under whatever name the
+    tool picked, and `run` moves it rather than trusting a flag it does not have.
+    """
+    root, conn = _store(repo, {"Orders.php": "<?php\nclass Orders {}\n"})
+    conn.close()
+
+    def fake_subprocess_run(argv, **kwargs):
+        assert argv == ["scip-php"]
+        (root / "index.scip").write_bytes(b"scip-bytes")
+
+    monkeypatch.setattr(run.subprocess, "run", fake_subprocess_run)
+    out = tmp_path / "scip-php.scip"
+    got = run.run("scip-php", root, out)
+    assert got == out
+    assert out.read_bytes() == b"scip-bytes"
+    assert not (root / "index.scip").exists()
 
 
 def test_a_project_with_no_build_unit_marker_is_unconfigured(repo, monkeypatch):

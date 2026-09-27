@@ -13,7 +13,8 @@ hundred times, drops the file, writes the index and exits 0
 Every one of these needs a resolved build that tree-sitter does not, and that
 asymmetry is the whole reason this tier is an overlay. So a table entry with no
 command is not a gap: it means the operator runs their own build and hands the
-index over, which is the only honest default for a tool needing a Gradle run.
+index over, which is the only honest default for `scip-ruby` and `scip-dart`,
+neither of which ships a one-shot indexing command at all.
 """
 
 from __future__ import annotations
@@ -50,6 +51,10 @@ class Indexer:
     # resolved. Empty where they resolve outside the tree, as Go's module cache
     # does, so the tree cannot answer and `readiness` must not claim it can.
     deps: str = ""
+    # Some indexers write a fixed filename at the build root and take no output
+    # flag at all. Set this instead of relying on `command`'s trailing argv slot,
+    # and `run` moves that file to the caller's `out` path after the command runs.
+    fixed_output: str = ""
 
 
 INDEXERS: dict[str, Indexer] = {
@@ -66,11 +71,28 @@ INDEXERS: dict[str, Indexer] = {
             "node_modules",
         ),
         Indexer("scip-go", ("go",), True, True, ("scip-go", "index", "--output"), "go.mod"),
-        Indexer("scip-java", ("java", "scala", "kotlin"), True, True),
-        Indexer("scip-clang", ("c", "cpp"), False, True),
+        Indexer(
+            "scip-java", ("java", "scala", "kotlin"), True, True, ("scip-java", "index", "--output")
+        ),
+        Indexer(
+            "scip-clang",
+            ("c", "cpp"),
+            False,
+            True,
+            ("scip-clang", "--compdb-path=compile_commands.json", "--index-output-path"),
+            deps="compile_commands.json",
+        ),
         Indexer("scip-ruby", ("ruby",), False, True),
         Indexer("scip-dart", ("dart",), True, True),
-        Indexer("scip-php", ("php",), False, True, deps="vendor/autoload.php"),
+        Indexer(
+            "scip-php",
+            ("php",),
+            False,
+            True,
+            ("scip-php",),
+            deps="vendor/autoload.php",
+            fixed_output="index.scip",
+        ),
         Indexer("rust-analyzer", ("rust",), True, False),
     )
 }
@@ -194,14 +216,18 @@ def run(name: str, root: Path | str, out: Path | str = "", timeout: float = 1800
             f"{name} needs the project's own build, so graphrag does not invoke it. "
             f"Run it yourself and point the overlay at the index it writes."
         )
+    argv = list(got.command) if got.fixed_output else [*got.command, str(out)]
     try:
-        subprocess.run(
-            [*got.command, str(out)], cwd=root, capture_output=True, timeout=timeout, check=False
-        )
+        subprocess.run(argv, cwd=root, capture_output=True, timeout=timeout, check=False)
     except FileNotFoundError as exc:
         raise RunError(f"{got.command[0]} is not on PATH") from exc
     except subprocess.TimeoutExpired as exc:
         raise RunError(f"{name} did not finish within {timeout:.0f}s") from exc
+    if got.fixed_output:
+        produced = root / got.fixed_output
+        if not produced.exists():
+            raise RunError(f"{name} wrote no index at {produced}")
+        produced.replace(out)
     if not out.exists():
         raise RunError(f"{name} wrote no index at {out}")
     return out

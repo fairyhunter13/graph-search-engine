@@ -192,3 +192,24 @@ Related: [which languages get a SCIP tier](which-languages-get-a-scip-tier.md), 
 refusal beside the other eight,
 [scip is an overlay and never the extractor](scip-is-an-overlay-and-never-the-extractor.md),
 [a submodule is invisible to discovery](../defects/a-submodule-is-invisible-to-discovery.md).
+
+# Reversed 2026-09-27: scip-php gets a command
+
+The owner decision behind `D-67` (ccw's retrieval-and-prune plan) overrides the empty-`command`
+ruling above for `scip-php` specifically, independent of the estate measurement: `Indexer("scip-php",
+..., ("scip-php",), deps="vendor/autoload.php", fixed_output="index.scip")`.
+
+The `1 of 333` PHP roots figure this record measured is unchanged and is not the reason for the
+reversal -- the tier still reads `manual` in the absence of a `command` and `installable` once one
+exists but the vendor marker is absent, exactly as `auto_indexers` already assumed in
+[the SCIP overlay is auto by language](the-scip-overlay-is-auto-by-language-and-a-project-opts-out.md).
+Composer's own packaging is the new finding: `composer global require davidrjenni/scip-php` and
+`composer require --dev` both install the tool with no nested `vendor/` beside itself, and
+`Composer.php:169` hard-requires exactly that (`__DIR__/../../vendor`). Only a standalone git clone
+of the tool's own repository, `composer install`ed in place, satisfies it. A `ccw`-side installer
+must produce a `scip-php` on `PATH` that is a wrapper around such a clone, not a `composer global
+require` symlink -- the latter runs and fails on every project, every time, with `RuntimeException:
+Invalid scip-php vendor directory`.
+
+PHPStan stays deferred for the reasons above, unchanged. Open issue #862 (README crash) still means
+a clone of `main` is the only source, matching the self-vendoring finding rather than contradicting it.
