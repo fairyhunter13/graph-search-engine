@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 from graphrag import config
+from graphrag.scip import run as scip_run
 
 
 @pytest.fixture(autouse=True)
@@ -28,6 +29,36 @@ def state_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "LEDGER_DIR", root / "ledgers")
     monkeypatch.setattr(config, "HEALTH_STATE_PATH", root / "health.json")
     return root
+
+
+@pytest.fixture(autouse=True)
+def no_host_scip_indexers(monkeypatch):
+    """A SCIP indexer installed on this development machine must never leak
+    into a test that did not ask for one.
+
+    `scip.enabled`'s default is auto (`D-63`), so any project a test builds
+    that happens to carry a `go.mod`/`vendor/autoload.php`/etc. and runs
+    through `index.index_once` picks up a real binary otherwise -- this
+    machine carries `scip-python`, `scip-typescript`, `scip-go` and
+    `rust-analyzer` on `PATH` already, and gained `scip-java`, `scip-clang`
+    and `scip-php` in the same session `D-67` gave them a command.
+
+    Scoped to the indexer names `run.INDEXERS` actually holds, and never to
+    `shutil.which` itself, so `systemd.units`'s `shutil.which("graphrag")`
+    keeps reading the real `PATH`. A test that wants a binary present still
+    fakes it with its own `monkeypatch.setattr(run.shutil, "which", ...)`,
+    which runs after this one and wins for its own duration.
+    """
+    real_which = scip_run.shutil.which
+    hidden = frozenset(scip_run.INDEXERS)
+
+    def which(name, *args, **kwargs):
+        if name in hidden:
+            return None
+        return real_which(name, *args, **kwargs)
+
+    monkeypatch.setattr(scip_run.shutil, "which", which)
+
 
 
 @pytest.fixture
