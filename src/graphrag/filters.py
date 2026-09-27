@@ -69,6 +69,13 @@ EXTENSIONS: dict[str, str] = {
     ".tf": "terraform",
     ".hcl": "hcl",
     ".proto": "proto",
+    ".cu": "cuda",
+    ".cuh": "cuda",
+    ".el": "elisp",
+    ".fs": "fsharp",
+    ".fsx": "fsharp",
+    ".fsi": "fsharp",
+    ".svelte": "svelte",
 }
 
 # Directory names never descended into. A vendored tree is somebody else's

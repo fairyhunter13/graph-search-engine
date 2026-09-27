@@ -24,11 +24,15 @@ def _pack_only(lang: str) -> set[str]:
 
 
 def test_capability_counts_under_the_pin():
-    """Measured 2026-08-27 on tree-sitter-language-pack 1.15.8.
+    """Measured 2026-09-27, tree-sitter-language-pack 1.15.8 plus this
+    project's own repair files for bash, c, cuda, fsharp, hcl, haskell, julia,
+    perl, sql, swift, terraform and zig, and the `vue`/`svelte` override onto
+    TypeScript's capability set.
 
     Two tables, because they answer different questions. The pack census is what
     the wheel ships. The effective table is what this project answers with, and
-    it is higher for `calls` because TypeScript and TSX concatenate JavaScript.
+    it is higher for `calls` because TypeScript, TSX, C, Swift, CUDA, F# and
+    Svelte each gain a call capture the pack's own query does not carry.
     """
     langs = grammars.known_languages()
     tagged = _tagged()
@@ -45,24 +49,30 @@ def test_capability_counts_under_the_pin():
         cap: sum(1 for lang in tagged if cap in grammars.capabilities(lang))
         for cap in ("defs", "calls", "impls")
     }
-    assert effective == {"defs": 67, "calls": 52, "impls": 17}
+    assert effective == {"defs": 68, "calls": 57, "impls": 17}
 
-    # The one tagged grammar with no definition capture at all. A markup query
-    # that names sections, so nothing it captures is a symbol.
-    assert [lang for lang in tagged if "defs" not in grammars.capabilities(lang)] == ["svelte"]
+    # `svelte`'s own pack query names markup sections and no symbol, but this
+    # project's `capabilities` overrides it onto TypeScript's set, which does
+    # carry defs. No tagged grammar is left with none.
+    assert [lang for lang in tagged if "defs" not in grammars.capabilities(lang)] == []
 
 
-def test_typescript_gains_calls_and_c_never_does():
+def test_typescript_and_c_both_gain_calls_from_a_repair():
+    """T-06 renamed: C stopped being the permanent counter-example on
+    2026-09-27, when `tags_extra/c.scm` gave it the one pattern its own
+    pack query never shipped.
+    """
     assert "calls" in grammars.capabilities("typescript")
     assert "calls" not in _pack_only("typescript")
     assert "calls" in grammars.capabilities("tsx")
-    assert "calls" not in grammars.capabilities("c")
+    assert "calls" in grammars.capabilities("c")
+    assert "calls" not in _pack_only("c")
 
 
 def test_a_missing_capability_is_a_sentence_and_a_present_one_is_empty():
     assert grammars.missing("python", "calls") == ""
-    reason = grammars.missing("c", "calls")
-    assert reason.startswith("c in this project")
+    reason = grammars.missing("elisp", "calls")
+    assert reason.startswith("elisp in this project")
     assert "no call capture" in reason
 
 

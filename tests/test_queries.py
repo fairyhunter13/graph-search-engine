@@ -56,6 +56,14 @@ def test_the_repair_layer_is_appended_and_the_pack_query_is_untouched():
     assert queries.tags_extra("python") == ""
 
 
+def test_the_repair_layer_follows_query_base_like_the_import_layer_already_does():
+    """`T-368`. `terraform` writes no repair of its own -- `hcl`'s answers it."""
+    assert queries.tags_extra("terraform") == queries.tags_extra("hcl")
+    assert queries.tags_extra("terraform") != ""
+    assert "not-a-language" not in queries.QUERY_BASE
+    assert queries.tags_extra("not-a-language") == ""
+
+
 def test_an_import_query_follows_the_base_language():
     assert queries.import_source("typescript") == queries.import_source("javascript")
     assert queries.import_source("not-a-language") == ""

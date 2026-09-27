@@ -58,7 +58,15 @@ def cached_languages() -> frozenset[str]:
 
 @cache
 def capabilities(lang: str) -> frozenset[str]:
-    """The capability set, read out of the query text."""
+    """The capability set, read out of the query text.
+
+    `vue` and `svelte` carry no `tags.scm` of their own -- the markup wraps a
+    real script, and `extract._embedded_script` parses that script as
+    TypeScript or JavaScript. So the capability this reports is TypeScript's,
+    the wider of the two, matching the parser that will actually run.
+    """
+    if lang in ("vue", "svelte"):
+        return capabilities("typescript")
     if lang not in known_languages():
         return frozenset()
 

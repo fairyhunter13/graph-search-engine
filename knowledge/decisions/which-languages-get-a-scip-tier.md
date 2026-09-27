@@ -143,3 +143,17 @@ and it is the fact to check again before reopening any refusal here.
 Related: [scip is an overlay and never the extractor](scip-is-an-overlay-and-never-the-extractor.md),
 [php gets no scip tier and the resolver is the next
 buy](php-gets-no-scip-tier-and-the-resolver-is-the-next-buy.md).
+
+# Updated 2026-09-27: PHP and Java gain a command, C gains a call capture
+
+`D-67` (ccw's retrieval-and-prune plan) gives `scip-php` and `scip-java` a `command`, overriding
+the "Refuse" and "Defer" rulings above by owner decision -- see the reversal section in
+[php gets no scip tier and the resolver is the next buy](php-gets-no-scip-tier-and-the-resolver-is-the-next-buy.md).
+Both now read `installable` or `ready` from `readiness`, never `manual`. `D-66` gives `c` a
+`reference.call` capture (`tags_extra/c.scm`), so property 1's "C has no tree-sitter `calls`
+capability" no longer holds -- a resolved `scip-clang` index over C now has something to rewrite.
+`cuda`, `bash`, `swift`, `perl`, `sql`, `hcl`/`terraform`, `zig`, `haskell` and `fsharp` gain the
+same capability; `julia` and `elisp` do not, each for a grammar-level reason recorded beside its
+`tags_extra` file. `vue` and `svelte` route through TypeScript's capability set once their
+`<script>` block is extracted, closing the "wrong instrument entirely" gap for the embedded script
+half of a single-file component; the template half is still unreached.

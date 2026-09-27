@@ -21,9 +21,10 @@ CYCLE = {
     "b.py": "def beta():\n    return 1\n",
 }
 
-# C has a tags file and no `@reference.call`, so it is the language the gap rule
-# was written for. The body is never parsed for calls; only its presence matters.
-NO_CALLS = {"main.c": "#include <stdio.h>\n\nint main(void) { return 0; }\n"}
+# Elisp has a tags file and no `@reference.call` -- C gained one on 2026-09-27,
+# so this is the language the gap rule now runs against. The body is never
+# parsed for calls; only its presence matters.
+NO_CALLS = {"main.el": "(defun main ()\n  0)\n"}
 
 # The four tools, and the arguments each one requires. The plan's Endpoints
 # table is the source, so a rename there fails here rather than at a client.
@@ -111,8 +112,8 @@ def test_missing_capability_is_reported(repo):
     index.index_once(root)
     answer = tools.neighbors(symbol="main", root=str(root), question="callers")
     assert answer["results"] == []
-    assert any("c in this project" in gap for gap in answer["gaps"]), answer
-    assert "calls" not in answer["capabilities"]["c"]
+    assert any("elisp in this project" in gap for gap in answer["gaps"]), answer
+    assert "calls" not in answer["capabilities"]["elisp"]
 
 
 def test_unknown_argument_names_valid_set(indexed):
@@ -141,8 +142,8 @@ def test_doctor_prints_the_capability_table(repo, capsys):
     index.index_once(root)
     assert cli.main(["doctor", str(root)]) == 0
     printed = capsys.readouterr().out
-    assert '"c"' in printed
-    assert "no call capture" in printed or "c in this project" in printed
+    assert '"elisp"' in printed
+    assert "no call capture" in printed or "elisp in this project" in printed
 
 
 def test_doctor_prints_the_file_census(repo, capsys):

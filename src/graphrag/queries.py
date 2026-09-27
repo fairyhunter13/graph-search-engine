@@ -125,8 +125,20 @@ IGNORED_CAPTURES: frozenset[str] = frozenset(
 
 # TypeScript's tags file is a 23-line delta over JavaScript's. Run alone on a
 # TypeScript tree it captures nothing at all, so the two concatenate. `tsx` is
-# byte-identical to `typescript` and needs the same treatment.
-QUERY_BASE: dict[str, str] = {"typescript": "javascript", "tsx": "javascript"}
+# byte-identical to `typescript` and needs the same treatment. `terraform` and
+# `hcl` are one grammar family under two pack names, and `terraform` carries
+# no tags.scm at all, pack or hand-written -- unlike TypeScript, it needs no
+# base of its own, only `tags_extra`'s fallback through this table.
+#
+# `cuda` is not here. `cpp`'s pack tags compile clean against the cuda
+# grammar, but cuda already captures its own definitions, and the two concatenated
+# double every one of them. `cuda.scm` copies only the one pattern cuda's own
+# tags.scm is missing instead.
+QUERY_BASE: dict[str, str] = {
+    "typescript": "javascript",
+    "tsx": "javascript",
+    "terraform": "hcl",
+}
 
 
 def capture_names(source: str) -> frozenset[str]:
@@ -152,8 +164,17 @@ def pack_tags(lang: str) -> str:
 
 @cache
 def tags_extra(lang: str) -> str:
+    """The repair file for this language, or its `QUERY_BASE`'s.
+
+    `terraform` writes no repair of its own -- `hcl` already wrote one, the two
+    share a grammar author, and duplicating the file is a second copy to keep
+    true. `import_source` already falls back through `QUERY_BASE` the same way.
+    """
     path = TAGS_EXTRA_DIR / f"{lang}.scm"
-    return path.read_text(encoding="utf-8") if path.is_file() else ""
+    if path.is_file():
+        return path.read_text(encoding="utf-8")
+    base = QUERY_BASE.get(lang)
+    return tags_extra(base) if base else ""
 
 
 @cache

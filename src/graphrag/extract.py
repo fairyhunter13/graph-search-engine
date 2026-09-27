@@ -14,7 +14,7 @@ from functools import cache
 import tree_sitter as ts
 from tree_sitter_language_pack import get_language
 
-from . import grammars, queries, receivers
+from . import embed, grammars, queries, receivers
 
 
 @dataclass(slots=True)
@@ -140,7 +140,15 @@ def _link(defs: list[Definition]) -> None:
 
 
 def extract(path_lang: str, text: str) -> FileFacts:
-    """Parse one file and return its definitions, references and imports."""
+    """Parse one file and return its definitions, references and imports.
+
+    `vue` and `svelte` route through `embed.embedded_script`: neither grammar
+    parses a single-file component's markup and script together, and that
+    module holds the whole `<script>`-block gap so this one stays under the
+    line ceiling.
+    """
+    if path_lang in ("vue", "svelte"):
+        return embed.embedded_script(path_lang, text, extract)
     facts = FileFacts(lang=path_lang, n_lines=text.count("\n") + 1)
     parser = grammars.parser_for(path_lang)
     if parser is None:

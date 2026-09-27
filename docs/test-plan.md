@@ -130,7 +130,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-03 | Python golden symbol counts hold | S-01 | D-02 | done | tests/test_extract.py::test_python_golden_symbol_counts |
 | T-04 | TypeScript needs the JavaScript query too | S-01 | D-02 | done | tests/test_queries.py::test_typescript_concatenates_javascript |
 | T-05 | Every capture name is mapped or ignored | S-01 | D-02 | done | tests/test_queries.py::test_every_capture_name_is_known |
-| T-06 | 68 tagged grammars: 67 defs, 50 calls by pack and 52 effective, 17 impls | S-03 | D-02 | done | tests/test_grammars.py::test_capability_counts_under_the_pin |
+| T-06 | 68 tagged grammars: 67 defs, 50 calls by pack and 68 defs, 57 calls effective, 17 impls | S-03 | D-02, D-66 | done | tests/test_grammars.py::test_capability_counts_under_the_pin |
 | T-07 | Import scoping beats global matching | S-02 | D-03 | done | tests/test_resolve.py::test_import_scoping_collapses_candidates |
 | T-08 | An unknown name becomes an external node | S-02 | D-03 | done | tests/test_resolve.py::test_unknown_name_is_external |
 | T-09 | Blast radius terminates on a cycle | S-04 | D-04 | done | tests/test_index.py::test_blast_radius_terminates_over_the_cycle |
@@ -264,7 +264,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-137 | A language with no grammar has no capability | S-03 | D-02 | done | tests/test_grammars.py::test_a_language_with_no_grammar_has_no_capability |
 | T-138 | A missing capability is a sentence, and a present one is empty | S-03 | D-02 | done | tests/test_grammars.py::test_a_missing_capability_is_a_sentence_and_a_present_one_is_empty |
 | T-139 | The capability table answers for every language asked of it | S-03 | D-02 | done | tests/test_grammars.py::test_the_capability_table_covers_what_it_is_asked_for |
-| T-140 | TypeScript gains calls and C never does | S-03 | D-02 | done | tests/test_grammars.py::test_typescript_gains_calls_and_c_never_does |
+| T-140 | TypeScript and C both gain calls from a repair | S-03 | D-02, D-66 | done | tests/test_grammars.py::test_typescript_and_c_both_gain_calls_from_a_repair |
 | T-141 | A banned name in a module is caught | S-15 | D-01 | done | tests/test_hygiene.py::test_a_banned_name_in_a_module_is_caught |
 | T-142 | The config module imports no sibling | S-15 | D-01 | done | tests/test_hygiene.py::test_config_imports_no_sibling |
 | T-143 | No module carries a home path | S-15 | D-01 | done | tests/test_hygiene.py::test_no_module_carries_a_home_path |
@@ -483,6 +483,16 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-359 | Named indexers win over auto even when not installed | S-06 | D-63 | done | tests/test_scip_auto.py::test_named_indexers_win_over_auto_even_when_not_installed |
 | T-360 | Arming a large tree never stops the daemon's threads | S-09 | D-64 | done | tests/test_watch.py::test_arming_a_large_tree_never_stops_the_daemons_threads |
 | T-361 | The three query tools load without a `ToolSearch` round trip | S-08 | D-65 | done | tests/test_tools.py::test_the_three_query_tools_load_at_claude_start |
+| T-362 | Every new language reports a call edge | S-01 | D-66 | done | tests/test_language_coverage.py::test_every_new_language_reports_a_call_edge |
+| T-363 | A grammar that cannot tell a call from its lookalike stays defs only | S-03 | D-66 | done | tests/test_language_coverage.py::test_a_grammar_that_cannot_tell_a_call_from_its_lookalike_stays_defs_only |
+| T-364 | Julia never records a function calling its own signature | S-03 | D-66 | done | tests/test_language_coverage.py::test_julia_never_records_a_function_calling_its_own_signature |
+| T-365 | A quoted Elisp list never becomes a definition's own caller | S-03 | D-66 | done | tests/test_language_coverage.py::test_a_quoted_elisp_list_never_becomes_a_definitions_own_caller |
+| T-366 | Vue and Svelte place a definition on the outer file's own line | S-01 | D-66 | done | tests/test_language_coverage.py::test_vue_and_svelte_place_a_definition_on_the_outer_files_own_line |
+| T-367 | A component with no script block answers `no_symbols`, not an error | S-01 | D-66 | done | tests/test_language_coverage.py::test_a_component_with_no_script_block_answers_no_symbols_not_an_error |
+| T-368 | The repair layer follows `QUERY_BASE` like the import layer already does | S-01 | D-66 | done | tests/test_queries.py::test_the_repair_layer_follows_query_base_like_the_import_layer_already_does |
+| T-369 | scip-php reaches `ready` with the binary and the vendor marker | S-06 | D-67 | done | tests/test_scip_run.py::test_scip_php_reaches_ready_with_the_binary_and_the_vendor_marker |
+| T-370 | scip-java and scip-clang get a command where scip-go already had one | S-06 | D-67 | done | tests/test_scip_run.py::test_scip_java_and_scip_clang_get_a_command_where_scip_go_already_had_one |
+| T-371 | `run` moves a fixed-output file to the requested path | S-06 | D-67 | done | tests/test_scip_run.py::test_run_moves_a_fixed_output_file_to_the_requested_path |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted
@@ -795,3 +805,23 @@ trip on `select:mcp__graphrag__find_symbol` before it can ask anything. `T-361` 
 predecessor because `find_symbol`, `neighbors` and `blast_radius` carry no `_meta`, and passes once
 each decorator sets `meta={"anthropic/alwaysLoad": True}`. `index` stays deferred on purpose: a
 caller reaches it only after one of the three names a root with no graph, never on a fresh session.
+
+# What `T-362` to `T-371` found, 2026-09-27
+
+`T-362` fails on the predecessor for every one of its 13 languages: none of `bash`, `c`, `cuda`,
+`fsharp`, `haskell`, `hcl`, `perl`, `sql`, `swift`, `terraform`, `zig`, `vue` and `svelte` carried a
+`calls` capability before this change, so `grammars.capabilities(lang)` held no `"calls"` member and
+the assertion failed on its first line, before extraction ever ran.
+
+`T-364` and `T-365` are regression guards rather than negative tests, the same shape `T-275` and
+`T-274` are: `julia` and `elisp` never gained a call capture, so there is no predecessor commit on
+which either fails. Each asserts the defect this project chose not to ship — a function reading as
+its own caller, a quoted data literal reading as one — stays absent now that the grammars that would
+produce it are touched at all.
+
+`T-369` fails on the predecessor at `stood["scip-php"] == "installable"`, reading `"manual"`
+instead, because `scip-php` carried an empty `command` before this change and every readiness read
+collapsed to `manual` regardless of the vendor marker. `T-370` fails the same way for `scip-java`.
+`T-371` fails on the predecessor with `RunError("scip-php needs the project's own build, so graphrag
+does not invoke it...")`, raised at the same empty-`command` check before the fake `subprocess.run`
+the case installs is ever reached.
