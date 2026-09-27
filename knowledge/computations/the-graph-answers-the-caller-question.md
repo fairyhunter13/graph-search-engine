@@ -245,5 +245,14 @@ receiver, recorded above. The truth is 92 entries.
 The arms read 0.424 lexical and 0.183 semantic, both inside the spread the sixteen before them
 describe.
 
+The eighteenth run, at `5069ea0`, holds 1.000 on both classes and needed a repair to get there.
+The first pass, on the tree Phase 9 (`bdc23d5`, `950f1d6`) left, read distinctive precision
+**0.982**, 57 files returned against 56, and the graph was right: `tests/test_language_coverage.py`
+calls `grammars.capabilities(lang)` once per language, in a test that file did not carry when the
+truth was last read. The truth is 93 entries.
+
+The arms read 0.392 lexical and 0.190 semantic, both inside the spread the seventeen before them
+describe.
+
 [^extractor]: `Reference` in `src/graphrag/extract.py` carries `is_member`, the attribute name and, since `D-19`, the receiver.
-[^two-engine-run]: Ten caller questions over this repo, 92 ground-truth caller entries, measured 2026-09-01 at commit `6f3fe27`.
+[^two-engine-run]: Ten caller questions over this repo, 93 ground-truth caller entries, measured 2026-09-28 at commit `5069ea0`.
