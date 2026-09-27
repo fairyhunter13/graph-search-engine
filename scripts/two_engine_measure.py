@@ -155,6 +155,7 @@ TRUTH: list[dict] = [
             "src/graphrag/query.py",
             "tests/test_grammars.py",
             "tests/test_import_queries.py",
+            "tests/test_language_coverage.py",
         ],
     },
     {
