@@ -106,3 +106,28 @@ def test_an_unreachable_daemon_is_reported_not_ranked(state_dir):
     ok, reason = health.check("http://127.0.0.1:1/healthz", state_dir / "health.json")
     assert not ok
     assert "did not answer" in reason
+
+
+def test_a_vanished_root_stops_paging(state_dir, tmp_path):
+    """A deleted root is skipped with no error, and its stored graph stays."""
+    from graphrag import config, index, store
+
+    root = tmp_path / "proj"
+    root.mkdir()
+    (root / "a.py").write_text("def f():\n    return 1\n")
+    index.index_once(root)
+    conn = store.connect(config.index_path(root.resolve()))
+    before = conn.execute("SELECT COUNT(*) FROM files").fetchone()[0]
+    conn.close()
+    assert before == 1
+
+    (root / "a.py").unlink()
+    root.rmdir()
+    report = index.index_once(root)
+    assert report.unchanged
+    index.record(report)
+
+    conn = store.connect(config.index_path(root.resolve()))
+    after = conn.execute("SELECT COUNT(*) FROM files").fetchone()[0]
+    conn.close()
+    assert after == before

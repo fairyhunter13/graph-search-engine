@@ -102,6 +102,11 @@ def index_once(
     latency and the scan buys correctness, so the hint never replaces the scan.
     """
     root = Path(root).resolve()
+    if not root.is_dir():
+        # An unmounted or deleted root keeps its graph: enumerating it would
+        # read every stored file as removed.
+        log.info("root missing, skipped: %s", root)
+        return IndexReport(root=str(root), unchanged=True)
     cfg = projcfg.effective(root)
     report = IndexReport(root=str(root))
     path = config.index_path(root)

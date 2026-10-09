@@ -129,10 +129,9 @@ Description=graphrag alert for %i
 
 [Service]
 Type=oneshot
-# The desktop session is not always ready when a boot-time failure fires, and a
-# notification sent into nothing is a failure nobody sees.
+# The failure is re-checked after a pause, then written to the user journal.
 ExecStartPre=/bin/sleep 8
-ExecStart=/usr/bin/notify-send -u critical "graphrag" "%i failed"
+ExecStart=/usr/bin/logger -t graphrag "%i failed"
 """,
     }
 
