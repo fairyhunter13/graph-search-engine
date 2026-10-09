@@ -129,7 +129,7 @@ Description=graphrag alert for %i
 
 [Service]
 Type=oneshot
-# The failure is re-checked after a pause, then written to the user journal.
+# The failure is written to the user journal after an 8 s pause. Nothing re-checks the unit.
 ExecStartPre=/bin/sleep 8
 ExecStart=/usr/bin/logger -t graphrag "%i failed"
 """,
