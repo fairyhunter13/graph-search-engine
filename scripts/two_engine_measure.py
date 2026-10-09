@@ -101,6 +101,7 @@ TRUTH: list[dict] = [
             "src/graphrag/scip/deps.py",
             "scripts/scip_census.py",
             "tests/test_scip_auto.py",
+            "tests/test_health.py",
         ],
     },
     {
@@ -190,6 +191,7 @@ TRUTH: list[dict] = [
             "src/graphrag/scip/deps.py",
             "scripts/scip_census.py",
             "tests/test_scip_auto.py",
+            "tests/test_health.py",
         ],
     },
     {
@@ -231,6 +233,8 @@ TRUTH: list[dict] = [
             # direction again: `_conn` in `tests/test_scip_auto.py` calls
             # `index_once` to build a store before asserting on `scip.plan`.
             "tests/test_scip_auto.py",
+            # The vanished-root case calls `index_once` on a deleted root.
+            "tests/test_health.py",
         ],
     },
 ]
