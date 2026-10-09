@@ -493,6 +493,7 @@ Expected: a missing attester or an unread receipt field fails the push.
 | T-369 | scip-php reaches `ready` with the binary and the vendor marker | S-06 | D-67 | done | tests/test_scip_run.py::test_scip_php_reaches_ready_with_the_binary_and_the_vendor_marker |
 | T-370 | scip-java and scip-clang get a command where scip-go already had one | S-06 | D-67 | done | tests/test_scip_run.py::test_scip_java_and_scip_clang_get_a_command_where_scip_go_already_had_one |
 | T-371 | `run` moves a fixed-output file to the requested path | S-06 | D-67 | done | tests/test_scip_run.py::test_run_moves_a_fixed_output_file_to_the_requested_path |
+| T-372 | A vanished root is skipped and keeps its graph | S-09 | D-07 | done | tests/test_health.py::test_a_vanished_root_stops_paging |
 
 `T-275` and `T-274` pass on the predecessor commit, and they are regression guards rather than
 negative tests. `T-275` holds `yield_on_timeout=True`, which sits four lines from the deleted
